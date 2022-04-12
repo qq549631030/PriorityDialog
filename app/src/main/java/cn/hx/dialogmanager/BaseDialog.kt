@@ -14,6 +14,9 @@ open class BaseDialog : AppCompatDialogFragment() {
     //对话框是否只有用户才能真正关闭
     var onlyDismissByUser: Boolean = true
 
+    //是否锁定窗口，若为true则弹框显示时只能停留在当前页面，无法关闭无法跳走
+    var lockWindow: Boolean = false
+
     private var baseDismissed = false
     private var baseShownByMe = false
 
@@ -33,6 +36,7 @@ open class BaseDialog : AppCompatDialogFragment() {
         savedInstanceState?.run {
             priority = getInt(PRIORITY, 0)
             onlyDismissByUser = getBoolean(ONLY_DISMISS_BY_USER, true)
+            lockWindow = getBoolean(LOCK_WINDOW, false)
             dismissByHighPriorityDialog = getBoolean(DISMISS_BY_HIGH_PRIORITY_DIALOG, false)
         }
     }
@@ -75,6 +79,9 @@ open class BaseDialog : AppCompatDialogFragment() {
             return
         }
         if (!dismissByHighPriorityDialog) {//正常关闭后尝试显示等待队列的中最高优先级的对话框
+            if (!parentFragmentManager.pendingLockedWindow()) {//不再锁定页面
+                (requireActivity() as? BaseActivity)?.tryPendingAction()
+            }
             parentFragmentManager.popPendingDialog()?.showBaseDialog(parentFragmentManager)
         }
     }
@@ -83,6 +90,7 @@ open class BaseDialog : AppCompatDialogFragment() {
         super.onSaveInstanceState(outState)
         outState.putInt(PRIORITY, priority)
         outState.putBoolean(ONLY_DISMISS_BY_USER, onlyDismissByUser)
+        outState.putBoolean(LOCK_WINDOW, lockWindow)
         outState.putBoolean(DISMISS_BY_HIGH_PRIORITY_DIALOG, dismissByHighPriorityDialog)
     }
 
@@ -97,6 +105,7 @@ open class BaseDialog : AppCompatDialogFragment() {
         const val BASE_DIALOG_TAG = "baseDialog:tag"
         private const val PRIORITY = "baseDialog:priority"
         private const val ONLY_DISMISS_BY_USER = "baseDialog:only_dismiss_by_user"
+        private const val LOCK_WINDOW = "baseDialog:lock_window"
         private const val DISMISS_BY_HIGH_PRIORITY_DIALOG =
             "baseDialog:dismiss_by_high_priority_dialog"
     }

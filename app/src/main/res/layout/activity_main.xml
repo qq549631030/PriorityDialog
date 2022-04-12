@@ -1,15 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:padding="16dp"
     tools:context=".MainActivity">
 
     <Button
-        android:id="@+id/btn_show"
+        android:id="@+id/btn_priority_high"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:text="Show" />
-</FrameLayout>
+        android:text="priority low to high" />
+
+    <Button
+        android:id="@+id/btn_priority_low"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:text="priority low to high" />
+
+    <Button
+        android:id="@+id/btn_dismiss_by_user_false"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:text="dismiss by program" />
+
+    <Button
+        android:id="@+id/btn_lock_window_for_start"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:text="lock window when start Activity" />
+
+    <Button
+        android:id="@+id/btn_lock_window_for_finish"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:text="lock window when finish" />
+
+    <Button
+        android:id="@+id/btn_lock_window_on_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:text="lock window on fragment" />
+</LinearLayout>
