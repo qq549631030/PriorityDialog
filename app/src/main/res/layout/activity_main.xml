@@ -29,6 +29,13 @@
         android:text="dismiss by program" />
 
     <Button
+        android:id="@+id/btn_for_start"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:text="start Activity on Second" />
+
+    <Button
         android:id="@+id/btn_lock_window_for_start"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

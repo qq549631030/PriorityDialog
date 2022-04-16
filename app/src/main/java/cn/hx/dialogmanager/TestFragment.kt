@@ -10,8 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import cn.hx.dialogmanager.databinding.FragmentTestBinding
 
-class TestFragment : BaseFragment(R.layout.fragment_test) {
-
+class TestFragment : BaseFragment() {
 
     private var _binding: FragmentTestBinding? = null
 
@@ -26,11 +25,7 @@ class TestFragment : BaseFragment(R.layout.fragment_test) {
         handler = Handler(Looper.getMainLooper())
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         _binding = FragmentTestBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -39,51 +34,83 @@ class TestFragment : BaseFragment(R.layout.fragment_test) {
         super.onViewCreated(view, savedInstanceState)
         binding.btnLockWindowForStart.setOnClickListener {
             showDialog(
-                "lock window dialog",
-                "this dialog with lockWindow  = true\nit will stop start Second Activity\nafter this dismiss the Second Activity will start again",
-                lockWindow = true
+                    "lock window dialog",
+                    "this dialog with lockWindow  = true\nit will stop start Second Activity\nafter this dismiss the Second Activity will start again",
+                    lockWindow = true
             )
 
             handler.post {
-                startActivity(
-                    Intent(
-                        requireContext(),
-                        SecondActivity::class.java
-                    )
-                )
+                startActivity(Intent(requireContext(), SecondActivity::class.java))
             }
         }
         binding.btnLockWindowForFinish.setOnClickListener {
             showDialog(
-                "lock window dialog",
-                "this dialog with lockWindow  = true\nit will stop finish current Activity\nafter this dismiss the this Activity will finish",
-                lockWindow = true
+                    "lock window dialog",
+                    "this dialog with lockWindow  = true\nit will stop finish current Activity\nafter this dismiss the this Activity will finish",
+                    lockWindow = true
             )
 
             handler.post {
                 activity?.finish()
             }
         }
+        binding.btnReplaceByOther.setOnClickListener {
+            showDialog(
+                    "first dialog",
+                    "this is the first dialog with priority  = 1\nthis will dismiss when second dialog show",
+                    1
+            )
+
+            handler.postDelayed({
+                showDialog(
+                        "second dialog",
+                        "this is the second dialog with priority  = 2 \nthe first dialog will reshow after this dismissed",
+                        2
+                )
+            }, 3000L)
+            handler.postDelayed({
+                parentFragmentManager.beginTransaction().replace(R.id.container, OtherFragment()).commit()
+            }, 3000)
+        }
+
+        binding.btnReplaceByOtherToBack.setOnClickListener {
+            showDialog(
+                    "first dialog",
+                    "this is the first dialog with priority  = 1\nthis will dismiss when second dialog show",
+                    1
+            )
+
+            handler.postDelayed({
+                showDialog(
+                        "second dialog",
+                        "this is the second dialog with priority  = 2 \nthe first dialog will reshow after this dismissed",
+                        2
+                )
+            }, 3000L)
+            handler.postDelayed({
+                parentFragmentManager.beginTransaction().replace(R.id.container, OtherFragment()).addToBackStack(null).commit()
+            }, 3000)
+        }
     }
 
 
     private fun showDialog(
-        title: String,
-        message: String,
-        priority: Int = 0,
-        onlyDismissByUser: Boolean = true,
-        lockWindow: Boolean = false
+            title: String,
+            message: String,
+            priority: Int = 0,
+            onlyDismissByUser: Boolean = true,
+            lockWindow: Boolean = false
     ) {
         val dialog = BaseAlertDialog.Builder()
-            .title(title)
-            .message(message)
-            .positive("Confirm")
-            .negative("Cancel")
-            .create()
+                .title(title)
+                .message(message)
+                .positive("Confirm")
+                .negative("Cancel")
+                .create()
         dialog.priority = priority
         dialog.onlyDismissByUser = onlyDismissByUser
         dialog.lockWindow = lockWindow
-        dialog.showBaseDialog(childFragmentManager)
+        showBaseDialog(dialog)
     }
 
 

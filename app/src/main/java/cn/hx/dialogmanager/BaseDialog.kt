@@ -1,12 +1,13 @@
 package cn.hx.dialogmanager
 
-import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatDialogFragment
-import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.DialogFragment
 
-open class BaseDialog : AppCompatDialogFragment() {
+open class BaseDialog : DialogFragment() {
+
+    //唯一标识
+    var uuid: String? = null
 
     //优先级，值越大优先级越高
     var priority: Int = 0
@@ -17,23 +18,13 @@ open class BaseDialog : AppCompatDialogFragment() {
     //是否锁定窗口，若为true则弹框显示时只能停留在当前页面，无法关闭无法跳走
     var lockWindow: Boolean = false
 
-    private var baseDismissed = false
-    private var baseShownByMe = false
-
     //被高优先级对话框关闭
-    private var dismissByHighPriorityDialog: Boolean = false
-
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        if (!baseShownByMe) {
-            baseDismissed = false
-        }
-    }
+    var dismissByHighPriorityDialog: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         savedInstanceState?.run {
+            uuid = getString(BASE_DIALOG_UUID)
             priority = getInt(PRIORITY, 0)
             onlyDismissByUser = getBoolean(ONLY_DISMISS_BY_USER, true)
             lockWindow = getBoolean(LOCK_WINDOW, false)
@@ -41,72 +32,33 @@ open class BaseDialog : AppCompatDialogFragment() {
         }
     }
 
-    fun showBaseDialog(fragmentManager: FragmentManager): Boolean {
-        if (fragmentManager.isDestroyed || fragmentManager.isStateSaved) {
-            return false
-        }
-        baseDismissed = false
-        baseShownByMe = true
-        val transaction = fragmentManager.beginTransaction()
-        val currentShowingDialog = fragmentManager.currentDialog
-        currentShowingDialog?.let {
-            if (priority < it.priority) {//优先级比当前显示的小，加入等待队列
-                fragmentManager.addPendingDialog(this)
-                return false
-            } else {//优先级大于或者等于当前显示的，取代当前的显示
-                if (it.onlyDismissByUser) {//当前显示的对话框只能由用户关闭，加上标记加入等待队列
-                    it.dismissByHighPriorityDialog = true
-                    fragmentManager.addPendingDialog(it)
-                }
-                transaction.remove(it)
-            }
-        }
-        show(transaction, BASE_DIALOG_TAG)
-        dismissByHighPriorityDialog = false
-        return true
-    }
-
-    fun isShowing(): Boolean {
-        return !baseDismissed
-    }
-
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
-        baseDismissed = true
-        baseShownByMe = false
         //非正常关闭，Activity销毁重建后dialog也会重建
         if (parentFragmentManager.isDestroyed || parentFragmentManager.isStateSaved) {
             return
         }
-        if (!dismissByHighPriorityDialog) {//正常关闭后尝试显示等待队列的中最高优先级的对话框
-            if (!parentFragmentManager.pendingLockedWindow()) {//不再锁定页面
-                (requireActivity() as? BaseActivity)?.tryPendingAction()
-            }
-            parentFragmentManager.popPendingDialog()?.showBaseDialog(parentFragmentManager)
+        if (!dismissByHighPriorityDialog) {//正常关闭
+            (parentFragment as? DialogHost)?.onDismiss(this)
+                    ?: (activity as? DialogHost)?.onDismiss(this)
         }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
+        outState.putString(BASE_DIALOG_UUID, uuid)
         outState.putInt(PRIORITY, priority)
         outState.putBoolean(ONLY_DISMISS_BY_USER, onlyDismissByUser)
         outState.putBoolean(LOCK_WINDOW, lockWindow)
         outState.putBoolean(DISMISS_BY_HIGH_PRIORITY_DIALOG, dismissByHighPriorityDialog)
     }
 
-    override fun onDetach() {
-        super.onDetach()
-        if (!baseShownByMe && !baseDismissed) {
-            baseDismissed = true
-        }
-    }
-
     companion object {
-        const val BASE_DIALOG_TAG = "baseDialog:tag"
-        private const val PRIORITY = "baseDialog:priority"
-        private const val ONLY_DISMISS_BY_USER = "baseDialog:only_dismiss_by_user"
-        private const val LOCK_WINDOW = "baseDialog:lock_window"
-        private const val DISMISS_BY_HIGH_PRIORITY_DIALOG =
-            "baseDialog:dismiss_by_high_priority_dialog"
+        const val BASE_DIALOG_TAG = "cn.hx.base.dialog.tag"
+        private const val BASE_DIALOG_UUID = "cn.hx.base.dialog.uuid"
+        private const val PRIORITY = "cn.hx.base.dialog.priority"
+        private const val ONLY_DISMISS_BY_USER = "cn.hx.base.dialog.onlyDismissByUser"
+        private const val LOCK_WINDOW = "cn.hx.base.dialog.lockWindow"
+        private const val DISMISS_BY_HIGH_PRIORITY_DIALOG = "cn.hx.base.dialog.dismissByHighPriorityDialog"
     }
 }

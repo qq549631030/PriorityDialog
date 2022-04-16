@@ -18,4 +18,18 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:text="lock window when finish" />
+
+    <Button
+        android:id="@+id/btn_replace_by_other"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:text="replace by other" />
+
+    <Button
+        android:id="@+id/btn_replace_by_other_to_back"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:text="replace by other Can Back" />
 </LinearLayout>

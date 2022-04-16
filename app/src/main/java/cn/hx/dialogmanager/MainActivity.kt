@@ -9,8 +9,6 @@ import cn.hx.dialogmanager.databinding.ActivityMainBinding
 
 class MainActivity : BaseActivity(), BaseAlertDialog.OnClickListener {
 
-    private val TAG: String = "MainActivity"
-
     lateinit var binding: ActivityMainBinding
 
     lateinit var handler: Handler
@@ -22,74 +20,86 @@ class MainActivity : BaseActivity(), BaseAlertDialog.OnClickListener {
         setContentView(binding.root)
         binding.btnPriorityHigh.setOnClickListener {
             showDialog(
-                "first dialog",
-                "this is the first dialog with priority  = 1\nthis will dismiss when second dialog show",
-                1
+                    "first dialog",
+                    "this is the first dialog with priority  = 1\nthis will dismiss when second dialog show",
+                    1
             )
 
             handler.postDelayed({
                 showDialog(
-                    "second dialog",
-                    "this is the second dialog with priority  = 2 \nthe first dialog will reshow after this dismissed",
-                    2
+                        "second dialog",
+                        "this is the second dialog with priority  = 2 \nthe first dialog will reshow after this dismissed",
+                        2
                 )
             }, 3000L)
         }
         binding.btnPriorityLow.setOnClickListener {
             showDialog(
-                "first dialog",
-                "this is the first dialog with priority  = 2\nthis will stop the second dialog to show\nthe second dialog will show after this dismissed",
-                2
+                    "first dialog",
+                    "this is the first dialog with priority  = 2\nthis will stop the second dialog to show\nthe second dialog will show after this dismissed",
+                    2
             )
 
             handler.postDelayed({
                 showDialog(
-                    "second dialog",
-                    "this is the second dialog with priority  = 1\nthis show after first dialog dismiss ",
-                    1
+                        "second dialog",
+                        "this is the second dialog with priority  = 1\nthis show after first dialog dismiss ",
+                        1
                 )
             }, 3000L)
         }
 
         binding.btnDismissByUserFalse.setOnClickListener {
             showDialog(
-                "first dialog",
-                "this is the first dialog with priority  = 1\nand with onlyDismissByUser = false\nthis will dismiss when second dialog show",
-                1,
-                false
+                    "first dialog",
+                    "this is the first dialog with priority  = 1\nand with onlyDismissByUser = false\nthis will dismiss when second dialog show",
+                    1,
+                    false
             )
 
             handler.postDelayed({
                 showDialog(
-                    "second dialog",
-                    "this is the second dialog with priority  = 2\nthe first dialog will not reshow when this dismissed",
-                    2
+                        "second dialog",
+                        "this is the second dialog with priority  = 2\nthe first dialog will not reshow when this dismissed",
+                        2
                 )
             }, 3000L)
         }
+        binding.btnForStart.setOnClickListener {
+            showDialog(
+                    "first dialog",
+                    "this is the first dialog with priority  = 1\nthis will dismiss when second dialog show",
+                    1,
+                    lockWindow = true
+            )
 
+            handler.postDelayed({
+                showDialog(
+                        "second dialog starter",
+                        "this is the second dialog with priority  = 2 \nthe first dialog will reshow after this dismissed",
+                        2,
+                        uuid = "mock_uuid_1"
+                )
+            }, 3000L)
+
+        }
         binding.btnLockWindowForStart.setOnClickListener {
             showDialog(
-                "lock window dialog",
-                "this dialog with lockWindow  = true\nit will stop start Second Activity\nafter this dismiss the Second Activity will start again",
-                lockWindow = true
+                    "lock window dialog",
+                    "this dialog with lockWindow  = true\nit will stop start Second Activity\nafter this dismiss the Second Activity will start again",
+                    lockWindow = true
             )
 
             handler.post {
-                startActivity(
-                    Intent(
-                        this,
-                        SecondActivity::class.java
-                    )
-                )
+                startActivity(Intent(this, SecondActivity::class.java))
             }
         }
 
         binding.btnLockWindowForFinish.setOnClickListener {
             showDialog(
-                "lock window dialog",
-                "this dialog with lockWindow  = true\nit will stop finish current Activity\nafter this dismiss the this Activity will finish",
-                lockWindow = true
+                    "lock window dialog",
+                    "this dialog with lockWindow  = true\nit will stop finish current Activity\nafter this dismiss the this Activity will finish",
+                    lockWindow = true
             )
 
             handler.post {
@@ -106,29 +116,24 @@ class MainActivity : BaseActivity(), BaseAlertDialog.OnClickListener {
         super.onDestroy()
     }
 
-    private fun showDialog(
-        title: String,
-        message: String,
-        priority: Int = 0,
-        onlyDismissByUser: Boolean = true,
-        lockWindow: Boolean = false
-    ) {
+    private fun showDialog(title: String, message: String, priority: Int = 0, onlyDismissByUser: Boolean = true, lockWindow: Boolean = false, uuid: String? = null) {
         val dialog = BaseAlertDialog.Builder()
-            .title(title)
-            .message(message)
-            .positive("Confirm")
-            .negative("Cancel")
-            .create()
+                .title(title)
+                .message(message)
+                .positive("Confirm")
+                .negative("Cancel")
+                .create()
         dialog.priority = priority
         dialog.onlyDismissByUser = onlyDismissByUser
         dialog.lockWindow = lockWindow
-        dialog.showBaseDialog(supportFragmentManager)
+        dialog.uuid = uuid
+        showBaseDialog(dialog)
     }
 
     override fun onClick(dialog: BaseAlertDialog, which: Int) {
-        Log.d(
-            TAG,
-            "onClick() called with:activity = $this dialog = $dialog, which = $which"
-        )
+        Log.d(TAG, "onClick() called with:activity = $this dialog = $dialog, which = $which")
+        if (dialog.uuid == "mock_uuid_1") {
+            startActivity(Intent(this, SecondActivity::class.java))
+        }
     }
 }

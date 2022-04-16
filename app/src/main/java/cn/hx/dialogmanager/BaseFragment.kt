@@ -1,12 +1,14 @@
 package cn.hx.dialogmanager
 
-import androidx.annotation.ContentView
-import androidx.annotation.LayoutRes
+import android.os.Bundle
 import androidx.fragment.app.Fragment
 
-open class BaseFragment : Fragment {
-    constructor() : super()
+open class BaseFragment : Fragment(), FragmentDialogHost by FragmentDialogHostImpl() {
 
-    @ContentView
-    constructor(@LayoutRes contentLayoutId: Int) : super(contentLayoutId)
+    val TAG = this::class.simpleName
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        initDialogHost(this)
+    }
 }

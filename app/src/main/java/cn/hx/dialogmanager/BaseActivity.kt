@@ -4,32 +4,34 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 
-open class BaseActivity : AppCompatActivity() {
+open class BaseActivity : AppCompatActivity(), ActivityDialogHost by ActivityDialogHostImpl() {
+
+    val TAG = this::class.simpleName
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        savedInstanceState?.run {
-            restoreBaseDialogBundle(this)
-        }
+        initDialogHost(this)
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        saveBaseDialogBundle(outState)
-    }
-
+    @Deprecated("Deprecated in Java")
     @Suppress("DEPRECATION")
     override fun startActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) {
-        if (warpStartActivityForResult(intent, requestCode, options)) {
+        val ignoreHoldWindow = intent.getBooleanExtra(EXTRA_IGNORE_DIALOG_LOCK, false)
+        if (!ignoreHoldWindow && warpStartActivityForResult(intent, requestCode, options)) {
             return
         }
         super.startActivityForResult(intent, requestCode, options)
     }
 
     override fun finish() {
-        if (warpFinish()) {
+        val ignoreHoldWindow = intent.getBooleanExtra(EXTRA_IGNORE_DIALOG_LOCK, false)
+        if (!ignoreHoldWindow && warpFinish()) {
             return
         }
         super.finish()
+    }
+
+    companion object {
+        const val EXTRA_IGNORE_DIALOG_LOCK = "extra_ignore_dialog_lock"
     }
 }
