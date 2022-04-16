@@ -1,10 +1,9 @@
-package cn.hx.dialogmanager
+package cn.hx.prioritydialog
 
 import android.os.Bundle
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.FragmentOnAttachListener
 import java.util.*
 
 abstract class AbsDialogHost : DialogHost {
@@ -55,14 +54,14 @@ abstract class AbsDialogHost : DialogHost {
         }
         priorityDialog.dismissByHighPriorityDialog = false
         pendingShowDialog = priorityDialog
-        fragmentManager.addFragmentOnAttachListener(object : FragmentOnAttachListener {
-            override fun onAttachFragment(fragmentManager: FragmentManager, fragment: Fragment) {
-                if (fragment == pendingShowDialog) {
+        fragmentManager.registerFragmentLifecycleCallbacks(object : FragmentManager.FragmentLifecycleCallbacks() {
+            override fun onFragmentCreated(fm: FragmentManager, f: Fragment, savedInstanceState: Bundle?) {
+                if (f == pendingShowDialog) {
                     pendingShowDialog = null
-                    fragmentManager.removeFragmentOnAttachListener(this)
+                    fragmentManager.unregisterFragmentLifecycleCallbacks(this)
                 }
             }
-        })
+        }, false)
         (priorityDialog as? DialogFragment)?.let {
             it.show(transaction, PriorityDialog.BASE_DIALOG_TAG)
             return true
@@ -126,7 +125,7 @@ abstract class AbsDialogHost : DialogHost {
     override fun onDismiss(priorityDialog: PriorityDialog) {
         pendingDismissDialog = priorityDialog
         fragmentManager.registerFragmentLifecycleCallbacks(object : FragmentManager.FragmentLifecycleCallbacks() {
-            override fun onFragmentDetached(fm: FragmentManager, f: Fragment) {
+            override fun onFragmentDestroyed(fm: FragmentManager, f: Fragment) {
                 if (f == pendingDismissDialog) {
                     pendingDismissDialog = null
                     fragmentManager.unregisterFragmentLifecycleCallbacks(this)

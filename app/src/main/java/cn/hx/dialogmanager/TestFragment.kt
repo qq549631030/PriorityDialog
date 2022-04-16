@@ -70,7 +70,7 @@ class TestFragment : BaseFragment() {
             }, 3000L)
             handler.postDelayed({
                 parentFragmentManager.beginTransaction().replace(R.id.container, OtherFragment()).commit()
-            }, 3000)
+            }, 6000)
         }
 
         binding.btnReplaceByOtherToBack.setOnClickListener {
@@ -89,7 +89,7 @@ class TestFragment : BaseFragment() {
             }, 3000L)
             handler.postDelayed({
                 parentFragmentManager.beginTransaction().replace(R.id.container, OtherFragment()).addToBackStack(null).commit()
-            }, 3000)
+            }, 6000)
         }
     }
 

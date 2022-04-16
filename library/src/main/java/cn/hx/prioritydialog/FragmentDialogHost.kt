@@ -1,4 +1,4 @@
-package cn.hx.dialogmanager
+package cn.hx.prioritydialog
 
 import androidx.fragment.app.Fragment
 

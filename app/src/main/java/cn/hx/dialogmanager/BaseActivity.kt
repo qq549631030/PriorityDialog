@@ -3,10 +3,12 @@ package cn.hx.dialogmanager
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import cn.hx.prioritydialog.ActivityDialogHost
+import cn.hx.prioritydialog.ActivityDialogHostImpl
 
 open class BaseActivity : AppCompatActivity(), ActivityDialogHost by ActivityDialogHostImpl() {
 
-    val TAG = this::class.simpleName
+    val TAG = this::class.java.simpleName
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

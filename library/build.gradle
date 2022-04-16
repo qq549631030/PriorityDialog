@@ -1,5 +1,5 @@
 plugins {
-    id 'com.android.application'
+    id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
 }
 
@@ -7,17 +7,13 @@ android {
     compileSdk 32
 
     defaultConfig {
-        applicationId "cn.hx.dialogmanager"
         minSdk 14
         targetSdk 32
-        versionCode 1
-        versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
     }
-    buildFeatures {
-        viewBinding true
-    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -35,9 +31,8 @@ android {
 
 dependencies {
 
-    implementation 'androidx.appcompat:appcompat:1.4.1'
-    implementation 'com.google.android.material:material:1.5.0'
-    implementation project(path: ':library')
+    api 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.0'
+    api 'androidx.fragment:fragment:1.1.0'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
