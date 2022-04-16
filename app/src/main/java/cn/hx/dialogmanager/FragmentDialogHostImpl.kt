@@ -34,7 +34,7 @@ class FragmentDialogHostImpl : AbsDialogHost(), FragmentDialogHost {
     }
 
     override fun tryPendingAction(): Boolean {
-        if (isWindowLocked()) {
+        if (isWindowLockedByDialog()) {
             return false
         }
         return (hostFragment.requireActivity() as? DialogHost)?.tryPendingAction() ?: false

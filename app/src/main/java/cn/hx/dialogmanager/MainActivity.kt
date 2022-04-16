@@ -127,7 +127,7 @@ class MainActivity : BaseActivity(), BaseAlertDialog.OnClickListener {
         dialog.onlyDismissByUser = onlyDismissByUser
         dialog.lockWindow = lockWindow
         dialog.uuid = uuid
-        showBaseDialog(dialog)
+        showPriorityDialog(dialog)
     }
 
     override fun onClick(dialog: BaseAlertDialog, which: Int) {

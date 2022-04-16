@@ -2,12 +2,11 @@ package cn.hx.dialogmanager
 
 interface DialogHost {
 
-    fun showBaseDialog(baseDialog: BaseDialog): Boolean
+    fun showPriorityDialog(priorityDialog: PriorityDialog): Boolean
 
-    fun isWindowLocked(): Boolean
+    fun isWindowLockedByDialog(): Boolean
 
-    fun onDismiss(baseDialog: BaseDialog)
-
+    fun onDismiss(priorityDialog: PriorityDialog)
 
     fun tryPendingAction(): Boolean
 }

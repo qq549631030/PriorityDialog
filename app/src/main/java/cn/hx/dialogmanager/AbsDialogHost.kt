@@ -1,6 +1,7 @@
 package cn.hx.dialogmanager
 
 import android.os.Bundle
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentOnAttachListener
@@ -11,12 +12,12 @@ abstract class AbsDialogHost : DialogHost {
     private lateinit var fragmentManager: FragmentManager
     private var inited = false
 
-    private var pendingShowDialog: BaseDialog? = null
-    private var pendingDismissDialog: BaseDialog? = null
+    private var pendingShowDialog: PriorityDialog? = null
+    private var pendingDismissDialog: PriorityDialog? = null
 
     //等待显示对话框
-    private val pendingDialogs: TreeMap<Int, Stack<BaseDialog>>
-        get() = pendingDialogMap[uuid] ?: TreeMap<Int, Stack<BaseDialog>>().also {
+    private val pendingDialogs: TreeMap<Int, Stack<PriorityDialog>>
+        get() = pendingDialogMap[uuid] ?: TreeMap<Int, Stack<PriorityDialog>>().also {
             pendingDialogMap[uuid] = it
         }
 
@@ -30,7 +31,7 @@ abstract class AbsDialogHost : DialogHost {
         inited = true
     }
 
-    override fun showBaseDialog(baseDialog: BaseDialog): Boolean {
+    override fun showPriorityDialog(priorityDialog: PriorityDialog): Boolean {
         if (!inited) {
             throw IllegalStateException("not init, please call initDialogHost first")
         }
@@ -38,20 +39,22 @@ abstract class AbsDialogHost : DialogHost {
             return false
         }
         val transaction = fragmentManager.beginTransaction()
-        currentDialog?.let {
-            if (baseDialog.priority < it.priority) {//优先级比当前显示的小，加入等待队列
-                addToPendingDialog(baseDialog)
+        currentDialog?.let { prev ->
+            if (priorityDialog.priority < prev.priority) {//优先级比当前显示的小，加入等待队列
+                addToPendingDialog(priorityDialog)
                 return false
             } else {//优先级大于或者等于当前显示的，取代当前的显示
-                if (it.onlyDismissByUser) {//当前显示的对话框只能由用户关闭，加上标记加入等待队列
-                    it.dismissByHighPriorityDialog = true
-                    addToPendingDialog(it)
+                if (prev.onlyDismissByUser) {//当前显示的对话框只能由用户关闭，加上标记加入等待队列
+                    prev.dismissByHighPriorityDialog = true
+                    addToPendingDialog(prev)
                 }
-                transaction.remove(it)
+                (prev as? DialogFragment)?.let {
+                    transaction.remove(it)
+                }
             }
         }
-        baseDialog.dismissByHighPriorityDialog = false
-        pendingShowDialog = baseDialog
+        priorityDialog.dismissByHighPriorityDialog = false
+        pendingShowDialog = priorityDialog
         fragmentManager.addFragmentOnAttachListener(object : FragmentOnAttachListener {
             override fun onAttachFragment(fragmentManager: FragmentManager, fragment: Fragment) {
                 if (fragment == pendingShowDialog) {
@@ -60,52 +63,55 @@ abstract class AbsDialogHost : DialogHost {
                 }
             }
         })
-        baseDialog.show(transaction, BaseDialog.BASE_DIALOG_TAG)
-        return true
+        (priorityDialog as? DialogFragment)?.let {
+            it.show(transaction, PriorityDialog.BASE_DIALOG_TAG)
+            return true
+        }
+        return false
     }
 
     //加入等待队列
-    private fun addToPendingDialog(baseDialog: BaseDialog) {
-        val stack = pendingDialogs[baseDialog.priority] ?: run {
-            val stack = Stack<BaseDialog>()
-            pendingDialogs[baseDialog.priority] = stack
+    private fun addToPendingDialog(priorityDialog: PriorityDialog) {
+        val stack = pendingDialogs[priorityDialog.priority] ?: run {
+            val stack = Stack<PriorityDialog>()
+            pendingDialogs[priorityDialog.priority] = stack
             stack
         }
-        stack.push(baseDialog)
+        stack.push(priorityDialog)
     }
 
     //弹出最高优先级对话框
-    private fun popPendingDialog(): BaseDialog? {
-        var baseDialog: BaseDialog? = null
+    private fun popPendingDialog(): PriorityDialog? {
+        var priorityDialog: PriorityDialog? = null
         return pendingDialogs.lastEntry()?.let {
             if (it.value.isNotEmpty()) {
-                baseDialog = it.value.pop()
+                priorityDialog = it.value.pop()
             }
             if (it.value.isEmpty()) {
                 pendingDialogs.remove(it.key)
             }
-            baseDialog
+            priorityDialog
         }
     }
 
     //当前显示的对话框
-    private val currentDialog: BaseDialog?
+    private val currentDialog: PriorityDialog?
         get() {
             if (pendingShowDialog != null) {
                 return pendingShowDialog
             }
-            val baseDialog = fragmentManager.findFragmentByTag(BaseDialog.BASE_DIALOG_TAG) as? BaseDialog
-            if (baseDialog == null) {
-                return baseDialog
+            val priorityDialog = fragmentManager.findFragmentByTag(PriorityDialog.BASE_DIALOG_TAG) as? PriorityDialog
+            if (priorityDialog == null) {
+                return priorityDialog
             }
-            if (pendingDismissDialog != null && baseDialog == pendingDismissDialog) {
+            if (pendingDismissDialog != null && priorityDialog == pendingDismissDialog) {
                 return null
             }
-            return baseDialog
+            return priorityDialog
         }
 
     //当前是否锁定页面
-    override fun isWindowLocked(): Boolean {
+    override fun isWindowLockedByDialog(): Boolean {
         //current
         val locked = currentDialog?.lockWindow ?: false
         if (locked) {
@@ -113,12 +119,12 @@ abstract class AbsDialogHost : DialogHost {
         }
         //children
         return fragmentManager.fragments.any {
-            it is DialogHost && it.isVisible && it.isWindowLocked()
+            it is DialogHost && it.isVisible && it.isWindowLockedByDialog()
         }
     }
 
-    override fun onDismiss(baseDialog: BaseDialog) {
-        pendingDismissDialog = baseDialog
+    override fun onDismiss(priorityDialog: PriorityDialog) {
+        pendingDismissDialog = priorityDialog
         fragmentManager.registerFragmentLifecycleCallbacks(object : FragmentManager.FragmentLifecycleCallbacks() {
             override fun onFragmentDetached(fm: FragmentManager, f: Fragment) {
                 if (f == pendingDismissDialog) {
@@ -129,9 +135,9 @@ abstract class AbsDialogHost : DialogHost {
         }, false)
         //尝试显示等待队列的中最高优先级的对话框
         popPendingDialog()?.let {
-            showBaseDialog(it)
+            showPriorityDialog(it)
         }
-        if (!isWindowLocked()) {//不再锁定页面
+        if (!isWindowLockedByDialog()) {//不再锁定页面
             tryPendingAction()
         }
     }
@@ -145,7 +151,7 @@ abstract class AbsDialogHost : DialogHost {
         const val KEY_DIALOG_HOST_STATE = "cn.hx.base.dialogHost.state"
         const val BASE_DIALOG_HOST_UUID = "cn.hx.base.dialogHost.uuid"
 
-        val pendingDialogMap: MutableMap<String, TreeMap<Int, Stack<BaseDialog>>> = mutableMapOf()
+        val pendingDialogMap: MutableMap<String, TreeMap<Int, Stack<PriorityDialog>>> = mutableMapOf()
         val pendingActionMap: MutableMap<String, Bundle> = mutableMapOf()
     }
 }

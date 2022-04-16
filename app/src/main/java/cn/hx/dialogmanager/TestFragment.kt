@@ -110,7 +110,7 @@ class TestFragment : BaseFragment() {
         dialog.priority = priority
         dialog.onlyDismissByUser = onlyDismissByUser
         dialog.lockWindow = lockWindow
-        showBaseDialog(dialog)
+        showPriorityDialog(dialog)
     }
 
 

@@ -57,7 +57,7 @@ class ActivityDialogHostImpl : AbsDialogHost(), ActivityDialogHost {
 
     @Suppress("DEPRECATION")
     override fun tryPendingAction(): Boolean {
-        if (isWindowLocked()) {
+        if (isWindowLockedByDialog()) {
             return false
         }
         var handle = false
@@ -77,7 +77,7 @@ class ActivityDialogHostImpl : AbsDialogHost(), ActivityDialogHost {
     }
 
     override fun warpStartActivityForResult(intent: Intent, requestCode: Int, options: Bundle?): Boolean {
-        if (isWindowLocked()) {
+        if (isWindowLockedByDialog()) {
             pendingIntent = intent
             pendingRequestCode = requestCode
             pendingOptions = options
@@ -87,7 +87,7 @@ class ActivityDialogHostImpl : AbsDialogHost(), ActivityDialogHost {
     }
 
     override fun warpFinish(): Boolean {
-        if (isWindowLocked()) {
+        if (isWindowLockedByDialog()) {
             pendingFinish = true
             return true
         }
