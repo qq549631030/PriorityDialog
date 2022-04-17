@@ -6,7 +6,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import java.util.*
 
-abstract class AbsDialogHost : DialogHost {
+abstract class AbsDialogHostImpl : DialogHost {
     private lateinit var uuid: String
     private lateinit var fragmentManager: FragmentManager
     private var inited = false
@@ -32,7 +32,7 @@ abstract class AbsDialogHost : DialogHost {
 
     override fun showPriorityDialog(priorityDialog: PriorityDialog): Boolean {
         if (!inited) {
-            throw IllegalStateException("not init, please call initDialogHost first")
+            throw IllegalStateException("not init, Please call initAsDialogHost first")
         }
         if (fragmentManager.isStateSaved || fragmentManager.isDestroyed) {
             return false

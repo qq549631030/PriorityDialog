@@ -10,8 +10,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        mavenLocal()
     }
 }
-rootProject.name = "DialogManager"
+rootProject.name = "PriorityDialog"
 include ':app'
 include ':library'

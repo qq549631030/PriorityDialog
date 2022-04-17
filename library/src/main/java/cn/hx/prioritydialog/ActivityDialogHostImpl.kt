@@ -8,7 +8,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import java.util.*
 
-class ActivityDialogHostImpl : AbsDialogHost(), ActivityDialogHost {
+class ActivityDialogHostImpl : AbsDialogHostImpl(), ActivityDialogHost {
 
     private lateinit var hostActivity: FragmentActivity
 
@@ -34,7 +34,7 @@ class ActivityDialogHostImpl : AbsDialogHost(), ActivityDialogHost {
             pendingActions.putBoolean(BASE_PENDING_FINISH, value)
         }
 
-    override fun initDialogHost(activity: FragmentActivity) {
+    override fun initAsDialogHost(activity: FragmentActivity) {
         hostActivity = activity
         val uuid = activity.savedStateRegistry.consumeRestoredStateForKey(KEY_DIALOG_HOST_STATE)?.getString(BASE_DIALOG_HOST_UUID)
                 ?: UUID.randomUUID().toString()

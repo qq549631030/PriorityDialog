@@ -7,17 +7,16 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import java.util.*
 
-class FragmentDialogHostImpl : AbsDialogHost(), FragmentDialogHost {
-    private lateinit var hostFragment: Fragment
-    private var fragmentSavedState = false
+class FragmentDialogHostImpl : AbsDialogHostImpl(), FragmentDialogHost {
 
-    override fun initDialogHost(fragment: Fragment) {
+    private lateinit var hostFragment: Fragment
+
+    override fun initAsDialogHost(fragment: Fragment) {
         hostFragment = fragment
         val uuid = fragment.savedStateRegistry.consumeRestoredStateForKey(KEY_DIALOG_HOST_STATE)?.getString(BASE_DIALOG_HOST_UUID)
                 ?: UUID.randomUUID().toString()
         init(uuid, fragment.childFragmentManager)
         fragment.savedStateRegistry.registerSavedStateProvider(KEY_DIALOG_HOST_STATE) {
-            fragmentSavedState = true
             Bundle().apply {
                 putString(BASE_DIALOG_HOST_UUID, uuid)
             }
@@ -25,7 +24,7 @@ class FragmentDialogHostImpl : AbsDialogHost(), FragmentDialogHost {
         fragment.lifecycle.addObserver(object : LifecycleEventObserver {
             override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
                 if (event == Lifecycle.Event.ON_DESTROY) {
-                    if (fragment.requireActivity().isFinishing || (fragment.isRemoving && !fragmentSavedState)) {
+                    if (fragment.requireActivity().isFinishing || (fragment.isRemoving && !fragment.isStateSaved)) {
                         cleanAllPending()
                     }
                 }

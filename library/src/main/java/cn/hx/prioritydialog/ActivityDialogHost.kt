@@ -5,7 +5,7 @@ import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
 
 interface ActivityDialogHost : DialogHost {
-    fun initDialogHost(activity: FragmentActivity)
+    fun initAsDialogHost(activity: FragmentActivity)
 
     fun warpStartActivityForResult(intent: Intent, requestCode: Int, options: Bundle?): Boolean
 

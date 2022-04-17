@@ -11,6 +11,6 @@ open class BaseFragment : Fragment(), FragmentDialogHost by FragmentDialogHostIm
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        initDialogHost(this)
+        initAsDialogHost(this)
     }
 }

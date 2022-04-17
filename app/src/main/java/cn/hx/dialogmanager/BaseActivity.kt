@@ -12,7 +12,7 @@ open class BaseActivity : AppCompatActivity(), ActivityDialogHost by ActivityDia
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        initDialogHost(this)
+        initAsDialogHost(this)
     }
 
     @Deprecated("Deprecated in Java")
