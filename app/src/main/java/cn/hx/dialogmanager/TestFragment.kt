@@ -14,8 +14,6 @@ class TestFragment : BaseFragment() {
 
     private var _binding: FragmentTestBinding? = null
 
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
 
 
@@ -65,11 +63,12 @@ class TestFragment : BaseFragment() {
                 showDialog(
                         "second dialog",
                         "this is the second dialog with priority  = 2 \nthe first dialog will reshow after this dismissed",
-                        2
+                        2,
+                        lockWindow = true
                 )
             }, 3000L)
             handler.postDelayed({
-                parentFragmentManager.beginTransaction().replace(R.id.container, OtherFragment()).commit()
+                warpParentFragmentManager.beginTransaction().replace(R.id.container, OtherFragment()).commit()
             }, 6000)
         }
 
@@ -84,35 +83,15 @@ class TestFragment : BaseFragment() {
                 showDialog(
                         "second dialog",
                         "this is the second dialog with priority  = 2 \nthe first dialog will reshow after this dismissed",
-                        2
+                        2,
+                        lockWindow = true
                 )
             }, 3000L)
             handler.postDelayed({
-                parentFragmentManager.beginTransaction().replace(R.id.container, OtherFragment()).addToBackStack(null).commit()
+                warpParentFragmentManager.beginTransaction().replace(R.id.container, SecondFragment()).addToBackStack(null).commit()
             }, 6000)
         }
     }
-
-
-    private fun showDialog(
-            title: String,
-            message: String,
-            priority: Int = 0,
-            onlyDismissByUser: Boolean = true,
-            lockWindow: Boolean = false
-    ) {
-        val dialog = BaseAlertDialog.Builder()
-                .title(title)
-                .message(message)
-                .positive("Confirm")
-                .negative("Cancel")
-                .create()
-        dialog.priority = priority
-        dialog.onlyDismissByUser = onlyDismissByUser
-        dialog.lockWindow = lockWindow
-        showPriorityDialog(dialog)
-    }
-
 
     override fun onDestroyView() {
         super.onDestroyView()

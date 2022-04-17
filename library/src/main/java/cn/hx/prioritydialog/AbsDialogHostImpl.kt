@@ -1,18 +1,39 @@
 package cn.hx.prioritydialog
 
 import android.os.Bundle
+import androidx.annotation.CallSuper
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import java.util.*
 
 abstract class AbsDialogHostImpl : DialogHost {
-    private lateinit var uuid: String
-    private lateinit var fragmentManager: FragmentManager
-    private var inited = false
+    protected lateinit var uuid: String
+    private lateinit var parentFragmentManager: FragmentManager
+    protected lateinit var childFragmentManager: FragmentManager
+    private lateinit var _warpParentFragmentManager: WarpFragmentManager
+    private var init = false
 
     private var pendingShowDialog: PriorityDialog? = null
     private var pendingDismissDialog: PriorityDialog? = null
+
+    //等待执行的Fragment切换
+    var pendingTransaction: WarpFragmentTransaction?
+        get() = pendingTransactionMap[uuid]
+        set(value) {
+            value?.let {
+                pendingTransactionMap[uuid] = it
+            } ?: pendingTransactionMap.remove(uuid)
+        }
+
+    //等待执行的Fragment因退
+    var pendingPopBackStack: Bundle?
+        get() = pendingPopBackStackMap[uuid]
+        set(value) {
+            value?.let {
+                pendingPopBackStackMap[uuid] = it
+            } ?: pendingPopBackStackMap.remove(uuid)
+        }
 
     //等待显示对话框
     private val pendingDialogs: TreeMap<Int, Stack<PriorityDialog>>
@@ -20,24 +41,26 @@ abstract class AbsDialogHostImpl : DialogHost {
             pendingDialogMap[uuid] = it
         }
 
-    //等待进行的动作
-    protected val pendingActions: Bundle
-        get() = pendingActionMap[uuid] ?: Bundle().also { pendingActionMap[uuid] = it }
 
-    protected fun init(uuid: String, fragmentManager: FragmentManager) {
+    protected fun init(uuid: String, parentFragmentManager: FragmentManager, childFragmentManager: FragmentManager) {
         this.uuid = uuid
-        this.fragmentManager = fragmentManager
-        inited = true
+        this.parentFragmentManager = parentFragmentManager
+        this.childFragmentManager = childFragmentManager
+        this._warpParentFragmentManager = WarpFragmentManager(parentFragmentManager, this)
+        init = true
     }
 
+    override val warpParentFragmentManager: FragmentManager
+        get() = _warpParentFragmentManager
+
     override fun showPriorityDialog(priorityDialog: PriorityDialog): Boolean {
-        if (!inited) {
+        if (!init) {
             throw IllegalStateException("not init, Please call initAsDialogHost first")
         }
-        if (fragmentManager.isStateSaved || fragmentManager.isDestroyed) {
+        if (childFragmentManager.isStateSaved || childFragmentManager.isDestroyed) {
             return false
         }
-        val transaction = fragmentManager.beginTransaction()
+        val transaction = childFragmentManager.beginTransaction()
         currentDialog?.let { prev ->
             if (priorityDialog.priority < prev.priority) {//优先级比当前显示的小，加入等待队列
                 addToPendingDialog(priorityDialog)
@@ -54,11 +77,11 @@ abstract class AbsDialogHostImpl : DialogHost {
         }
         priorityDialog.dismissByHighPriorityDialog = false
         pendingShowDialog = priorityDialog
-        fragmentManager.registerFragmentLifecycleCallbacks(object : FragmentManager.FragmentLifecycleCallbacks() {
+        childFragmentManager.registerFragmentLifecycleCallbacks(object : FragmentManager.FragmentLifecycleCallbacks() {
             override fun onFragmentCreated(fm: FragmentManager, f: Fragment, savedInstanceState: Bundle?) {
                 if (f == pendingShowDialog) {
                     pendingShowDialog = null
-                    fragmentManager.unregisterFragmentLifecycleCallbacks(this)
+                    childFragmentManager.unregisterFragmentLifecycleCallbacks(this)
                 }
             }
         }, false)
@@ -99,7 +122,7 @@ abstract class AbsDialogHostImpl : DialogHost {
             if (pendingShowDialog != null) {
                 return pendingShowDialog
             }
-            val priorityDialog = fragmentManager.findFragmentByTag(PriorityDialog.BASE_DIALOG_TAG) as? PriorityDialog
+            val priorityDialog = childFragmentManager.findFragmentByTag(PriorityDialog.BASE_DIALOG_TAG) as? PriorityDialog
             if (priorityDialog == null) {
                 return priorityDialog
             }
@@ -117,18 +140,18 @@ abstract class AbsDialogHostImpl : DialogHost {
             return true
         }
         //children
-        return fragmentManager.fragments.any {
+        return childFragmentManager.fragments.any {
             it is DialogHost && it.isVisible && it.isWindowLockedByDialog()
         }
     }
 
     override fun onDismiss(priorityDialog: PriorityDialog) {
         pendingDismissDialog = priorityDialog
-        fragmentManager.registerFragmentLifecycleCallbacks(object : FragmentManager.FragmentLifecycleCallbacks() {
+        childFragmentManager.registerFragmentLifecycleCallbacks(object : FragmentManager.FragmentLifecycleCallbacks() {
             override fun onFragmentDestroyed(fm: FragmentManager, f: Fragment) {
                 if (f == pendingDismissDialog) {
                     pendingDismissDialog = null
-                    fragmentManager.unregisterFragmentLifecycleCallbacks(this)
+                    childFragmentManager.unregisterFragmentLifecycleCallbacks(this)
                 }
             }
         }, false)
@@ -141,16 +164,39 @@ abstract class AbsDialogHostImpl : DialogHost {
         }
     }
 
-    protected fun cleanAllPending() {
+    @CallSuper
+    override fun tryPendingAction() {
+        if (isWindowLockedByDialog()) {
+            return
+        }
+        if (parentFragmentManager.isStateSaved || parentFragmentManager.isDestroyed) {
+            return
+        }
+        pendingTransaction?.let {
+            if (it.tryPendingAction()) {
+                pendingTransaction = null
+            }
+        }
+        pendingPopBackStack?.let {
+            if (_warpParentFragmentManager.tryPendingAction(it)) {
+                pendingPopBackStack = null
+            }
+        }
+    }
+
+    @CallSuper
+    protected open fun cleanAllPending() {
         pendingDialogMap.remove(uuid)
-        pendingActionMap.remove(uuid)
+        pendingTransactionMap.remove(uuid)
+        pendingPopBackStackMap.remove(uuid)
     }
 
     companion object {
         const val KEY_DIALOG_HOST_STATE = "cn.hx.base.dialogHost.state"
         const val BASE_DIALOG_HOST_UUID = "cn.hx.base.dialogHost.uuid"
 
-        val pendingDialogMap: MutableMap<String, TreeMap<Int, Stack<PriorityDialog>>> = mutableMapOf()
-        val pendingActionMap: MutableMap<String, Bundle> = mutableMapOf()
+        private val pendingDialogMap: MutableMap<String, TreeMap<Int, Stack<PriorityDialog>>> = mutableMapOf()
+        private val pendingTransactionMap: MutableMap<String, WarpFragmentTransaction> = mutableMapOf()
+        private val pendingPopBackStackMap: MutableMap<String, Bundle> = mutableMapOf()
     }
 }

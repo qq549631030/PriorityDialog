@@ -15,7 +15,7 @@ class FragmentDialogHostImpl : AbsDialogHostImpl(), FragmentDialogHost {
         hostFragment = fragment
         val uuid = fragment.savedStateRegistry.consumeRestoredStateForKey(KEY_DIALOG_HOST_STATE)?.getString(BASE_DIALOG_HOST_UUID)
                 ?: UUID.randomUUID().toString()
-        init(uuid, fragment.childFragmentManager)
+        init(uuid, fragment.requireFragmentManager(), fragment.childFragmentManager)
         fragment.savedStateRegistry.registerSavedStateProvider(KEY_DIALOG_HOST_STATE) {
             Bundle().apply {
                 putString(BASE_DIALOG_HOST_UUID, uuid)
@@ -32,10 +32,12 @@ class FragmentDialogHostImpl : AbsDialogHostImpl(), FragmentDialogHost {
         })
     }
 
-    override fun tryPendingAction(): Boolean {
+    override fun tryPendingAction() {
+        super.tryPendingAction()
         if (isWindowLockedByDialog()) {
-            return false
+            return
         }
-        return (hostFragment.requireActivity() as? DialogHost)?.tryPendingAction() ?: false
+        (hostFragment.parentFragment as? DialogHost)?.tryPendingAction()
+                ?: (hostFragment.requireActivity() as? DialogHost)?.tryPendingAction()
     }
 }

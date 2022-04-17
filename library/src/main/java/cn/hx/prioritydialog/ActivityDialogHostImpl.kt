@@ -12,6 +12,10 @@ class ActivityDialogHostImpl : AbsDialogHostImpl(), ActivityDialogHost {
 
     private lateinit var hostActivity: FragmentActivity
 
+    //等待进行的动作
+    private val pendingActions: Bundle
+        get() = pendingActionMap[uuid] ?: Bundle().also { pendingActionMap[uuid] = it }
+
     private var pendingIntent: Intent?
         get() = pendingActions.getParcelable(BASE_PENDING_INTENT)
         set(value) {
@@ -38,7 +42,7 @@ class ActivityDialogHostImpl : AbsDialogHostImpl(), ActivityDialogHost {
         hostActivity = activity
         val uuid = activity.savedStateRegistry.consumeRestoredStateForKey(KEY_DIALOG_HOST_STATE)?.getString(BASE_DIALOG_HOST_UUID)
                 ?: UUID.randomUUID().toString()
-        init(uuid, activity.supportFragmentManager)
+        init(uuid, activity.supportFragmentManager, activity.supportFragmentManager)
         activity.savedStateRegistry.registerSavedStateProvider(KEY_DIALOG_HOST_STATE) {
             Bundle().apply {
                 putString(BASE_DIALOG_HOST_UUID, uuid)
@@ -56,24 +60,26 @@ class ActivityDialogHostImpl : AbsDialogHostImpl(), ActivityDialogHost {
     }
 
     @Suppress("DEPRECATION")
-    override fun tryPendingAction(): Boolean {
+    override fun tryPendingAction() {
+        super.tryPendingAction()
         if (isWindowLockedByDialog()) {
-            return false
+            return
         }
-        var handle = false
         pendingIntent?.let {
             hostActivity.startActivityForResult(it, pendingRequestCode, pendingOptions)
             pendingIntent = null
             pendingRequestCode = -1
             pendingOptions = null
-            handle = true
         }
         if (pendingFinish) {
             hostActivity.finish()
             pendingFinish = false
-            handle = true
         }
-        return handle
+    }
+
+    override fun cleanAllPending() {
+        super.cleanAllPending()
+        pendingActionMap.remove(uuid)
     }
 
     override fun warpStartActivityForResult(intent: Intent, requestCode: Int, options: Bundle?): Boolean {
@@ -99,5 +105,7 @@ class ActivityDialogHostImpl : AbsDialogHostImpl(), ActivityDialogHost {
         private const val BASE_PENDING_REQUEST_CODE = "cn.hx.base.activity.pendingRequestCode"
         private const val BASE_PENDING_OPTIONS = "cn.hx.base.activity.pendingOptions"
         private const val BASE_PENDING_FINISH = "cn.hx.base.activity.pendingFinish"
+
+        private val pendingActionMap: MutableMap<String, Bundle> = mutableMapOf()
     }
 }

@@ -41,7 +41,7 @@ open class BaseDialog : DialogFragment(), PriorityDialog by PriorityDialogImpl()
 ActivityDialogHost by ActivityDialogHostImpl() 可实现将任意一个FragmentActivity转变成对话框宿主FragmentDialogHost by
 FragmentDialogHostImpl()可实现将任意一个Fragment转变成对话框宿主
 
-并在onCreate方法调用initAsPriorityDialog(this)完成初始化
+并在onCreate方法调用initAsDialogHost(this)完成初始化
 
 ```kotlin
 open class BaseActivity : AppCompatActivity(), ActivityDialogHost by ActivityDialogHostImpl() {

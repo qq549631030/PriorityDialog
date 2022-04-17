@@ -1,6 +1,10 @@
 package cn.hx.prioritydialog
 
+import androidx.fragment.app.FragmentManager
+
 interface DialogHost {
+
+    val warpParentFragmentManager: FragmentManager
 
     fun showPriorityDialog(priorityDialog: PriorityDialog): Boolean
 
@@ -8,5 +12,5 @@ interface DialogHost {
 
     fun onDismiss(priorityDialog: PriorityDialog)
 
-    fun tryPendingAction(): Boolean
+    fun tryPendingAction()
 }
