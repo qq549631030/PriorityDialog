@@ -31,7 +31,7 @@ class TestFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.btnLockWindowForStart.setOnClickListener {
-            showDialog(
+            showAlertDialog(
                     "lock window dialog",
                     "this dialog with lockWindow  = true\nit will stop start Second Activity\nafter this dismiss the Second Activity will start again",
                     lockWindow = true
@@ -42,7 +42,7 @@ class TestFragment : BaseFragment() {
             }
         }
         binding.btnLockWindowForFinish.setOnClickListener {
-            showDialog(
+            showAlertDialog(
                     "lock window dialog",
                     "this dialog with lockWindow  = true\nit will stop finish current Activity\nafter this dismiss the this Activity will finish",
                     lockWindow = true
@@ -53,14 +53,14 @@ class TestFragment : BaseFragment() {
             }
         }
         binding.btnReplaceByOther.setOnClickListener {
-            showDialog(
+            showAlertDialog(
                     "first dialog",
                     "this is the first dialog with priority  = 1\nthis will dismiss when second dialog show",
                     1
             )
 
             handler.postDelayed({
-                showDialog(
+                showAlertDialog(
                         "second dialog",
                         "this is the second dialog with priority  = 2 \nthe first dialog will reshow after this dismissed",
                         2,
@@ -73,14 +73,14 @@ class TestFragment : BaseFragment() {
         }
 
         binding.btnReplaceByOtherToBack.setOnClickListener {
-            showDialog(
+            showAlertDialog(
                     "first dialog",
                     "this is the first dialog with priority  = 1\nthis will dismiss when second dialog show",
                     1
             )
 
             handler.postDelayed({
-                showDialog(
+                showAlertDialog(
                         "second dialog",
                         "this is the second dialog with priority  = 2 \nthe first dialog will reshow after this dismissed",
                         2,

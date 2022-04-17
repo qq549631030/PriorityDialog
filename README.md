@@ -4,19 +4,17 @@ Android 默认对话框是不带优先级的，并且可以同时弹出多个，
 
 PriorityDialog基于DialogFragment实现，以最小的倾入性实现优先级对话框。
 
-### 使用方法
-
-#### gradle依赖
+### gradle依赖
 
 ```groovy
 dependencies {
-    implementation 'com.github.qq549631030:priority-dialog:1.0.0'
+    implementation 'com.github.qq549631030:priority-dialog:x.x.x'
 }
 ```
 
-#### 初始化配置
+### 初始化配置
 
-##### 1、PriorityDialog配置
+#### 1、PriorityDialog配置
 
 通过代理方式：
 
@@ -34,7 +32,7 @@ open class BaseDialog : DialogFragment(), PriorityDialog by PriorityDialogImpl()
 }
 ```
 
-##### 2、DialogHost配置
+#### 2、DialogHost配置
 
 通过代理方式：
 
@@ -63,7 +61,7 @@ open class BaseFragment : Fragment(), FragmentDialogHost by FragmentDialogHostIm
 }
 ```
 
-##### 3、使用
+#### 3、使用
 
 在DialogHost(宿主)中调用showPriorityDialog(priorityDialog)即可
 
@@ -73,9 +71,9 @@ dialog.priority = 1
 showPriorityDialog(dialog)
 ```
 
-#### 属性介绍
+### 属性介绍
 
-##### 1、priority优先级，值越大优先级越高(默认值为0)
+#### 1、priority优先级，值越大优先级越高(默认值为0)
 
 当同一宿主页面同时有多个对话框弹出时，优先级最高的先显示，等高优先级的关闭后，次优先级的再弹出。
 
@@ -132,7 +130,7 @@ dialog1.dismiss()
 //当前无dialog
 ```
 
-##### 2、onlyDismissByUser 话框是否只有用户才能真正关闭（默认值true）
+#### 2、onlyDismissByUser 话框是否只有用户才能真正关闭（默认值true）
 
 如前面情况1，**低**被**高**取代，当**高**关闭后**低**会再次显示，如果想**低**不再显示，可以设置**低**的onlyDismissByUser=false
 
@@ -150,10 +148,15 @@ dialog2.dismiss()
 //当前无dialog
 ```
 
-##### 3、lockWindow是否锁定当前页面(默认值false)
+#### 3、lockWindow是否锁定当前页面(默认值false)
 
-若为true则对话框显示时只能停留在当前页面，无法关闭无法跳走，即startActivity()、startActivityForResult()、finish()
-三个方法不生效，会把这些操作缓存起来，当对话框关闭时会自动执行之前未执行的操作。
+若为true则对话框显示时只能停留在当前页面，无法关闭无法跳走，会把这些操作缓存起来，当对话框关闭时会自动执行之前未执行的操作。
+
+##### Activity级别操作
+
+Activity的 startActivity()、startActivityForResult()、finish()
+
+Fragment的 startActivity()、startActivityForResult()
 
 要使这个属性生效，前的BaseActivity配置要做如下调整：
 
@@ -164,7 +167,7 @@ open class BaseActivity : AppCompatActivity(), ActivityDialogHost by ActivityDia
         super.onCreate(savedInstanceState)
         initAsDialogHost(this)
     }
-    
+
     override fun startActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) {
         if (warpStartActivityForResult(intent, requestCode, options)) {
             return
@@ -192,4 +195,23 @@ finish()
 dialog.dismiss()
 //SecondActivity启动，当前页面关闭
 ```
+
+##### Fragment级别操作
+
+FragmentManager的各种Transaction以及popBackStack
+
+要使这个属性生效，执行Transaction以及popBackStack操作时要使用warpParentFragmentManager
+
+```kotlin
+val dialog = BaseDialog()
+dialog.lockWindow = true
+showPriorityDialog(dialog)
+//当前显示dialog
+warpParentFragmentManager.beginTransaction().replace(R.id.container, SecondFragment()).commit()
+//当前显示的Fragment不变
+dialog.dismiss()
+//当前显示的Fragment变成了SecondFragment
+```
+
+***注意，Transaction操作在Activity重建后会丢失，暂时未找到解决办法***
 

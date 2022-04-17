@@ -47,6 +47,7 @@ abstract class AbsDialogHostImpl : DialogHost {
         this.parentFragmentManager = parentFragmentManager
         this.childFragmentManager = childFragmentManager
         this._warpParentFragmentManager = WarpFragmentManager(parentFragmentManager, this)
+        pendingTransactionMap.remove(uuid)//重建后保存的Transaction是无效的
         init = true
     }
 
@@ -117,7 +118,7 @@ abstract class AbsDialogHostImpl : DialogHost {
     }
 
     //当前显示的对话框
-    private val currentDialog: PriorityDialog?
+    override val currentDialog: PriorityDialog?
         get() {
             if (pendingShowDialog != null) {
                 return pendingShowDialog

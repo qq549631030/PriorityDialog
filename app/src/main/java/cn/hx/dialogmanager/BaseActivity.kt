@@ -33,6 +33,19 @@ open class BaseActivity : AppCompatActivity(), ActivityDialogHost by ActivityDia
         super.finish()
     }
 
+    fun showAlertDialog(title: String? = null, message: String, priority: Int = 0, onlyDismissByUser: Boolean = true, lockWindow: Boolean = false) {
+        val dialog = BaseAlertDialog.Builder()
+                .title(title)
+                .message(message)
+                .positive("Confirm")
+                .negative("Cancel")
+                .create()
+        dialog.priority = priority
+        dialog.onlyDismissByUser = onlyDismissByUser
+        dialog.lockWindow = lockWindow
+        showPriorityDialog(dialog)
+    }
+
     companion object {
         const val EXTRA_IGNORE_DIALOG_LOCK = "extra_ignore_dialog_lock"
     }

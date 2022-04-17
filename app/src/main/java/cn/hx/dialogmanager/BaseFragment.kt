@@ -14,7 +14,7 @@ open class BaseFragment : Fragment(), FragmentDialogHost by FragmentDialogHostIm
         initAsDialogHost(this)
     }
 
-    protected fun showDialog(title: String, message: String, priority: Int = 0, onlyDismissByUser: Boolean = true, lockWindow: Boolean = false) {
+    fun showAlertDialog(title: String? = null, message: String? = null, priority: Int = 0, onlyDismissByUser: Boolean = true, lockWindow: Boolean = false) {
         val dialog = BaseAlertDialog.Builder()
                 .title(title)
                 .message(message)

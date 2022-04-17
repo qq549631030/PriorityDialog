@@ -8,6 +8,8 @@ interface DialogHost {
 
     fun showPriorityDialog(priorityDialog: PriorityDialog): Boolean
 
+    val currentDialog: PriorityDialog?
+
     fun isWindowLockedByDialog(): Boolean
 
     fun onDismiss(priorityDialog: PriorityDialog)

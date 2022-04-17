@@ -45,22 +45,22 @@ class BaseAlertDialog : BaseDialog() {
         private var negative: CharSequence? = null
         private var neutral: CharSequence? = null
 
-        fun title(title: CharSequence): Builder {
+        fun title(title: CharSequence?): Builder {
             this.title = title
             return this
         }
 
-        fun message(message: CharSequence): Builder {
+        fun message(message: CharSequence?): Builder {
             this.message = message
             return this
         }
 
-        fun positive(positive: CharSequence): Builder {
+        fun positive(positive: CharSequence?): Builder {
             this.positive = positive
             return this
         }
 
-        fun negative(negative: CharSequence): Builder {
+        fun negative(negative: CharSequence?): Builder {
             this.negative = negative
             return this
         }

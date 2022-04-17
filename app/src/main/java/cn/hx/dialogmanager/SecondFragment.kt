@@ -29,7 +29,7 @@ class SecondFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.btnPop.setOnClickListener {
-            showDialog(
+            showAlertDialog(
                     "first dialog",
                     "this is the first dialog with priority  = 1\nthis will lock the window\nthe follow popBackStack will be stop and will restart after this dialog dismiss",
                     1,
