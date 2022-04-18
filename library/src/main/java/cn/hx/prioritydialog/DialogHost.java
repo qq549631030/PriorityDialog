@@ -19,6 +19,10 @@ interface DialogHost {
 
     boolean isWindowLockedByDialog();
 
+    void onDialogEvent(@NonNull PriorityDialog priorityDialog, @NonNull Object event);
+
+    void onCancel(@NonNull PriorityDialog priorityDialog);
+
     void onDismiss(@NonNull PriorityDialog priorityDialog);
 
     void setPendingTransaction(@NonNull WarpBackStackRecord pendingTransaction);

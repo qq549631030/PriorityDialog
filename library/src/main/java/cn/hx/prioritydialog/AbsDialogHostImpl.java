@@ -189,6 +189,16 @@ public abstract class AbsDialogHostImpl implements DialogHost {
     }
 
     @Override
+    public void onDialogEvent(@NonNull PriorityDialog priorityDialog, @NonNull Object event) {
+
+    }
+
+    @Override
+    public void onCancel(@NonNull PriorityDialog priorityDialog) {
+
+    }
+
+    @Override
     public void onDismiss(@NonNull PriorityDialog priorityDialog) {
         pendingDismissDialog = priorityDialog;
         childFragmentManager.registerFragmentLifecycleCallbacks(new FragmentManager.FragmentLifecycleCallbacks() {

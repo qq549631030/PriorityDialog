@@ -1,12 +1,19 @@
 package cn.hx.prioritydialog;
 
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
+import android.util.Pair;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.RestrictTo;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 
-public class PriorityDialogImpl implements PriorityDialog {
+import java.util.UUID;
+
+public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCancelListener {
 
     String KEY_DIALOG_STATE = "cn.hx.base.dialog.state";
     String BASE_DIALOG_UUID = "cn.hx.base.dialog.uuid";
@@ -23,13 +30,17 @@ public class PriorityDialogImpl implements PriorityDialog {
     private boolean mLockWindow = false;
     private boolean mDismissByHighPriorityDialog = false;
 
+    @NonNull
     @Override
     public String getUuid() {
+        if (mUuid == null) {
+            mUuid = UUID.randomUUID().toString();
+        }
         return mUuid;
     }
 
     @Override
-    public void setUuid(String uuid) {
+    public void setUuid(@NonNull String uuid) {
         mUuid = uuid;
     }
 
@@ -64,6 +75,7 @@ public class PriorityDialogImpl implements PriorityDialog {
     }
 
     @Override
+    @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
     public void setDismissByHighPriorityDialog(boolean dismissByHighPriorityDialog) {
         mDismissByHighPriorityDialog = dismissByHighPriorityDialog;
     }
@@ -88,18 +100,53 @@ public class PriorityDialogImpl implements PriorityDialog {
             return bundle;
         });
         mDialogFragment.getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
+            if (event == Lifecycle.Event.ON_START) {
+                Dialog dialog = mDialogFragment.getDialog();
+                if (dialog != null) {
+                    //override the DialogFragment onCancelListener
+                    dialog.setOnCancelListener(this);
+                }
+            }
             if (event == Lifecycle.Event.ON_DESTROY) {
                 if (mDialogFragment.isRemoving() && !mDialogFragment.isStateSaved() && !mDismissByHighPriorityDialog) {
-                    if (mDialogFragment instanceof PriorityDialog) {
-                        PriorityDialog priorityDialog = (PriorityDialog) mDialogFragment;
-                        if (mDialogFragment.getParentFragment() instanceof FragmentDialogHost) {
-                            ((FragmentDialogHost) mDialogFragment.getParentFragment()).onDismiss(priorityDialog);
-                        } else if (mDialogFragment.getActivity() instanceof ActivityDialogHost) {
-                            ((ActivityDialogHost) mDialogFragment.getActivity()).onDismiss(priorityDialog);
-                        }
+                    Pair<DialogHost, PriorityDialog> dialogAndHost = getDialogAndHost();
+                    if (dialogAndHost != null) {
+                        dialogAndHost.first.onDismiss(dialogAndHost.second);
                     }
                 }
             }
         });
+    }
+
+    private Pair<DialogHost, PriorityDialog> getDialogAndHost() {
+        if (mDialogFragment instanceof PriorityDialog) {
+            PriorityDialog priorityDialog = (PriorityDialog) mDialogFragment;
+            DialogHost dialogHost = null;
+            if (mDialogFragment.getParentFragment() instanceof FragmentDialogHost) {
+                dialogHost = ((FragmentDialogHost) mDialogFragment.getParentFragment());
+            } else if (mDialogFragment.getActivity() instanceof ActivityDialogHost) {
+                dialogHost = ((ActivityDialogHost) mDialogFragment.getActivity());
+            }
+            if (dialogHost != null) {
+                return new Pair<>(dialogHost, priorityDialog);
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void onDialogEvent(@NonNull Object event) {
+        Pair<DialogHost, PriorityDialog> dialogAndHost = getDialogAndHost();
+        if (dialogAndHost != null) {
+            dialogAndHost.first.onDialogEvent(dialogAndHost.second, event);
+        }
+    }
+
+    @Override
+    public void onCancel(DialogInterface dialogInterface) {
+        Pair<DialogHost, PriorityDialog> dialogAndHost = getDialogAndHost();
+        if (dialogAndHost != null) {
+            dialogAndHost.first.onCancel(dialogAndHost.second);
+        }
     }
 }

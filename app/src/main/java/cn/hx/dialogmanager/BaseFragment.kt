@@ -14,7 +14,7 @@ open class BaseFragment : Fragment(), FragmentDialogHost by FragmentDialogHostIm
         initAsDialogHost(this)
     }
 
-    fun showAlertDialog(title: String? = null, message: String? = null, priority: Int = 0, onlyDismissByUser: Boolean = true, lockWindow: Boolean = false) {
+    fun showAlertDialog(title: String? = null, message: String? = null, priority: Int = 0, onlyDismissByUser: Boolean = true, lockWindow: Boolean = false, uuid: String? = null) {
         val dialog = BaseAlertDialog.Builder()
                 .title(title)
                 .message(message)
@@ -24,6 +24,9 @@ open class BaseFragment : Fragment(), FragmentDialogHost by FragmentDialogHostIm
         dialog.priority = priority
         dialog.onlyDismissByUser = onlyDismissByUser
         dialog.lockWindow = lockWindow
+        uuid?.let {
+            dialog.uuid = it
+        }
         showPriorityDialog(dialog)
     }
 }

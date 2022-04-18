@@ -33,7 +33,7 @@ open class BaseActivity : AppCompatActivity(), ActivityDialogHost by ActivityDia
         super.finish()
     }
 
-    fun showAlertDialog(title: String? = null, message: String, priority: Int = 0, onlyDismissByUser: Boolean = true, lockWindow: Boolean = false) {
+    fun showAlertDialog(title: String? = null, message: String, priority: Int = 0, onlyDismissByUser: Boolean = true, lockWindow: Boolean = false, uuid: String? = null) {
         val dialog = BaseAlertDialog.Builder()
                 .title(title)
                 .message(message)
@@ -43,6 +43,9 @@ open class BaseActivity : AppCompatActivity(), ActivityDialogHost by ActivityDia
         dialog.priority = priority
         dialog.onlyDismissByUser = onlyDismissByUser
         dialog.lockWindow = lockWindow
+        uuid?.let {
+            dialog.uuid = it
+        }
         showPriorityDialog(dialog)
     }
 

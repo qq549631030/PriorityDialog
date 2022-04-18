@@ -1,41 +1,32 @@
 package cn.hx.dialogmanager
 
 import android.app.Dialog
+import android.content.DialogInterface
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 
-class BaseAlertDialog : BaseDialog() {
-
-    private val onClickListener: OnClickListener?
-        get() {
-            return parentFragment?.let {
-                it as? OnClickListener?
-            } ?: activity as? OnClickListener?
-
-        }
+class BaseAlertDialog : BaseDialog(), DialogInterface.OnClickListener {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return context?.run {
             val builder = AlertDialog.Builder(this)
             builder.setTitle(arguments?.getString(TITLE))
-                .setMessage(arguments?.getString(MESSAGE))
+                    .setMessage(arguments?.getString(MESSAGE))
             arguments?.getString(POSITIVE)?.let {
-                builder.setPositiveButton(it) { _, which ->
-                    onClickListener?.onClick(this@BaseAlertDialog, which)
-                }
+                builder.setPositiveButton(it, this@BaseAlertDialog)
             }
             arguments?.getString(NEGATIVE)?.let {
-                builder.setNegativeButton(it) { _, which ->
-                    onClickListener?.onClick(this@BaseAlertDialog, which)
-                }
+                builder.setNegativeButton(it, this@BaseAlertDialog)
             }
             arguments?.getString(NEUTRAL)?.let {
-                builder.setNeutralButton(it) { _, which ->
-                    onClickListener?.onClick(this@BaseAlertDialog, which)
-                }
+                builder.setNeutralButton(it, this@BaseAlertDialog)
             }
             return builder.create()
         } ?: throw IllegalStateException("Activity cannot be null")
+    }
+
+    override fun onClick(dialog: DialogInterface, which: Int) {
+        onDialogEvent(AlertDialogClickEvent(which))
     }
 
     class Builder {
@@ -83,10 +74,7 @@ class BaseAlertDialog : BaseDialog() {
         }
     }
 
-    //用Fragment/Activity实现些接口的方法，可以保证Activity重建后按钮点击事件有效
-    interface OnClickListener {
-        fun onClick(dialog: BaseAlertDialog, which: Int)
-    }
+    class AlertDialogClickEvent(val which: Int)
 
     companion object {
         private const val TITLE = "title"

@@ -1,6 +1,7 @@
 package cn.hx.prioritydialog;
 
-import androidx.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.RestrictTo;
 import androidx.fragment.app.DialogFragment;
 
 public interface PriorityDialog {
@@ -8,10 +9,10 @@ public interface PriorityDialog {
     String BASE_DIALOG_TAG = "cn.hx.base.dialog.tag";
 
     //唯一标识
-    @Nullable
+    @NonNull
     String getUuid();
 
-    void setUuid(@Nullable String uuid);
+    void setUuid(@NonNull String uuid);
 
     //优先级，值越大优先级越高
     int getPriority();
@@ -28,9 +29,10 @@ public interface PriorityDialog {
 
     void setLockWindow(boolean lockWindow);
 
-    //被高优先级对话框关闭
+    @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
     void setDismissByHighPriorityDialog(boolean dismissByHighPriorityDialog);
 
     void initAsPriorityDialog(DialogFragment dialogFragment);
 
+    void onDialogEvent(@NonNull Object event);
 }
