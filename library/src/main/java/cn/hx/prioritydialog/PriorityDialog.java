@@ -29,7 +29,7 @@ public interface PriorityDialog {
 
     void setLockWindow(boolean lockWindow);
 
-    @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
     void setDismissByHighPriorityDialog(boolean dismissByHighPriorityDialog);
 
     void initAsPriorityDialog(DialogFragment dialogFragment);

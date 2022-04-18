@@ -29,6 +29,7 @@ public abstract class AbsDialogHostImpl implements DialogHost {
     FragmentManager parentFragmentManager;
     FragmentManager childFragmentManager;
     WarpFragmentManager mWarpParentFragmentManager;
+    WarpFragmentManager mWarpChildFragmentManager;
     boolean init = false;
 
     PriorityDialog pendingShowDialog;
@@ -40,7 +41,8 @@ public abstract class AbsDialogHostImpl implements DialogHost {
         this.uuid = uuid;
         this.parentFragmentManager = parentFragmentManager;
         this.childFragmentManager = childFragmentManager;
-        this.mWarpParentFragmentManager = new WarpFragmentManager(parentFragmentManager, this);
+        this.mWarpParentFragmentManager = new WarpFragmentManager(parentFragmentManager, this, false);
+        this.mWarpChildFragmentManager = new WarpFragmentManager(childFragmentManager, this, true);
         needWarpPendingTransaction = true;
         init = true;
     }
@@ -60,7 +62,13 @@ public abstract class AbsDialogHostImpl implements DialogHost {
         if (needWarpPendingTransaction) {
             for (FragmentAction fragmentAction : getPendingFragmentActions()) {
                 if (fragmentAction.type == FragmentAction.TYPE_TRANSACTION) {
-                    fragmentAction.transaction = fragmentAction.transaction.warpWithNewFragmentManager(parentFragmentManager, this);
+                    FragmentManager fragmentManager;
+                    if (fragmentAction.isChildFragmentManager) {
+                        fragmentManager = childFragmentManager;
+                    } else {
+                        fragmentManager = parentFragmentManager;
+                    }
+                    fragmentAction.transaction = fragmentAction.transaction.warpWithNewFragmentManager(fragmentManager, this);
                 }
             }
             needWarpPendingTransaction = false;
@@ -71,6 +79,12 @@ public abstract class AbsDialogHostImpl implements DialogHost {
     @Override
     public FragmentManager getWarpParentFragmentManager() {
         return mWarpParentFragmentManager;
+    }
+
+    @NonNull
+    @Override
+    public FragmentManager getWarpChildFragmentManager() {
+        return mWarpChildFragmentManager;
     }
 
     @NonNull
@@ -220,13 +234,13 @@ public abstract class AbsDialogHostImpl implements DialogHost {
     }
 
     @Override
-    public void setPendingTransaction(@NonNull WarpBackStackRecord pendingTransaction) {
-        getPendingFragmentActions().addLast(new FragmentAction(pendingTransaction));
+    public void setPendingTransaction(@NonNull WarpBackStackRecord pendingTransaction, boolean isChildFragmentManager) {
+        getPendingFragmentActions().addLast(new FragmentAction(pendingTransaction, isChildFragmentManager));
     }
 
     @Override
-    public void setPendingPopBackStack(@NonNull Bundle pendingPopBackStack) {
-        getPendingFragmentActions().addLast(new FragmentAction(pendingPopBackStack));
+    public void setPendingPopBackStack(@NonNull Bundle pendingPopBackStack, boolean isChildFragmentManager) {
+        getPendingFragmentActions().addLast(new FragmentAction(pendingPopBackStack, isChildFragmentManager));
     }
 
     @Override
@@ -248,7 +262,13 @@ public abstract class AbsDialogHostImpl implements DialogHost {
                     }
                     break;
                 case FragmentAction.TYPE_POP_BACKSTACK:
-                    if (mWarpParentFragmentManager.tryPendingAction(fragmentAction.popBackStack)) {
+                    WarpFragmentManager fragmentManager;
+                    if (fragmentAction.isChildFragmentManager) {
+                        fragmentManager = mWarpChildFragmentManager;
+                    } else {
+                        fragmentManager = mWarpParentFragmentManager;
+                    }
+                    if (fragmentManager.tryPendingAction(fragmentAction.popBackStack)) {
                         getPendingFragmentActions().removeFirst();
                     } else {
                         return;

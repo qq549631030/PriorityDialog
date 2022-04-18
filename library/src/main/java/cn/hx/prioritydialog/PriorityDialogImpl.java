@@ -75,7 +75,6 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
     }
 
     @Override
-    @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
     public void setDismissByHighPriorityDialog(boolean dismissByHighPriorityDialog) {
         mDismissByHighPriorityDialog = dismissByHighPriorityDialog;
     }

@@ -28,16 +28,18 @@ public class WarpFragmentManager extends FragmentManager {
 
     final FragmentManager fragmentManager;
     final AbsDialogHostImpl dialogHost;
+    final boolean isChildFragmentManager;
 
-    public WarpFragmentManager(FragmentManager fragmentManager, AbsDialogHostImpl dialogHost) {
+    public WarpFragmentManager(FragmentManager fragmentManager, AbsDialogHostImpl dialogHost, boolean isChildFragmentManager) {
         this.fragmentManager = fragmentManager;
         this.dialogHost = dialogHost;
+        this.isChildFragmentManager = isChildFragmentManager;
     }
 
     @NonNull
     @Override
     public FragmentTransaction beginTransaction() {
-        return new WarpBackStackRecord(fragmentManager.beginTransaction(), dialogHost);
+        return new WarpBackStackRecord(fragmentManager.beginTransaction(), dialogHost, isChildFragmentManager);
     }
 
     @Override
@@ -62,7 +64,7 @@ public class WarpFragmentManager extends FragmentManager {
         if (dialogHost.isWindowLockedByDialog()) {
             Bundle bundle = new Bundle();
             bundle.putInt(POP_BACK_STACK_TYPE, TYPE_POP);
-            dialogHost.setPendingPopBackStack(bundle);
+            dialogHost.setPendingPopBackStack(bundle, isChildFragmentManager);
             return;
         }
         fragmentManager.popBackStack();
@@ -73,7 +75,7 @@ public class WarpFragmentManager extends FragmentManager {
         if (dialogHost.isWindowLockedByDialog()) {
             Bundle bundle = new Bundle();
             bundle.putInt(POP_BACK_STACK_TYPE, TYPE_POP_IMMEDIATE);
-            dialogHost.setPendingPopBackStack(bundle);
+            dialogHost.setPendingPopBackStack(bundle, isChildFragmentManager);
             return false;
         }
         return false;
@@ -86,7 +88,7 @@ public class WarpFragmentManager extends FragmentManager {
             bundle.putInt(POP_BACK_STACK_TYPE, TYPE_POP_WITH_NAME);
             bundle.putString(POP_BACK_STACK_NAME, name);
             bundle.putInt(POP_BACK_STACK_FLAG, flags);
-            dialogHost.setPendingPopBackStack(bundle);
+            dialogHost.setPendingPopBackStack(bundle, isChildFragmentManager);
             return;
         }
         fragmentManager.popBackStack(name, flags);
@@ -99,7 +101,7 @@ public class WarpFragmentManager extends FragmentManager {
             bundle.putInt(POP_BACK_STACK_TYPE, TYPE_POP_IMMEDIATE_WITH_NAME);
             bundle.putString(POP_BACK_STACK_NAME, name);
             bundle.putInt(POP_BACK_STACK_FLAG, flags);
-            dialogHost.setPendingPopBackStack(bundle);
+            dialogHost.setPendingPopBackStack(bundle, isChildFragmentManager);
             return false;
         }
         return fragmentManager.popBackStackImmediate(name, flags);
@@ -112,7 +114,7 @@ public class WarpFragmentManager extends FragmentManager {
             bundle.putInt(POP_BACK_STACK_TYPE, TYPE_POP_WITH_ID);
             bundle.putInt(POP_BACK_STACK_ID, id);
             bundle.putInt(POP_BACK_STACK_FLAG, flags);
-            dialogHost.setPendingPopBackStack(bundle);
+            dialogHost.setPendingPopBackStack(bundle, isChildFragmentManager);
             return;
         }
         fragmentManager.popBackStack(id, flags);
@@ -125,7 +127,7 @@ public class WarpFragmentManager extends FragmentManager {
             bundle.putInt(POP_BACK_STACK_TYPE, TYPE_POP_IMMEDIATE_WITH_ID);
             bundle.putInt(POP_BACK_STACK_ID, id);
             bundle.putInt(POP_BACK_STACK_FLAG, flags);
-            dialogHost.setPendingPopBackStack(bundle);
+            dialogHost.setPendingPopBackStack(bundle, isChildFragmentManager);
             return false;
         }
         return fragmentManager.popBackStackImmediate(id, flags);
