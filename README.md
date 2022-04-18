@@ -213,5 +213,3 @@ dialog.dismiss()
 //当前显示的Fragment变成了SecondFragment
 ```
 
-***注意，Transaction和popBackStack操作只保留最后一次***
-

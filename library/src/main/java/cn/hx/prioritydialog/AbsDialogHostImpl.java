@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +23,7 @@ public abstract class AbsDialogHostImpl implements DialogHost {
     public static String BASE_DIALOG_HOST_UUID = "cn.hx.base.dialogHost.uuid";
 
     private static final Map<String, TreeMap<Integer, Stack<PriorityDialog>>> pendingDialogMap = new HashMap();
-    private static final Map<String, WarpBackStackRecord> pendingTransactionMap = new HashMap();
-    private static final Map<String, Bundle> pendingPopBackStackMap = new HashMap();
+    private static final Map<String, ArrayDeque<FragmentAction>> pendingFragmentActionMap = new HashMap();
 
     protected String uuid;
     FragmentManager parentFragmentManager;
@@ -34,25 +34,36 @@ public abstract class AbsDialogHostImpl implements DialogHost {
     PriorityDialog pendingShowDialog;
     PriorityDialog pendingDismissDialog;
 
-    private WarpBackStackRecord needWarpPendingTransaction = null;
+    private boolean needWarpPendingTransaction = false;
 
     protected void init(@NonNull String uuid, @NonNull FragmentManager parentFragmentManager, @NonNull FragmentManager childFragmentManager) {
         this.uuid = uuid;
         this.parentFragmentManager = parentFragmentManager;
         this.childFragmentManager = childFragmentManager;
         this.mWarpParentFragmentManager = new WarpFragmentManager(parentFragmentManager, this);
-        needWarpPendingTransaction = pendingTransactionMap.remove(uuid);
-
+        needWarpPendingTransaction = true;
         init = true;
     }
 
+    @NonNull
+    private ArrayDeque<FragmentAction> getPendingFragmentActions() {
+        ArrayDeque<FragmentAction> fragmentActions = pendingFragmentActionMap.get(uuid);
+        if (fragmentActions != null) {
+            return fragmentActions;
+        }
+        fragmentActions = new ArrayDeque<>();
+        pendingFragmentActionMap.put(uuid, fragmentActions);
+        return fragmentActions;
+    }
+
     protected void tryWarpPendingTransaction() {
-        if (needWarpPendingTransaction != null) {
-            WarpBackStackRecord newPendingTransaction = needWarpPendingTransaction.warpWithNewFragmentManager(parentFragmentManager, this);
-            if (newPendingTransaction != null) {
-                pendingTransactionMap.put(uuid, newPendingTransaction);
-                needWarpPendingTransaction = null;
+        if (needWarpPendingTransaction) {
+            for (FragmentAction fragmentAction : getPendingFragmentActions()) {
+                if (fragmentAction.type == FragmentAction.TYPE_TRANSACTION) {
+                    fragmentAction.transaction = fragmentAction.transaction.warpWithNewFragmentManager(parentFragmentManager, this);
+                }
             }
+            needWarpPendingTransaction = false;
         }
     }
 
@@ -200,12 +211,12 @@ public abstract class AbsDialogHostImpl implements DialogHost {
 
     @Override
     public void setPendingTransaction(@NonNull WarpBackStackRecord pendingTransaction) {
-        pendingTransactionMap.put(uuid, pendingTransaction);
+        getPendingFragmentActions().addLast(new FragmentAction(pendingTransaction));
     }
 
     @Override
     public void setPendingPopBackStack(@NonNull Bundle pendingPopBackStack) {
-        pendingPopBackStackMap.put(uuid, pendingPopBackStack);
+        getPendingFragmentActions().addLast(new FragmentAction(pendingPopBackStack));
     }
 
     @Override
@@ -216,26 +227,32 @@ public abstract class AbsDialogHostImpl implements DialogHost {
         if (parentFragmentManager.isStateSaved() || parentFragmentManager.isDestroyed()) {
             return;
         }
-        WarpBackStackRecord pendingTransaction = pendingTransactionMap.get(uuid);
-        if (pendingTransaction != null) {
-            if (pendingTransaction.tryPendingAction()) {
-                pendingTransactionMap.remove(uuid);
+        FragmentAction fragmentAction = getPendingFragmentActions().peekFirst();
+        while (fragmentAction != null) {
+            switch (fragmentAction.type) {
+                case FragmentAction.TYPE_TRANSACTION:
+                    if (fragmentAction.transaction.tryPendingAction()) {
+                        getPendingFragmentActions().removeFirst();
+                    } else {
+                        return;
+                    }
+                    break;
+                case FragmentAction.TYPE_POP_BACKSTACK:
+                    if (mWarpParentFragmentManager.tryPendingAction(fragmentAction.popBackStack)) {
+                        getPendingFragmentActions().removeFirst();
+                    } else {
+                        return;
+                    }
+                    break;
             }
-        }
-        Bundle pendingPopBackStack = pendingPopBackStackMap.get(uuid);
-        if (pendingPopBackStack != null) {
-            if (mWarpParentFragmentManager.tryPendingAction(pendingPopBackStack)) {
-                pendingTransactionMap.remove(uuid);
-            }
-
+            fragmentAction = getPendingFragmentActions().peekFirst();
         }
     }
 
     @CallSuper
     protected void cleanAllPending() {
         pendingDialogMap.remove(uuid);
-        pendingTransactionMap.remove(uuid);
-        pendingPopBackStackMap.remove(uuid);
+        pendingFragmentActionMap.remove(uuid);
     }
 
 }
