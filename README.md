@@ -130,7 +130,7 @@ dialog1.dismiss()
 //当前无dialog
 ```
 
-#### 2、onlyDismissByUser 话框是否只有用户才能真正关闭（默认值true）
+#### 2、onlyDismissByUser 对话框是否只有用户才能真正关闭（默认值true）
 
 如前面情况1，**低**被**高**取代，当**高**关闭后**低**会再次显示，如果想**低**不再显示，可以设置**低**的onlyDismissByUser=false
 
@@ -158,7 +158,7 @@ Activity的 startActivity()、startActivityForResult()、finish()
 
 Fragment的 startActivity()、startActivityForResult()
 
-要使这个属性生效，前的BaseActivity配置要做如下调整：
+要使这个属性生效，前面的BaseActivity配置要做如下调整：
 
 ```kotlin
 open class BaseActivity : AppCompatActivity(), ActivityDialogHost by ActivityDialogHostImpl() {
