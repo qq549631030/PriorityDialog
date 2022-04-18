@@ -298,7 +298,7 @@ class LockWindowTest {
     }
 
     @Test
-    fun activity_transaction_recreate_notWork() {
+    fun activity_transaction_recreate() {
         activityRule.scenario.onActivity {
             assert(getCurrentFragment(it)?.javaClass?.simpleName == TestFragment::class.java.simpleName)
             it.showAlertDialog(message = "first dialog", lockWindow = true)
@@ -326,7 +326,7 @@ class LockWindowTest {
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .perform(ViewActions.click())
 
-            assert(getCurrentFragment(it)?.javaClass?.simpleName == TestFragment::class.java.simpleName)
+            assert(getCurrentFragment(it)?.javaClass?.simpleName == SecondFragment::class.java.simpleName)
         }
     }
 
@@ -427,7 +427,7 @@ class LockWindowTest {
     }
 
     @Test
-    fun fragment_transaction_recreate_notwork() {
+    fun fragment_transaction_recreate() {
         activityRule.scenario.onActivity {
             assert(getCurrentFragment(it)?.javaClass?.simpleName == TestFragment::class.java.simpleName)
             getCurrentFragment(it)?.run {
@@ -459,7 +459,7 @@ class LockWindowTest {
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .perform(ViewActions.click())
 
-            assert(getCurrentFragment(it)?.javaClass?.simpleName == TestFragment::class.java.simpleName)
+            assert(getCurrentFragment(it)?.javaClass?.simpleName == SecondFragment::class.java.simpleName)
         }
     }
 
