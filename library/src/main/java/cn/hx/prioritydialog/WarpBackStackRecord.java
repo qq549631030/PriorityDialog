@@ -276,6 +276,7 @@ public class WarpBackStackRecord extends FragmentTransaction {
         return this;
     }
 
+    @SuppressWarnings("deprecation")
     @NonNull
     @Override
     public FragmentTransaction setAllowOptimization(boolean allowOptimization) {

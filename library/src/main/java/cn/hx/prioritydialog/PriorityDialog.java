@@ -42,4 +42,6 @@ public interface PriorityDialog {
     void initAsPriorityDialog(DialogFragment dialogFragment);
 
     void onDialogEvent(@NonNull Object event);
+
+    void dismissCurrent();
 }

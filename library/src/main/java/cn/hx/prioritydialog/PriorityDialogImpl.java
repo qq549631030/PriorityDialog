@@ -162,6 +162,11 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
     }
 
     @Override
+    public void dismissCurrent() {
+        mDialogFragment.dismiss();
+    }
+
+    @Override
     public void onCancel(DialogInterface dialogInterface) {
         DialogHost dialogHost = getDialogHost();
         if (dialogHost != null) {

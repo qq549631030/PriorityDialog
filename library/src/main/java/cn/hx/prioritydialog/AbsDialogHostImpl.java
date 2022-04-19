@@ -133,6 +133,13 @@ public abstract class AbsDialogHostImpl implements DialogHost {
     }
 
     @Override
+    public void dismissCurrentDialog() {
+        if (mDialogManager.getCurrentDialog() != null) {
+            mDialogManager.getCurrentDialog().dismissCurrent();
+        }
+    }
+
+    @Override
     public void onDismiss(@NonNull PriorityDialog priorityDialog) {
 
     }

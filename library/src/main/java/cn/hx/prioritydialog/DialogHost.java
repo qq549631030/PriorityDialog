@@ -27,6 +27,8 @@ interface DialogHost {
 
     void onCancel(@NonNull PriorityDialog priorityDialog);
 
+    void dismissCurrentDialog();
+
     void onDismiss(@NonNull PriorityDialog priorityDialog);
 
     @RestrictTo(RestrictTo.Scope.LIBRARY)
