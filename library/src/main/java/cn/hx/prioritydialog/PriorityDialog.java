@@ -1,6 +1,7 @@
 package cn.hx.prioritydialog;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
 import androidx.fragment.app.DialogFragment;
 
@@ -13,6 +14,12 @@ public interface PriorityDialog {
     String getUuid();
 
     void setUuid(@NonNull String uuid);
+
+    //Host唯一标识
+    @Nullable
+    String getHostUuid();
+
+    void setHostUuid(@Nullable String uuid);
 
     //优先级，值越大优先级越高
     int getPriority();

@@ -24,10 +24,10 @@ public class WarpBackStackRecord extends FragmentTransaction {
     public int type = TYPE_COMMIT;
 
     final FragmentTransaction transaction;
-    final AbsDialogHostImpl dialogHost;
+    final DialogHost dialogHost;
     final boolean isChildFragmentManager;
 
-    WarpBackStackRecord(FragmentTransaction transaction, AbsDialogHostImpl dialogHost, boolean isChildFragmentManager) {
+    WarpBackStackRecord(FragmentTransaction transaction, DialogHost dialogHost, boolean isChildFragmentManager) {
         this.transaction = transaction;
         this.dialogHost = dialogHost;
         this.isChildFragmentManager = isChildFragmentManager;
@@ -35,7 +35,7 @@ public class WarpBackStackRecord extends FragmentTransaction {
 
     @Override
     public int commit() {
-        if (dialogHost.isWindowLockedByDialog()) {
+        if (dialogHost.getDialogManager().isWindowLockedByDialog()) {
             type = TYPE_COMMIT;
             // add to pending, this will lose the returned backStackIndex
             dialogHost.setPendingTransaction(this, isChildFragmentManager);
@@ -46,7 +46,7 @@ public class WarpBackStackRecord extends FragmentTransaction {
 
     @Override
     public int commitAllowingStateLoss() {
-        if (dialogHost.isWindowLockedByDialog()) {
+        if (dialogHost.getDialogManager().isWindowLockedByDialog()) {
             type = TYPE_COMMIT_ALLOWING_STATE_LOSS;
             // add to pending, this will lose the returned backStackIndex
             dialogHost.setPendingTransaction(this, isChildFragmentManager);
@@ -57,7 +57,7 @@ public class WarpBackStackRecord extends FragmentTransaction {
 
     @Override
     public void commitNow() {
-        if (dialogHost.isWindowLockedByDialog()) {
+        if (dialogHost.getDialogManager().isWindowLockedByDialog()) {
             type = TYPE_COMMIT_NOW;
             // add to pending
             dialogHost.setPendingTransaction(this, isChildFragmentManager);
@@ -68,7 +68,7 @@ public class WarpBackStackRecord extends FragmentTransaction {
 
     @Override
     public void commitNowAllowingStateLoss() {
-        if (dialogHost.isWindowLockedByDialog()) {
+        if (dialogHost.getDialogManager().isWindowLockedByDialog()) {
             type = TYPE_COMMIT_NOW_ALLOWING_STATE_LOSS;
             // add to pending
             dialogHost.setPendingTransaction(this, isChildFragmentManager);
@@ -78,7 +78,7 @@ public class WarpBackStackRecord extends FragmentTransaction {
     }
 
     public boolean tryPendingAction() {
-        if (dialogHost.isWindowLockedByDialog()) {
+        if (dialogHost.getDialogManager().isWindowLockedByDialog()) {
             return false;
         }
         switch (type) {

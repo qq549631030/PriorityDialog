@@ -32,20 +32,23 @@ open class BaseDialog : DialogFragment(), PriorityDialog by PriorityDialogImpl()
 }
 ```
 
-#### 2、DialogHost配置
+#### 2、DialogManager，DialogHost配置
 
 通过代理方式：
 
-ActivityDialogHost by ActivityDialogHostImpl() 可实现将任意一个FragmentActivity转变成对话框宿主FragmentDialogHost by
-FragmentDialogHostImpl()可实现将任意一个Fragment转变成对话框宿主
+DialogManager by DialogManagerImpl() 可实现将任意一个FragmentActivity转变成对话框管理类
+ActivityDialogHost by ActivityDialogHostImpl() 可实现将任意一个FragmentActivity转变成对话框宿主
+FragmentDialogHost by FragmentDialogHostImpl()可实现将任意一个Fragment转变成对话框宿主
 
-并在onCreate方法调用initAsDialogHost(this)完成初始化
+在onCreate方法调用initAsDialogManager(this)、initAsDialogHost(this)完成初始化
+DialogManager仅可用于FragmentActivity
 
 ```kotlin
-open class BaseActivity : AppCompatActivity(), ActivityDialogHost by ActivityDialogHostImpl() {
+open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImpl(), ActivityDialogHost by ActivityDialogHostImpl() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        initAsDialogManager(this)
         initAsDialogHost(this)
     }
 }
@@ -161,10 +164,11 @@ Fragment的 startActivity()、startActivityForResult()
 要使这个属性生效，前面的BaseActivity配置要做如下调整：
 
 ```kotlin
-open class BaseActivity : AppCompatActivity(), ActivityDialogHost by ActivityDialogHostImpl() {
+open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImpl(), ActivityDialogHost by ActivityDialogHostImpl() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        initAsDialogManager(this)
         initAsDialogHost(this)
     }
 
@@ -200,7 +204,7 @@ dialog.dismiss()
 
 FragmentManager的各种Transaction以及popBackStack
 
-要使这个属性生效，执行Transaction以及popBackStack操作时要使用warpParentFragmentManager
+要使这个属性生效，执行Transaction以及popBackStack操作时要使用warpParentFragmentManager或者warpChildFragmentManager
 
 ```kotlin
 val dialog = BaseDialog()
@@ -213,3 +217,41 @@ dialog.dismiss()
 //当前显示的Fragment变成了SecondFragment
 ```
 
+### 对话框事件处理
+
+#### onCancel
+可重写DialogHost的onCancel方法
+```kotlin
+override fun onCancel(priorityDialog: PriorityDialog) {
+    if (priorityDialog.uuid == "custom_uuid") {
+        //next
+    }
+}
+```
+
+#### onDismiss
+可重写DialogHost的onDismiss方法
+```kotlin
+override fun onDismiss(priorityDialog: PriorityDialog) {
+    if (priorityDialog.uuid == "custom_uuid") {
+        //next
+    }
+}
+```
+
+#### onDialogEvent
+可重写DialogHost的onDialogEvent方法，event可以是任意的自定义事件，比如按钮点击，文字输入等等。
+```kotlin
+override fun onDialogEvent(priorityDialog: PriorityDialog, event: Any) {
+    if (priorityDialog.uuid == "custom_uuid") {
+        when (event) {
+            is BaseAlertDialog.AlertDialogClickEvent -> {
+                if (event.which == DialogInterface.BUTTON_POSITIVE) {
+                    //next
+                }
+            }
+            else -> {}
+        }
+    }
+}
+```

@@ -3,7 +3,6 @@ package cn.hx.prioritydialog;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
 import androidx.fragment.app.FragmentManager;
 
@@ -16,13 +15,13 @@ interface DialogHost {
     @NonNull
     FragmentManager getWarpChildFragmentManager();
 
-    boolean showPriorityDialog(@NonNull PriorityDialog newDialog);
-
-    @Nullable
-    PriorityDialog getCurrentDialog();
+    @NonNull
+    DialogManager getDialogManager();
 
     @RestrictTo(RestrictTo.Scope.LIBRARY)
-    boolean isWindowLockedByDialog();
+    boolean isReady();
+
+    boolean showPriorityDialog(@NonNull PriorityDialog newDialog);
 
     void onDialogEvent(@NonNull PriorityDialog priorityDialog, @NonNull Object event);
 

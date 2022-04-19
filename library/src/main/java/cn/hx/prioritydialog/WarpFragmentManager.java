@@ -27,10 +27,10 @@ public class WarpFragmentManager extends FragmentManager {
     public static final int TYPE_POP_IMMEDIATE_WITH_ID = 6;
 
     final FragmentManager fragmentManager;
-    final AbsDialogHostImpl dialogHost;
+    final DialogHost dialogHost;
     final boolean isChildFragmentManager;
 
-    public WarpFragmentManager(FragmentManager fragmentManager, AbsDialogHostImpl dialogHost, boolean isChildFragmentManager) {
+    public WarpFragmentManager(FragmentManager fragmentManager, DialogHost dialogHost, boolean isChildFragmentManager) {
         this.fragmentManager = fragmentManager;
         this.dialogHost = dialogHost;
         this.isChildFragmentManager = isChildFragmentManager;
@@ -61,7 +61,7 @@ public class WarpFragmentManager extends FragmentManager {
 
     @Override
     public void popBackStack() {
-        if (dialogHost.isWindowLockedByDialog()) {
+        if (dialogHost.getDialogManager().isWindowLockedByDialog()) {
             Bundle bundle = new Bundle();
             bundle.putInt(POP_BACK_STACK_TYPE, TYPE_POP);
             dialogHost.setPendingPopBackStack(bundle, isChildFragmentManager);
@@ -72,7 +72,7 @@ public class WarpFragmentManager extends FragmentManager {
 
     @Override
     public boolean popBackStackImmediate() {
-        if (dialogHost.isWindowLockedByDialog()) {
+        if (dialogHost.getDialogManager().isWindowLockedByDialog()) {
             Bundle bundle = new Bundle();
             bundle.putInt(POP_BACK_STACK_TYPE, TYPE_POP_IMMEDIATE);
             dialogHost.setPendingPopBackStack(bundle, isChildFragmentManager);
@@ -83,7 +83,7 @@ public class WarpFragmentManager extends FragmentManager {
 
     @Override
     public void popBackStack(@Nullable String name, int flags) {
-        if (dialogHost.isWindowLockedByDialog()) {
+        if (dialogHost.getDialogManager().isWindowLockedByDialog()) {
             Bundle bundle = new Bundle();
             bundle.putInt(POP_BACK_STACK_TYPE, TYPE_POP_WITH_NAME);
             bundle.putString(POP_BACK_STACK_NAME, name);
@@ -96,7 +96,7 @@ public class WarpFragmentManager extends FragmentManager {
 
     @Override
     public boolean popBackStackImmediate(@Nullable String name, int flags) {
-        if (dialogHost.isWindowLockedByDialog()) {
+        if (dialogHost.getDialogManager().isWindowLockedByDialog()) {
             Bundle bundle = new Bundle();
             bundle.putInt(POP_BACK_STACK_TYPE, TYPE_POP_IMMEDIATE_WITH_NAME);
             bundle.putString(POP_BACK_STACK_NAME, name);
@@ -109,7 +109,7 @@ public class WarpFragmentManager extends FragmentManager {
 
     @Override
     public void popBackStack(int id, int flags) {
-        if (dialogHost.isWindowLockedByDialog()) {
+        if (dialogHost.getDialogManager().isWindowLockedByDialog()) {
             Bundle bundle = new Bundle();
             bundle.putInt(POP_BACK_STACK_TYPE, TYPE_POP_WITH_ID);
             bundle.putInt(POP_BACK_STACK_ID, id);
@@ -122,7 +122,7 @@ public class WarpFragmentManager extends FragmentManager {
 
     @Override
     public boolean popBackStackImmediate(int id, int flags) {
-        if (dialogHost.isWindowLockedByDialog()) {
+        if (dialogHost.getDialogManager().isWindowLockedByDialog()) {
             Bundle bundle = new Bundle();
             bundle.putInt(POP_BACK_STACK_TYPE, TYPE_POP_IMMEDIATE_WITH_ID);
             bundle.putInt(POP_BACK_STACK_ID, id);
@@ -209,7 +209,7 @@ public class WarpFragmentManager extends FragmentManager {
     }
 
     public boolean tryPendingAction(@NonNull Bundle pendingPopBackStack) {
-        if (dialogHost.isWindowLockedByDialog()) {
+        if (dialogHost.getDialogManager().isWindowLockedByDialog()) {
             return false;
         }
         int type = pendingPopBackStack.getInt(POP_BACK_STACK_TYPE);

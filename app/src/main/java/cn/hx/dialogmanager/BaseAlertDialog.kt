@@ -7,22 +7,49 @@ import androidx.appcompat.app.AlertDialog
 
 class BaseAlertDialog : BaseDialog(), DialogInterface.OnClickListener {
 
+    private var title: CharSequence? = null
+    private var message: CharSequence? = null
+    private var positive: CharSequence? = null
+    private var negative: CharSequence? = null
+    private var neutral: CharSequence? = null
+
+    init {
+        savedStateRegistry.registerSavedStateProvider(KEY_ALERT_DIALOG_STATE) {
+            Bundle().apply {
+                putCharSequence(TITLE, title)
+                putCharSequence(MESSAGE, message)
+                putCharSequence(POSITIVE, positive)
+                putCharSequence(NEGATIVE, negative)
+                putCharSequence(NEUTRAL, neutral)
+            }
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        savedStateRegistry.consumeRestoredStateForKey(KEY_ALERT_DIALOG_STATE)?.run {
+            title = getCharSequence(TITLE)
+            message = getCharSequence(MESSAGE)
+            positive = getCharSequence(POSITIVE)
+            negative = getCharSequence(NEGATIVE)
+            neutral = getCharSequence(NEUTRAL)
+        }
+    }
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return context?.run {
-            val builder = AlertDialog.Builder(this)
-            builder.setTitle(arguments?.getString(TITLE))
-                    .setMessage(arguments?.getString(MESSAGE))
-            arguments?.getString(POSITIVE)?.let {
-                builder.setPositiveButton(it, this@BaseAlertDialog)
-            }
-            arguments?.getString(NEGATIVE)?.let {
-                builder.setNegativeButton(it, this@BaseAlertDialog)
-            }
-            arguments?.getString(NEUTRAL)?.let {
-                builder.setNeutralButton(it, this@BaseAlertDialog)
-            }
-            return builder.create()
-        } ?: throw IllegalStateException("Activity cannot be null")
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle(title)
+                .setMessage(message)
+        positive?.let {
+            builder.setPositiveButton(it, this@BaseAlertDialog)
+        }
+        negative?.let {
+            builder.setNegativeButton(it, this@BaseAlertDialog)
+        }
+        neutral?.let {
+            builder.setNeutralButton(it, this@BaseAlertDialog)
+        }
+        return builder.create()
     }
 
     override fun onClick(dialog: DialogInterface, which: Int) {
@@ -62,14 +89,12 @@ class BaseAlertDialog : BaseDialog(), DialogInterface.OnClickListener {
         }
 
         fun create(): BaseAlertDialog {
-            return BaseAlertDialog().apply {
-                arguments = Bundle().apply {
-                    putCharSequence(TITLE, title)
-                    putCharSequence(MESSAGE, message)
-                    putCharSequence(POSITIVE, positive)
-                    putCharSequence(NEGATIVE, negative)
-                    putCharSequence(NEUTRAL, neutral)
-                }
+            return BaseAlertDialog().also {
+                it.title = title
+                it.message = message
+                it.positive = positive
+                it.negative = negative
+                it.neutral = neutral
             }
         }
     }
@@ -77,6 +102,9 @@ class BaseAlertDialog : BaseDialog(), DialogInterface.OnClickListener {
     class AlertDialogClickEvent(val which: Int)
 
     companion object {
+
+        private const val KEY_ALERT_DIALOG_STATE = "cn.hx.base.alertDialog.state"
+
         private const val TITLE = "title"
         private const val MESSAGE = "message"
         private const val POSITIVE = "positive"

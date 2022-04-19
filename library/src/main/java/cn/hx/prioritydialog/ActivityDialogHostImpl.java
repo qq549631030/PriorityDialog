@@ -55,6 +55,9 @@ public class ActivityDialogHostImpl extends AbsDialogHostImpl implements Activit
 
     @Override
     public void initAsDialogHost(@NonNull FragmentActivity activity) {
+        if (!(activity instanceof DialogManager)) {
+            throw new IllegalArgumentException("activity must implements DialogManager");
+        }
         this.activity = activity;
         Bundle savedState = activity.getSavedStateRegistry().consumeRestoredStateForKey(KEY_DIALOG_HOST_STATE);
         if (savedState != null) {
@@ -63,7 +66,8 @@ public class ActivityDialogHostImpl extends AbsDialogHostImpl implements Activit
         if (uuid == null) {
             uuid = UUID.randomUUID().toString();
         }
-        init(uuid, activity.getSupportFragmentManager(), activity.getSupportFragmentManager());
+        init((DialogManager) activity, uuid, activity.getSupportFragmentManager(), activity.getSupportFragmentManager());
+        mDialogManager.registerDialogHost(uuid, this);
         activity.getSavedStateRegistry().registerSavedStateProvider(KEY_DIALOG_HOST_STATE, () -> {
             Bundle bundle = new Bundle();
             bundle.putString(BASE_DIALOG_HOST_UUID, uuid);
@@ -75,16 +79,22 @@ public class ActivityDialogHostImpl extends AbsDialogHostImpl implements Activit
             }
             if (event == Lifecycle.Event.ON_DESTROY) {
                 if (activity.isFinishing()) {
-                    cleanAllPending();
+                    mDialogManager.unregisterDialogHost(uuid);
+                    cleanAllPendingAction();
                 }
             }
         });
     }
 
     @Override
+    public boolean isReady() {
+        return !activity.isFinishing();
+    }
+
+    @Override
     public void tryPendingAction() {
         super.tryPendingAction();
-        if (isWindowLockedByDialog()) {
+        if (mDialogManager.isWindowLockedByDialog()) {
             return;
         }
         if (getPendingIntent() != null) {
@@ -98,7 +108,7 @@ public class ActivityDialogHostImpl extends AbsDialogHostImpl implements Activit
 
     @Override
     public boolean warpStartActivityForResult(@NonNull Intent intent, int requestCode, @Nullable Bundle options) {
-        if (isWindowLockedByDialog()) {
+        if (mDialogManager.isWindowLockedByDialog()) {
             getPendingActions().putParcelable(BASE_PENDING_INTENT, intent);
             getPendingActions().putInt(BASE_PENDING_REQUEST_CODE, requestCode);
             getPendingActions().putBundle(BASE_PENDING_OPTIONS, options);
@@ -109,7 +119,7 @@ public class ActivityDialogHostImpl extends AbsDialogHostImpl implements Activit
 
     @Override
     public boolean warpFinish() {
-        if (isWindowLockedByDialog()) {
+        if (mDialogManager.isWindowLockedByDialog()) {
             getPendingActions().putBoolean(BASE_PENDING_FINISH, true);
             return true;
         }
@@ -117,8 +127,8 @@ public class ActivityDialogHostImpl extends AbsDialogHostImpl implements Activit
     }
 
     @Override
-    protected void cleanAllPending() {
-        super.cleanAllPending();
+    protected void cleanAllPendingAction() {
+        super.cleanAllPendingAction();
         pendingActionMap.remove(uuid);
     }
 }

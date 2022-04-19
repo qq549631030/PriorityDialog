@@ -15,6 +15,9 @@ public class FragmentDialogHostImpl extends AbsDialogHostImpl implements Fragmen
 
     @Override
     public void initAsDialogHost(@NonNull Fragment fragment) {
+        if (!(fragment.requireActivity() instanceof DialogManager)) {
+            throw new IllegalArgumentException("fragment's host activity must implements DialogManager");
+        }
         this.fragment = fragment;
         Bundle savedState = fragment.getSavedStateRegistry().consumeRestoredStateForKey(KEY_DIALOG_HOST_STATE);
         if (savedState != null) {
@@ -23,7 +26,8 @@ public class FragmentDialogHostImpl extends AbsDialogHostImpl implements Fragmen
         if (uuid == null) {
             uuid = UUID.randomUUID().toString();
         }
-        init(uuid, fragment.requireFragmentManager(), fragment.getChildFragmentManager());
+        init((DialogManager) fragment.requireActivity(), uuid, fragment.requireFragmentManager(), fragment.getChildFragmentManager());
+        mDialogManager.registerDialogHost(uuid, this);
         fragment.getSavedStateRegistry().registerSavedStateProvider(KEY_DIALOG_HOST_STATE, () -> {
             Bundle bundle = new Bundle();
             bundle.putString(BASE_DIALOG_HOST_UUID, uuid);
@@ -35,22 +39,15 @@ public class FragmentDialogHostImpl extends AbsDialogHostImpl implements Fragmen
             }
             if (event == Lifecycle.Event.ON_DESTROY) {
                 if (fragment.requireActivity().isFinishing() || (fragment.isRemoving() && !fragment.isStateSaved())) {
-                    cleanAllPending();
+                    mDialogManager.unregisterDialogHost(uuid);
+                    cleanAllPendingAction();
                 }
             }
         });
     }
 
     @Override
-    public void tryPendingAction() {
-        super.tryPendingAction();
-        if (isWindowLockedByDialog()) {
-            return;
-        }
-        if (fragment.getParentFragment() instanceof FragmentDialogHost) {
-            ((FragmentDialogHost) fragment.getParentFragment()).tryPendingAction();
-        } else if (fragment.requireActivity() instanceof ActivityDialogHost) {
-            ((ActivityDialogHost) fragment.requireActivity()).tryPendingAction();
-        }
+    public boolean isReady() {
+        return fragment.isVisible();
     }
 }

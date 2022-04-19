@@ -1,17 +1,18 @@
 package cn.hx.dialogmanager
 
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import cn.hx.prioritydialog.ActivityDialogHost
-import cn.hx.prioritydialog.ActivityDialogHostImpl
+import cn.hx.prioritydialog.*
 
-open class BaseActivity : AppCompatActivity(), ActivityDialogHost by ActivityDialogHostImpl() {
+open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImpl(), ActivityDialogHost by ActivityDialogHostImpl() {
 
     val TAG = this::class.java.simpleName
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        initAsDialogManager(this)
         initAsDialogHost(this)
     }
 
@@ -47,6 +48,31 @@ open class BaseActivity : AppCompatActivity(), ActivityDialogHost by ActivityDia
             dialog.uuid = it
         }
         showPriorityDialog(dialog)
+    }
+
+    override fun onCancel(priorityDialog: PriorityDialog) {
+        if (priorityDialog.uuid == "custom_uuid") {
+            //next
+        }
+    }
+
+    override fun onDismiss(priorityDialog: PriorityDialog) {
+        if (priorityDialog.uuid == "custom_uuid") {
+            //next
+        }
+    }
+
+    override fun onDialogEvent(priorityDialog: PriorityDialog, event: Any) {
+        if (priorityDialog.uuid == "custom_uuid") {
+            when (event) {
+                is BaseAlertDialog.AlertDialogClickEvent -> {
+                    if (event.which == DialogInterface.BUTTON_POSITIVE) {
+                        //next
+                    }
+                }
+                else -> {}
+            }
+        }
     }
 
     companion object {
