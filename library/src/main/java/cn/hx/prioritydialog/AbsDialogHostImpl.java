@@ -4,6 +4,7 @@ import android.os.Bundle;
 
 import androidx.annotation.CallSuper;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -109,17 +110,48 @@ public abstract class AbsDialogHostImpl implements DialogHost {
                     mDialogManager.addToPendingDialog(currentDialog);
                 }
                 if (currentDialog instanceof DialogFragment) {
-                    transaction.remove((DialogFragment) currentDialog);
+                    DialogFragment current = (DialogFragment) currentDialog;
+                    FragmentManager fm = current.getFragmentManager();
+                    if (fm != null && !fm.isStateSaved() && !fm.isDestroyed()) {
+                        fm.beginTransaction().remove(current).commit();
+                    }
                 }
             }
         }
         newDialog.setDismissByHighPriorityDialog(false);
-        mDialogManager.setCurrentDialog(newDialog);
         if (newDialog instanceof DialogFragment) {
+            mDialogManager.setPendingShowDialog(newDialog);
             ((DialogFragment) newDialog).show(transaction, PriorityDialog.BASE_DIALOG_TAG);
+            mWarpChildFragmentManager.registerFragmentLifecycleCallbacks(new FragmentManager.FragmentLifecycleCallbacks() {
+                @Override
+                public void onFragmentCreated(@NonNull FragmentManager fm, @NonNull Fragment f, @Nullable Bundle savedInstanceState) {
+                    if (f.equals(mDialogManager.getPendingShowDialog())) {
+                        mDialogManager.setPendingShowDialog(null);
+                        mWarpChildFragmentManager.unregisterFragmentLifecycleCallbacks(this);
+                    }
+                }
+            }, false);
             return true;
         }
         return false;
+    }
+
+    @Nullable
+    @Override
+    public PriorityDialog findCurrentDialog() {
+        Fragment fragment = childFragmentManager.findFragmentByTag(PriorityDialog.BASE_DIALOG_TAG);
+        if (fragment instanceof PriorityDialog) {
+            return (PriorityDialog) fragment;
+        }
+        for (Fragment childFragment : childFragmentManager.getFragments()) {
+            if (childFragment.isVisible() && childFragment instanceof DialogHost) {
+                PriorityDialog priorityDialog = ((DialogHost) childFragment).findCurrentDialog();
+                if (priorityDialog != null) {
+                    return priorityDialog;
+                }
+            }
+        }
+        return null;
     }
 
     @Override

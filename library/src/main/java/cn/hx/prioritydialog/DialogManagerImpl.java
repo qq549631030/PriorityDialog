@@ -23,7 +23,8 @@ public class DialogManagerImpl implements DialogManager {
     private String managerUuid;
     FragmentActivity activity;
 
-    PriorityDialog mCurrentDialog;
+    PriorityDialog pendingShowDialog;
+    PriorityDialog pendingDismissDialog;
 
     @Override
     public void initAsDialogManager(@NonNull FragmentActivity activity) {
@@ -73,15 +74,48 @@ public class DialogManagerImpl implements DialogManager {
         }
     }
 
+    public PriorityDialog getPendingShowDialog() {
+        return pendingShowDialog;
+    }
+
+    public void setPendingShowDialog(PriorityDialog pendingShowDialog) {
+        this.pendingShowDialog = pendingShowDialog;
+    }
+
+    public PriorityDialog getPendingDismissDialog() {
+        return pendingDismissDialog;
+    }
+
+    public void setPendingDismissDialog(PriorityDialog pendingDismissDialog) {
+        this.pendingDismissDialog = pendingDismissDialog;
+    }
+
     @Nullable
     @Override
     public PriorityDialog getCurrentDialog() {
-        return mCurrentDialog;
-    }
-
-    @Override
-    public void setCurrentDialog(@Nullable PriorityDialog priorityDialog) {
-        mCurrentDialog = priorityDialog;
+        if (pendingShowDialog != null) {
+            return pendingShowDialog;
+        }
+        PriorityDialog currentDialog = null;
+        if (activity instanceof DialogHost) {
+            currentDialog = ((DialogHost) activity).findCurrentDialog();
+        } else {
+            for (Fragment childFragment : activity.getSupportFragmentManager().getFragments()) {
+                if (childFragment.isVisible() && childFragment instanceof DialogHost) {
+                    currentDialog = ((DialogHost) childFragment).findCurrentDialog();
+                    if (currentDialog != null) {
+                        break;
+                    }
+                }
+            }
+        }
+        if (currentDialog == null) {
+            return null;
+        }
+        if (pendingDismissDialog != null && pendingDismissDialog.equals(currentDialog)) {
+            return null;
+        }
+        return currentDialog;
     }
 
     @NonNull
@@ -162,8 +196,8 @@ public class DialogManagerImpl implements DialogManager {
 
     @Override
     public boolean isWindowLockedByDialog() {
-        if (mCurrentDialog != null) {
-            return mCurrentDialog.getLockWindow();
+        if (getCurrentDialog() != null) {
+            return getCurrentDialog().getLockWindow();
         }
         return false;
     }

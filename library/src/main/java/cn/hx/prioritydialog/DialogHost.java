@@ -3,6 +3,7 @@ package cn.hx.prioritydialog;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
 import androidx.fragment.app.FragmentManager;
 
@@ -22,6 +23,10 @@ interface DialogHost {
     boolean isReady();
 
     boolean showPriorityDialog(@NonNull PriorityDialog newDialog);
+
+    @Nullable
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
+    PriorityDialog findCurrentDialog();
 
     void onDialogEvent(@NonNull PriorityDialog priorityDialog, @NonNull Object event);
 

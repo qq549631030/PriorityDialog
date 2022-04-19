@@ -15,11 +15,22 @@ public interface DialogManager {
     @RestrictTo(RestrictTo.Scope.LIBRARY)
     void unregisterDialogHost(@NonNull String uuid);
 
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
+    void setPendingShowDialog(@Nullable PriorityDialog pendingShowDialog);
+
     @Nullable
-    PriorityDialog getCurrentDialog();
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
+    PriorityDialog getPendingShowDialog();
 
     @RestrictTo(RestrictTo.Scope.LIBRARY)
-    void setCurrentDialog(@Nullable PriorityDialog priorityDialog);
+    void setPendingDismissDialog(@Nullable PriorityDialog pendingDismissDialog);
+
+    @Nullable
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
+    PriorityDialog getPendingDismissDialog();
+
+    @Nullable
+    PriorityDialog getCurrentDialog();
 
     @RestrictTo(RestrictTo.Scope.LIBRARY)
     void addToPendingDialog(@NonNull PriorityDialog priorityDialog);

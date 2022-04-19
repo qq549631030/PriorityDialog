@@ -7,6 +7,8 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 
@@ -105,9 +107,6 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
             mLockWindow = savedState.getBoolean(BASE_DIALOG_LOCK_WINDOW);
             mDismissByHighPriorityDialog = savedState.getBoolean(BASE_DIALOG_DISMISS_BY_HIGH_PRIORITY_DIALOG);
         }
-        if (mDialogFragment.requireActivity() instanceof DialogManager) {
-            ((DialogManager) mDialogFragment.requireActivity()).setCurrentDialog((PriorityDialog) mDialogFragment);
-        }
         mDialogFragment.getSavedStateRegistry().registerSavedStateProvider(KEY_DIALOG_STATE, () -> {
             Bundle bundle = new Bundle();
             bundle.putString(BASE_DIALOG_UUID, mUuid);
@@ -127,16 +126,39 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
                 }
             }
             if (event == Lifecycle.Event.ON_DESTROY) {
-                if (mDialogFragment.isRemoving() && !mDialogFragment.isStateSaved() && !mDismissByHighPriorityDialog) {
-                    if (mDialogFragment.requireActivity() instanceof DialogManager) {
-                        DialogManager dialogManager = (DialogManager) mDialogFragment.requireActivity();
-                        dialogManager.setCurrentDialog(null);
-                        dialogManager.tryShowNextPendingDialog();
-                        dialogManager.tryAllPendingAction();
+                boolean reallyDismiss = false;
+                if (mDialogFragment.getParentFragment() != null) {
+                    if (mDialogFragment.getParentFragment().isRemoving()) {
+                        reallyDismiss = true;//fragment Destroy lead dialog destroy
                     }
+                } else if (mDialogFragment.requireActivity().isFinishing()) {
+                    reallyDismiss = true;//Activity Destroy lead dialog destroy
+                }
+                if (!reallyDismiss) {
+                    if (mDialogFragment.isRemoving() && !mDialogFragment.isStateSaved() && !mDismissByHighPriorityDialog) {
+                        reallyDismiss = true;//dismiss by user
+                    }
+                }
+                if (reallyDismiss) {
                     DialogHost dialogHost = getDialogHost();
                     if (dialogHost != null) {
                         dialogHost.onDismiss((PriorityDialog) mDialogFragment);
+                    }
+                    if (mDialogFragment.requireActivity() instanceof DialogManager) {
+                        DialogManager dialogManager = (DialogManager) mDialogFragment.requireActivity();
+                        dialogManager.setPendingDismissDialog((PriorityDialog) mDialogFragment);
+                        FragmentManager fragmentManager = mDialogFragment.requireFragmentManager();
+                        fragmentManager.registerFragmentLifecycleCallbacks(new FragmentManager.FragmentLifecycleCallbacks() {
+                            @Override
+                            public void onFragmentDestroyed(@NonNull FragmentManager fm, @NonNull Fragment f) {
+                                if (f.equals(dialogManager.getPendingDismissDialog())) {
+                                    dialogManager.setPendingDismissDialog(null);
+                                    fragmentManager.unregisterFragmentLifecycleCallbacks(this);
+                                }
+                            }
+                        }, false);
+                        dialogManager.tryShowNextPendingDialog();
+                        dialogManager.tryAllPendingAction();
                     }
                 }
             }
