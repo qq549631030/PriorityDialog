@@ -29,9 +29,17 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
     private String mUuid;
     private String mHostUuid;
     private int mPriority = 0;
-    private boolean mOnlyDismissByUser = true;
+    private boolean mOnlyDismissByUser;
     private boolean mLockWindow = false;
     private boolean mDismissByHighPriorityDialog = false;
+
+    public PriorityDialogImpl() {
+        this(false);
+    }
+
+    public PriorityDialogImpl(boolean onlyDismissByUser) {
+        this.mOnlyDismissByUser = onlyDismissByUser;
+    }
 
     @NonNull
     @Override
@@ -91,6 +99,11 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
     @Override
     public void setDismissByHighPriorityDialog(boolean dismissByHighPriorityDialog) {
         mDismissByHighPriorityDialog = dismissByHighPriorityDialog;
+    }
+
+    @Override
+    public boolean isDismissByHighPriorityDialog() {
+        return mDismissByHighPriorityDialog;
     }
 
     public void initAsPriorityDialog(DialogFragment dialogFragment) {
@@ -190,6 +203,7 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
 
     @Override
     public void onCancel(DialogInterface dialogInterface) {
+        mDialogFragment.onCancel(dialogInterface);
         DialogHost dialogHost = getDialogHost();
         if (dialogHost != null) {
             dialogHost.onCancel((PriorityDialog) mDialogFragment);

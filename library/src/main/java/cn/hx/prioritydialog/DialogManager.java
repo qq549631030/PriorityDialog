@@ -9,6 +9,12 @@ public interface DialogManager {
 
     void initAsDialogManager(@NonNull FragmentActivity activity);
 
+    void initAsDialogManager(@NonNull FragmentActivity activity, @NonNull PriorityStrategy priorityStrategy);
+
+    @NonNull
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
+    PriorityStrategy getPriorityStrategy();
+
     @RestrictTo(RestrictTo.Scope.LIBRARY)
     void registerDialogHost(@NonNull String uuid, @NonNull DialogHost dialogHost);
 

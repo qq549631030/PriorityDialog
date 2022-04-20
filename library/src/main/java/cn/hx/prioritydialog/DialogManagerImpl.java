@@ -20,6 +20,8 @@ public class DialogManagerImpl implements DialogManager {
     private static final Map<String, DialogHost> dialogHostMap = new HashMap();
     private static final Map<String, TreeMap<Integer, LinkedList<PriorityDialog>>> pendingDialogMap = new HashMap();
 
+    private PriorityStrategy mPriorityStrategy = new DefaultPriorityStrategy();
+
     private String managerUuid;
     FragmentActivity activity;
 
@@ -41,6 +43,18 @@ public class DialogManagerImpl implements DialogManager {
             bundle.putString(BASE_DIALOG_MANAGER_UUID, managerUuid);
             return bundle;
         });
+    }
+
+    @Override
+    public void initAsDialogManager(@NonNull FragmentActivity activity, @NonNull PriorityStrategy priorityStrategy) {
+        initAsDialogManager(activity);
+        this.mPriorityStrategy = priorityStrategy;
+    }
+
+    @NonNull
+    @Override
+    public PriorityStrategy getPriorityStrategy() {
+        return mPriorityStrategy;
     }
 
     @Override

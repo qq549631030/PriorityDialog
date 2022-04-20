@@ -9,48 +9,26 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 public class ActivityDialogHostImpl extends AbsDialogHostImpl implements ActivityDialogHost {
 
-    private static final String BASE_PENDING_INTENT = "cn.hx.base.activity.pendingIntent";
-    private static final String BASE_PENDING_REQUEST_CODE = "cn.hx.base.activity.pendingRequestCode";
-    private static final String BASE_PENDING_OPTIONS = "cn.hx.base.activity.pendingOptions";
-    private static final String BASE_PENDING_FINISH = "cn.hx.base.activity.pendingFinish";
-
-    private static final Map<String, Bundle> pendingActionMap = new HashMap();
+    private static final Map<String, ArrayDeque<ActivityAction>> pendingActivityActionMap = new HashMap();
 
     FragmentActivity activity;
 
     @NonNull
-    private Bundle getPendingActions() {
-        Bundle bundle = pendingActionMap.get(uuid);
-        if (bundle != null) {
-            return bundle;
+    private ArrayDeque<ActivityAction> getPendingActions() {
+        ArrayDeque<ActivityAction> activityActions = pendingActivityActionMap.get(uuid);
+        if (activityActions != null) {
+            return activityActions;
         }
-        bundle = new Bundle();
-        pendingActionMap.put(uuid, bundle);
-        return bundle;
-    }
-
-    @Nullable
-    private Intent getPendingIntent() {
-        return getPendingActions().getParcelable(BASE_PENDING_INTENT);
-    }
-
-    private int getPendingRequestCode() {
-        return getPendingActions().getInt(BASE_PENDING_REQUEST_CODE, -1);
-    }
-
-    @Nullable
-    private Bundle getPendingOptions() {
-        return getPendingActions().getBundle(BASE_PENDING_OPTIONS);
-    }
-
-    private boolean getPendingFinish() {
-        return getPendingActions().getBoolean(BASE_PENDING_FINISH);
+        activityActions = new ArrayDeque<>();
+        pendingActivityActionMap.put(uuid, activityActions);
+        return activityActions;
     }
 
     @Override
@@ -97,21 +75,27 @@ public class ActivityDialogHostImpl extends AbsDialogHostImpl implements Activit
         if (mDialogManager.isWindowLockedByDialog()) {
             return;
         }
-        if (getPendingIntent() != null) {
-            activity.startActivityForResult(getPendingIntent(), getPendingRequestCode(), getPendingOptions());
+        ArrayDeque<ActivityAction> activityActions = pendingActivityActionMap.remove(uuid);
+        if (activityActions != null && !activityActions.isEmpty()) {
+            ActivityAction activityAction = activityActions.pollFirst();
+            while (activityAction != null) {
+                switch (activityAction.type) {
+                    case ActivityAction.TYPE_START_ACTIVITY:
+                        activity.startActivityForResult(activityAction.intent, activityAction.requestCode, activityAction.options);
+                        break;
+                    case ActivityAction.TYPE_FINISH_ACTIVITY:
+                        activity.finish();
+                        break;
+                }
+                activityAction = activityActions.pollFirst();
+            }
         }
-        if (getPendingFinish()) {
-            activity.finish();
-        }
-        pendingActionMap.remove(uuid);
     }
 
     @Override
     public boolean warpStartActivityForResult(@NonNull Intent intent, int requestCode, @Nullable Bundle options) {
         if (mDialogManager.isWindowLockedByDialog()) {
-            getPendingActions().putParcelable(BASE_PENDING_INTENT, intent);
-            getPendingActions().putInt(BASE_PENDING_REQUEST_CODE, requestCode);
-            getPendingActions().putBundle(BASE_PENDING_OPTIONS, options);
+            getPendingActions().addLast(new ActivityAction(intent, requestCode, options));
             return true;
         }
         return false;
@@ -120,7 +104,7 @@ public class ActivityDialogHostImpl extends AbsDialogHostImpl implements Activit
     @Override
     public boolean warpFinish() {
         if (mDialogManager.isWindowLockedByDialog()) {
-            getPendingActions().putBoolean(BASE_PENDING_FINISH, true);
+            getPendingActions().add(new ActivityAction(ActivityAction.TYPE_FINISH_ACTIVITY));
             return true;
         }
         return false;
@@ -129,6 +113,6 @@ public class ActivityDialogHostImpl extends AbsDialogHostImpl implements Activit
     @Override
     protected void cleanAllPendingAction() {
         super.cleanAllPendingAction();
-        pendingActionMap.remove(uuid);
+        pendingActivityActionMap.remove(uuid);
     }
 }

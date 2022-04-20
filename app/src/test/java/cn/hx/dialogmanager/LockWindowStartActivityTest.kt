@@ -48,6 +48,30 @@ class LockWindowStartActivityTest {
     }
 
     @Test
+    fun activity_startActivity_multi() {
+        activityRule.scenario.onActivity {
+            assert(it.currentDialog == null)
+            it.showAlertDialog(message = "first dialog", lockWindow = true)
+        }
+        activityRule.scenario.onActivity {
+            assert(it.currentDialog != null)
+            Espresso.onView(ViewMatchers.withId(android.R.id.message))
+                    .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
+                    .check(ViewAssertions.matches(ViewMatchers.withText("first dialog")))
+
+            it.startActivity(Intent(it, SecondActivity::class.java))
+            it.startActivity(Intent(it, BaseActivity::class.java))
+            assert(Shadows.shadowOf(it).nextStartedActivity == null)
+
+            Espresso.onView(ViewMatchers.withId(android.R.id.button1))
+                    .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
+                    .perform(ViewActions.click())
+
+            assert(Shadows.shadowOf(it).nextStartedActivity?.component?.className == BaseActivity::class.qualifiedName)
+        }
+    }
+
+    @Test
     fun activity_startActivity_recreate() {
         activityRule.scenario.onActivity {
             assert(it.currentDialog == null)

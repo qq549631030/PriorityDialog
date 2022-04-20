@@ -39,6 +39,9 @@ public interface PriorityDialog {
     @RestrictTo(RestrictTo.Scope.LIBRARY)
     void setDismissByHighPriorityDialog(boolean dismissByHighPriorityDialog);
 
+    @RestrictTo({RestrictTo.Scope.SUBCLASSES})
+    boolean isDismissByHighPriorityDialog();
+
     void initAsPriorityDialog(DialogFragment dialogFragment);
 
     void onDialogEvent(@NonNull Object event);

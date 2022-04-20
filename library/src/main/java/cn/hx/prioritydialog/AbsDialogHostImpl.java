@@ -101,11 +101,9 @@ public abstract class AbsDialogHostImpl implements DialogHost {
         FragmentTransaction transaction = childFragmentManager.beginTransaction();
         PriorityDialog currentDialog = mDialogManager.getCurrentDialog();
         if (currentDialog != null) {
-            if (newDialog.getPriority() < currentDialog.getPriority()) {
-                mDialogManager.addToPendingDialog(newDialog);
-                return false;
-            } else {
-                if (currentDialog.getOnlyDismissByUser()) {
+            PriorityStrategy priorityStrategy = mDialogManager.getPriorityStrategy();
+            if (priorityStrategy.canNewShow(currentDialog, newDialog)) {
+                if (priorityStrategy.shouldPreAddToPendingWhenNewShow(currentDialog, newDialog)) {
                     currentDialog.setDismissByHighPriorityDialog(true);
                     mDialogManager.addToPendingDialog(currentDialog);
                 }
@@ -116,6 +114,11 @@ public abstract class AbsDialogHostImpl implements DialogHost {
                         fm.beginTransaction().remove(current).commit();
                     }
                 }
+            } else {
+                if (priorityStrategy.shouldNewAddToPendingWhenCanNotShow(currentDialog, newDialog)) {
+                    mDialogManager.addToPendingDialog(newDialog);
+                }
+                return false;
             }
         }
         newDialog.setDismissByHighPriorityDialog(false);
