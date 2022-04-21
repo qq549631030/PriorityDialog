@@ -98,7 +98,6 @@ public abstract class AbsDialogHostImpl implements DialogHost {
             return false;
         }
         newDialog.setHostUuid(uuid);
-        FragmentTransaction transaction = childFragmentManager.beginTransaction();
         PriorityDialog currentDialog = mDialogManager.getCurrentDialog();
         if (currentDialog != null) {
             PriorityStrategy priorityStrategy = mDialogManager.getPriorityStrategy();
@@ -124,6 +123,7 @@ public abstract class AbsDialogHostImpl implements DialogHost {
         newDialog.setDismissByHighPriorityDialog(false);
         if (newDialog instanceof DialogFragment) {
             mDialogManager.setPendingShowDialog(newDialog);
+            FragmentTransaction transaction = childFragmentManager.beginTransaction();
             ((DialogFragment) newDialog).show(transaction, PriorityDialog.BASE_DIALOG_TAG);
             mWarpChildFragmentManager.registerFragmentLifecycleCallbacks(new FragmentManager.FragmentLifecycleCallbacks() {
                 @Override

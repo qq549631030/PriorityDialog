@@ -1,10 +1,12 @@
 package cn.hx.dialogmanager
 
-import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import cn.hx.prioritydialog.*
+import cn.hx.prioritydialog.ActivityDialogHost
+import cn.hx.prioritydialog.ActivityDialogHostImpl
+import cn.hx.prioritydialog.DialogManager
+import cn.hx.prioritydialog.DialogManagerImpl
 
 open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImpl(), ActivityDialogHost by ActivityDialogHostImpl() {
 
@@ -35,6 +37,11 @@ open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImp
     }
 
     fun showAlertDialog(title: String? = null, message: String, priority: Int = 0, onlyDismissByUser: Boolean = true, lockWindow: Boolean = false, uuid: String? = null) {
+        val dialog = createAlertDialog(title, message, priority, onlyDismissByUser, lockWindow, uuid)
+        showPriorityDialog(dialog)
+    }
+
+    fun createAlertDialog(title: String? = null, message: String, priority: Int = 0, onlyDismissByUser: Boolean = true, lockWindow: Boolean = false, uuid: String? = null): BaseAlertDialog {
         val dialog = BaseAlertDialog.Builder()
                 .title(title)
                 .message(message)
@@ -47,32 +54,7 @@ open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImp
         uuid?.let {
             dialog.uuid = it
         }
-        showPriorityDialog(dialog)
-    }
-
-    override fun onCancel(priorityDialog: PriorityDialog) {
-        if (priorityDialog.uuid == "custom_uuid") {
-            //next
-        }
-    }
-
-    override fun onDismiss(priorityDialog: PriorityDialog) {
-        if (priorityDialog.uuid == "custom_uuid") {
-            //next
-        }
-    }
-
-    override fun onDialogEvent(priorityDialog: PriorityDialog, event: Any) {
-        if (priorityDialog.uuid == "custom_uuid") {
-            when (event) {
-                is BaseAlertDialog.AlertDialogClickEvent -> {
-                    if (event.which == DialogInterface.BUTTON_POSITIVE) {
-                        //next
-                    }
-                }
-                else -> {}
-            }
-        }
+        return dialog
     }
 
     companion object {

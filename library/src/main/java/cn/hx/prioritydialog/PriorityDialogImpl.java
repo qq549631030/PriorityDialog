@@ -12,6 +12,8 @@ import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCancelListener {
@@ -23,6 +25,10 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
     String BASE_DIALOG_ONLY_DISMISS_BY_USER = "cn.hx.base.dialog.onlyDismissByUser";
     String BASE_DIALOG_LOCK_WINDOW = "cn.hx.base.dialog.lockWindow";
     String BASE_DIALOG_DISMISS_BY_HIGH_PRIORITY_DIALOG = "cn.hx.base.dialog.dismissByHighPriorityDialog";
+
+    private static final Map<String, OnCancelListener<? extends DialogHost>> onCancelListenerMap = new HashMap();
+    private static final Map<String, OnDismissListener<? extends DialogHost>> onDismissListenerMap = new HashMap();
+    private static final Map<String, OnDialogEventListener<? extends DialogHost>> onDialogEventListenerMap = new HashMap();
 
     private DialogFragment mDialogFragment;
 
@@ -156,7 +162,11 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
                     DialogHost dialogHost = getDialogHost();
                     if (dialogHost != null) {
                         dialogHost.onDismiss((PriorityDialog) mDialogFragment);
+                        dispatchOnDismiss(dialogHost);
                     }
+                    onCancelListenerMap.remove(getUuid());
+                    onDismissListenerMap.remove(getUuid());
+                    onDialogEventListenerMap.remove(getUuid());
                     if (mDialogFragment.requireActivity() instanceof DialogManager) {
                         DialogManager dialogManager = (DialogManager) mDialogFragment.requireActivity();
                         dialogManager.setPendingDismissDialog((PriorityDialog) mDialogFragment);
@@ -178,6 +188,22 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
         });
     }
 
+    @Override
+    public void setOnCancelListener(@Nullable OnCancelListener<? extends DialogHost> listener) {
+        onCancelListenerMap.put(getUuid(), listener);
+    }
+
+    @Override
+    public void setOnDismissListener(@Nullable OnDismissListener<? extends DialogHost> listener) {
+        onDismissListenerMap.put(getUuid(), listener);
+    }
+
+    @Override
+    public void setOnDialogEventListener(@Nullable OnDialogEventListener<? extends DialogHost> listener) {
+        onDialogEventListenerMap.put(getUuid(), listener);
+    }
+
+    @Nullable
     private DialogHost getDialogHost() {
         DialogHost dialogHost = null;
         if (mDialogFragment.getParentFragment() instanceof FragmentDialogHost) {
@@ -193,6 +219,7 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
         DialogHost dialogHost = getDialogHost();
         if (dialogHost != null) {
             dialogHost.onDialogEvent((PriorityDialog) mDialogFragment, event);
+            dispatchOnDialogEvent(dialogHost, event);
         }
     }
 
@@ -207,6 +234,28 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
         DialogHost dialogHost = getDialogHost();
         if (dialogHost != null) {
             dialogHost.onCancel((PriorityDialog) mDialogFragment);
+            dispatchOnCancel(dialogHost);
+        }
+    }
+
+    private void dispatchOnCancel(@NonNull DialogHost dialogHost) {
+        OnCancelListener<? extends DialogHost> listener = onCancelListenerMap.remove(getUuid());
+        if (listener != null) {
+            listener.dispatch(dialogHost);
+        }
+    }
+
+    private void dispatchOnDismiss(@NonNull DialogHost dialogHost) {
+        OnDismissListener<? extends DialogHost> listener = onDismissListenerMap.remove(getUuid());
+        if (listener != null) {
+            listener.dispatch(dialogHost);
+        }
+    }
+
+    private void dispatchOnDialogEvent(@NonNull DialogHost dialogHost, @NonNull Object event) {
+        OnDialogEventListener<? extends DialogHost> listener = onDialogEventListenerMap.remove(getUuid());
+        if (listener != null) {
+            listener.dispatch(dialogHost, event);
         }
     }
 }

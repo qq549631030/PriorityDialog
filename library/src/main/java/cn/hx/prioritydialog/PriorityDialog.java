@@ -44,6 +44,12 @@ public interface PriorityDialog {
 
     void initAsPriorityDialog(DialogFragment dialogFragment);
 
+    void setOnCancelListener(@Nullable OnCancelListener<? extends DialogHost> listener);
+
+    void setOnDismissListener(@Nullable OnDismissListener<? extends DialogHost> listener);
+
+    void setOnDialogEventListener(@Nullable OnDialogEventListener<? extends DialogHost> listener);
+
     void onDialogEvent(@NonNull Object event);
 
     void dismissCurrent();

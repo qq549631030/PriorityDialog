@@ -8,7 +8,7 @@ import androidx.annotation.RestrictTo;
 import androidx.fragment.app.FragmentManager;
 
 
-interface DialogHost {
+public interface DialogHost {
 
     @NonNull
     FragmentManager getWarpParentFragmentManager();

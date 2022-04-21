@@ -37,10 +37,13 @@ open class BaseDialog : DialogFragment(), PriorityDialog by PriorityDialogImpl()
 通过代理方式：
 
 DialogManager by DialogManagerImpl() 可实现将任意一个FragmentActivity转变成对话框管理类
+
 ActivityDialogHost by ActivityDialogHostImpl() 可实现将任意一个FragmentActivity转变成对话框宿主
+
 FragmentDialogHost by FragmentDialogHostImpl()可实现将任意一个Fragment转变成对话框宿主
 
 在onCreate方法调用initAsDialogManager(this)、initAsDialogHost(this)完成初始化
+
 DialogManager仅可用于FragmentActivity
 
 ```kotlin
@@ -133,6 +136,23 @@ dialog1.dismiss()
 //当前无dialog
 ```
 
+以上是默认的优先级处理方式，1.0.4之后可以通过配置PriorityStrategy来自定义规则  
+
+通过initAsDialogManager(this，customPriorityStrategy)来实现
+
+具体实现方式可参数DefaultPriorityStrategy
+
+```java
+public interface PriorityStrategy {
+	//新对话框是否能取代现有对话框而显示
+    boolean canNewShow(@NonNull PriorityDialog preDialog, @NonNull PriorityDialog newDialog);
+	//新对话框不可显示时，是否要加入等待队列
+    boolean shouldNewAddToPendingWhenCanNotShow(@NonNull PriorityDialog preDialog, @NonNull PriorityDialog newDialog);
+	//新对话框可显示时，现有对话框是否要加入等待队列
+    boolean shouldPreAddToPendingWhenNewShow(@NonNull PriorityDialog preDialog, @NonNull PriorityDialog newDialog);
+}
+```
+
 #### 2、onlyDismissByUser 对话框是否只有用户才能真正关闭（默认值true）
 
 如前面情况1，**低**被**高**取代，当**高**关闭后**低**会再次显示，如果想**低**不再显示，可以设置**低**的onlyDismissByUser=false
@@ -220,7 +240,7 @@ dialog.dismiss()
 ### 对话框事件处理
 
 #### onCancel
-可重写DialogHost的onCancel方法
+可重写DialogHost的onCancel方法（推荐）
 ```kotlin
 override fun onCancel(priorityDialog: PriorityDialog) {
     if (priorityDialog.uuid == "custom_uuid") {
@@ -228,9 +248,19 @@ override fun onCancel(priorityDialog: PriorityDialog) {
     }
 }
 ```
+也可用setOnCancelListener
+```kotlin
+dialog.setOnCancelListener(object : OnCancelListener<FragmentTestActivity>() {
+            override fun onCancel(host: FragmentTestActivity) {
+                //这里只能通过host访问外部类的方法、属性
+                //不可直接访问外部类方法、属性，因为Activity recreate后的情况下原host已经不存在了
+                host.publicMethod()
+            }
+        })
+```
 
 #### onDismiss
-可重写DialogHost的onDismiss方法
+可重写DialogHost的onDismiss方法（推荐）
 ```kotlin
 override fun onDismiss(priorityDialog: PriorityDialog) {
     if (priorityDialog.uuid == "custom_uuid") {
@@ -238,9 +268,21 @@ override fun onDismiss(priorityDialog: PriorityDialog) {
     }
 }
 ```
+也可用setOnDismissListener
+```kotlin
+dialog.setOnDismissListener(object : OnDismissListener<FragmentTestActivity>() {
+            override fun onDismiss(host: FragmentTestActivity) {
+                //这里只能通过host访问外部类的方法、属性
+                //不可直接访问外部类方法、属性，因为Activity recreate后的情况下原host已经不存在了
+                host.publicMethod()
+            }
+        })
+```
 
 #### onDialogEvent
-可重写DialogHost的onDialogEvent方法，event可以是任意的自定义事件，比如按钮点击，文字输入等等。
+可重写DialogHost的onDialogEvent方法（推荐）
+
+event可以是任意的自定义事件，比如按钮点击，文字输入等等。
 ```kotlin
 override fun onDialogEvent(priorityDialog: PriorityDialog, event: Any) {
     if (priorityDialog.uuid == "custom_uuid") {
@@ -254,4 +296,14 @@ override fun onDialogEvent(priorityDialog: PriorityDialog, event: Any) {
         }
     }
 }
+```
+也可用setOnDialogEventListener
+```kotlin
+dialog.setOnDialogEventListener(object : OnDialogEventListener<FragmentTestActivity>() {
+            override fun onDialogEvent(host: FragmentTestActivity, event: Any) {
+                //这里只能通过host访问外部类的方法、属性
+                //不可直接访问外部类方法、属性，因为Activity recreate后的情况下原host已经不存在了
+                host.publicMethod()
+            }
+        })
 ```
