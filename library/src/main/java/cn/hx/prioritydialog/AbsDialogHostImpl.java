@@ -19,7 +19,7 @@ public abstract class AbsDialogHostImpl implements DialogHost {
     public static String KEY_DIALOG_HOST_STATE = "cn.hx.base.dialogHost.state";
     public static String BASE_DIALOG_HOST_UUID = "cn.hx.base.dialogHost.uuid";
 
-    private static final Map<String, ArrayDeque<FragmentAction>> pendingFragmentActionMap = new HashMap();
+    private static final Map<String, ArrayDeque<FragmentAction>> pendingFragmentActionMap = new HashMap<>();
 
     DialogManager mDialogManager;
     protected String uuid;
@@ -90,11 +90,17 @@ public abstract class AbsDialogHostImpl implements DialogHost {
     }
 
     @Override
+    @CallSuper
+    public boolean isReady() {
+        return !childFragmentManager.isStateSaved() && !childFragmentManager.isDestroyed();
+    }
+
+    @Override
     public boolean showPriorityDialog(@NonNull PriorityDialog newDialog) {
         if (!init) {
-            throw new IllegalStateException("not init, Please call initAsDialogHost first");
+            throw new IllegalStateException("dialog host not init, Please call initAsDialogHost first");
         }
-        if (childFragmentManager.isStateSaved() || childFragmentManager.isDestroyed()) {
+        if (!isReady()) {
             return false;
         }
         newDialog.setHostUuid(uuid);
@@ -120,8 +126,8 @@ public abstract class AbsDialogHostImpl implements DialogHost {
                 return false;
             }
         }
-        newDialog.setDismissByHighPriorityDialog(false);
         if (newDialog instanceof DialogFragment) {
+            newDialog.setDismissByHighPriorityDialog(false);
             mDialogManager.setPendingShowDialog(newDialog);
             FragmentTransaction transaction = childFragmentManager.beginTransaction();
             ((DialogFragment) newDialog).show(transaction, PriorityDialog.BASE_DIALOG_TAG);

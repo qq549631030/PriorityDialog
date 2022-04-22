@@ -24,11 +24,10 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
     String BASE_DIALOG_PRIORITY = "cn.hx.base.dialog.priority";
     String BASE_DIALOG_ONLY_DISMISS_BY_USER = "cn.hx.base.dialog.onlyDismissByUser";
     String BASE_DIALOG_LOCK_WINDOW = "cn.hx.base.dialog.lockWindow";
-    String BASE_DIALOG_DISMISS_BY_HIGH_PRIORITY_DIALOG = "cn.hx.base.dialog.dismissByHighPriorityDialog";
 
-    private static final Map<String, OnCancelListener<? extends DialogHost>> onCancelListenerMap = new HashMap();
-    private static final Map<String, OnDismissListener<? extends DialogHost>> onDismissListenerMap = new HashMap();
-    private static final Map<String, OnDialogEventListener<? extends DialogHost>> onDialogEventListenerMap = new HashMap();
+    private static final Map<String, OnCancelListener<? extends DialogHost>> onCancelListenerMap = new HashMap<>();
+    private static final Map<String, OnDismissListener<? extends DialogHost>> onDismissListenerMap = new HashMap<>();
+    private static final Map<String, OnDialogEventListener<? extends DialogHost>> onDialogEventListenerMap = new HashMap<>();
 
     private DialogFragment mDialogFragment;
 
@@ -124,7 +123,6 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
             mPriority = savedState.getInt(BASE_DIALOG_PRIORITY, 0);
             mOnlyDismissByUser = savedState.getBoolean(BASE_DIALOG_ONLY_DISMISS_BY_USER, true);
             mLockWindow = savedState.getBoolean(BASE_DIALOG_LOCK_WINDOW);
-            mDismissByHighPriorityDialog = savedState.getBoolean(BASE_DIALOG_DISMISS_BY_HIGH_PRIORITY_DIALOG);
         }
         mDialogFragment.getSavedStateRegistry().registerSavedStateProvider(KEY_DIALOG_STATE, () -> {
             Bundle bundle = new Bundle();
@@ -133,7 +131,6 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
             bundle.putInt(BASE_DIALOG_PRIORITY, mPriority);
             bundle.putBoolean(BASE_DIALOG_ONLY_DISMISS_BY_USER, mOnlyDismissByUser);
             bundle.putBoolean(BASE_DIALOG_LOCK_WINDOW, mLockWindow);
-            bundle.putBoolean(BASE_DIALOG_DISMISS_BY_HIGH_PRIORITY_DIALOG, mDismissByHighPriorityDialog);
             return bundle;
         });
         mDialogFragment.getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
@@ -167,6 +164,7 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
                     onCancelListenerMap.remove(getUuid());
                     onDismissListenerMap.remove(getUuid());
                     onDialogEventListenerMap.remove(getUuid());
+                    reallyDismiss();
                     if (mDialogFragment.requireActivity() instanceof DialogManager) {
                         DialogManager dialogManager = (DialogManager) mDialogFragment.requireActivity();
                         dialogManager.setPendingDismissDialog((PriorityDialog) mDialogFragment);
@@ -226,6 +224,11 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
     @Override
     public void dismissCurrent() {
         mDialogFragment.dismiss();
+    }
+
+    @Override
+    public void reallyDismiss() {
+
     }
 
     @Override

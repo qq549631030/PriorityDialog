@@ -16,7 +16,7 @@ import java.util.UUID;
 
 public class ActivityDialogHostImpl extends AbsDialogHostImpl implements ActivityDialogHost {
 
-    private static final Map<String, ArrayDeque<ActivityAction>> pendingActivityActionMap = new HashMap();
+    private static final Map<String, ArrayDeque<ActivityAction>> pendingActivityActionMap = new HashMap<>();
 
     FragmentActivity activity;
 
@@ -66,6 +66,9 @@ public class ActivityDialogHostImpl extends AbsDialogHostImpl implements Activit
 
     @Override
     public boolean isReady() {
+        if (!super.isReady()) {
+            return false;
+        }
         return !activity.isFinishing();
     }
 

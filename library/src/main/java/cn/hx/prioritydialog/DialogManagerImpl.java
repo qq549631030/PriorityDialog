@@ -17,8 +17,8 @@ import java.util.UUID;
 public class DialogManagerImpl implements DialogManager {
     private static final String BASE_DIALOG_MANAGER_STATE = "cn.hx.base.dialogManager.state";
     private static final String BASE_DIALOG_MANAGER_UUID = "cn.hx.base.dialogManager.uuid";
-    private static final Map<String, DialogHost> dialogHostMap = new HashMap();
-    private static final Map<String, TreeMap<Integer, LinkedList<PriorityDialog>>> pendingDialogMap = new HashMap();
+    private static final Map<String, DialogHost> dialogHostMap = new HashMap<>();
+    private static final Map<String, TreeMap<Integer, LinkedList<PriorityDialog>>> pendingDialogMap = new HashMap<>();
 
     private PriorityStrategy mPriorityStrategy = new DefaultPriorityStrategy();
 
@@ -144,7 +144,7 @@ public class DialogManagerImpl implements DialogManager {
     }
 
     @Override
-    public void addToPendingDialog(@NonNull PriorityDialog priorityDialog) {
+    synchronized public void addToPendingDialog(@NonNull PriorityDialog priorityDialog) {
         if (priorityDialog.getHostUuid() == null) {
             return;
         }
@@ -157,7 +157,7 @@ public class DialogManagerImpl implements DialogManager {
     }
 
     @Override
-    public void tryShowNextPendingDialog() {
+    synchronized public void tryShowNextPendingDialog() {
         if (isWindowLockedByDialog()) {
             return;
         }
@@ -166,16 +166,22 @@ public class DialogManagerImpl implements DialogManager {
         while (lastEntry != null) {
             LinkedList<PriorityDialog> linkedList = lastEntry.getValue();
             if (!linkedList.isEmpty()) {
-                ListIterator<PriorityDialog> listIterator = linkedList.listIterator(linkedList.size());
-                while (listIterator.hasPrevious()) {
-                    PriorityDialog priorityDialog = listIterator.previous();
+                LinkedList<PriorityDialog> temp = new LinkedList<>();
+                temp.addAll(linkedList);
+                PriorityDialog priorityDialog;
+                if (mPriorityStrategy.firstInFirstOutWhenSamePriority()) {
+                    priorityDialog = temp.pollFirst();
+                } else {
+                    priorityDialog = temp.pollLast();
+                }
+                while (priorityDialog != null) {
                     String hostUuid = priorityDialog.getHostUuid();
                     if (hostUuid != null) {
                         DialogHost dialogHost = dialogHostMap.get(hostUuid);
                         if (dialogHost != null) {
-                            if (dialogHost.isReady()) {
+                            if (dialogHost.isReady() && canPendingDialogShow(priorityDialog)) {
                                 if (dialogHost.showPriorityDialog(priorityDialog)) {
-                                    listIterator.remove();
+                                    linkedList.remove(priorityDialog);
                                     if (linkedList.isEmpty()) {
                                         treeMap.remove(lastEntry.getKey());
                                     }
@@ -184,12 +190,28 @@ public class DialogManagerImpl implements DialogManager {
                             }
                         }
                     }
+                    if (mPriorityStrategy.firstInFirstOutWhenSamePriority()) {
+                        priorityDialog = temp.pollFirst();
+                    } else {
+                        priorityDialog = temp.pollLast();
+                    }
                 }
-            }
-            if (!linkedList.isEmpty()) {
                 lastEntry = treeMap.lowerEntry(lastEntry.getKey());
+            } else {
+                treeMap.remove(lastEntry.getKey());
+                lastEntry = treeMap.lastEntry();
             }
         }
+    }
+
+    private boolean canPendingDialogShow(@NonNull PriorityDialog newDialog) {
+        PriorityDialog currentDialog = getCurrentDialog();
+        if (currentDialog != null) {
+            if (mPriorityStrategy.canNewShow(currentDialog, newDialog)) {
+                return true;
+            }
+        }
+        return true;
     }
 
     @Override

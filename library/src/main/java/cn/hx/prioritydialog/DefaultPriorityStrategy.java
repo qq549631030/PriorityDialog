@@ -17,4 +17,9 @@ public class DefaultPriorityStrategy implements PriorityStrategy {
     public boolean shouldPreAddToPendingWhenNewShow(@NonNull PriorityDialog preDialog, @NonNull PriorityDialog newDialog) {
         return preDialog.getOnlyDismissByUser();
     }
+
+    @Override
+    public boolean firstInFirstOutWhenSamePriority() {
+        return false;
+    }
 }

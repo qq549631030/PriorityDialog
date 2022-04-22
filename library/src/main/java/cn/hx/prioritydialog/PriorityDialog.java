@@ -50,7 +50,11 @@ public interface PriorityDialog {
 
     void setOnDialogEventListener(@Nullable OnDialogEventListener<? extends DialogHost> listener);
 
+    @RestrictTo({RestrictTo.Scope.SUBCLASSES})
     void onDialogEvent(@NonNull Object event);
 
     void dismissCurrent();
+
+    @RestrictTo({RestrictTo.Scope.SUBCLASSES})
+    void reallyDismiss();
 }

@@ -9,4 +9,6 @@ public interface PriorityStrategy {
     boolean shouldNewAddToPendingWhenCanNotShow(@NonNull PriorityDialog preDialog, @NonNull PriorityDialog newDialog);
 
     boolean shouldPreAddToPendingWhenNewShow(@NonNull PriorityDialog preDialog, @NonNull PriorityDialog newDialog);
+
+    boolean firstInFirstOutWhenSamePriority();
 }

@@ -150,6 +150,8 @@ public interface PriorityStrategy {
     boolean shouldNewAddToPendingWhenCanNotShow(@NonNull PriorityDialog preDialog, @NonNull PriorityDialog newDialog);
 	//新对话框可显示时，现有对话框是否要加入等待队列
     boolean shouldPreAddToPendingWhenNewShow(@NonNull PriorityDialog preDialog, @NonNull PriorityDialog newDialog);
+    //等待队列中相同优先级的对话框弹出顺序是不是先进先出
+    boolean firstInFirstOutWhenSamePriority();
 }
 ```
 

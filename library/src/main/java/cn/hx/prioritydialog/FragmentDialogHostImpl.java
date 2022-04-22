@@ -48,6 +48,9 @@ public class FragmentDialogHostImpl extends AbsDialogHostImpl implements Fragmen
 
     @Override
     public boolean isReady() {
+        if (!super.isReady()) {
+            return false;
+        }
         return fragment.isVisible();
     }
 }
