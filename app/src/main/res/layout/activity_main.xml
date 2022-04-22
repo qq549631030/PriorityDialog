@@ -28,6 +28,14 @@
         android:layout_gravity="bottom"
         android:text="dismiss by program" />
 
+
+    <Button
+        android:id="@+id/btn_un_support_recreate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:text="unSupport recreate" />
+
     <Button
         android:id="@+id/btn_for_start"
         android:layout_width="match_parent"

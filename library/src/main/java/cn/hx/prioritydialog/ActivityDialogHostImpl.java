@@ -32,25 +32,19 @@ public class ActivityDialogHostImpl extends AbsDialogHostImpl implements Activit
     }
 
     @Override
-    public void initAsDialogHost(@NonNull FragmentActivity activity) {
+    public void initAsDialogHost(@NonNull FragmentActivity activity, @Nullable Bundle savedInstanceState) {
         if (!(activity instanceof DialogManager)) {
             throw new IllegalArgumentException("activity must implements DialogManager");
         }
         this.activity = activity;
-        Bundle savedState = activity.getSavedStateRegistry().consumeRestoredStateForKey(KEY_DIALOG_HOST_STATE);
-        if (savedState != null) {
-            uuid = savedState.getString(BASE_DIALOG_HOST_UUID);
+        if (savedInstanceState != null) {
+            uuid = savedInstanceState.getString(BASE_DIALOG_HOST_UUID);
         }
         if (uuid == null) {
             uuid = UUID.randomUUID().toString();
         }
         init((DialogManager) activity, uuid, activity.getSupportFragmentManager(), activity.getSupportFragmentManager());
         mDialogManager.registerDialogHost(uuid, this);
-        activity.getSavedStateRegistry().registerSavedStateProvider(KEY_DIALOG_HOST_STATE, () -> {
-            Bundle bundle = new Bundle();
-            bundle.putString(BASE_DIALOG_HOST_UUID, uuid);
-            return bundle;
-        });
         activity.getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
             if (event == Lifecycle.Event.ON_START) {
                 tryWarpPendingTransaction();

@@ -29,26 +29,31 @@ public class DialogManagerImpl implements DialogManager {
     PriorityDialog pendingDismissDialog;
 
     @Override
-    public void initAsDialogManager(@NonNull FragmentActivity activity) {
+    public void initAsDialogManager(@NonNull FragmentActivity activity, @Nullable Bundle savedInstanceState) {
         this.activity = activity;
-        Bundle savedState = activity.getSavedStateRegistry().consumeRestoredStateForKey(BASE_DIALOG_MANAGER_STATE);
-        if (savedState != null) {
-            managerUuid = savedState.getString(BASE_DIALOG_MANAGER_UUID);
+        if (savedInstanceState != null) {
+            managerUuid = savedInstanceState.getString(BASE_DIALOG_MANAGER_UUID);
         }
         if (managerUuid == null) {
             managerUuid = UUID.randomUUID().toString();
         }
-        activity.getSavedStateRegistry().registerSavedStateProvider(BASE_DIALOG_MANAGER_STATE, () -> {
-            Bundle bundle = new Bundle();
-            bundle.putString(BASE_DIALOG_MANAGER_UUID, managerUuid);
-            return bundle;
-        });
+        if (activity instanceof ActivityDialogHost) {
+            ((ActivityDialogHost) activity).initAsDialogHost(activity, savedInstanceState);
+        }
     }
 
     @Override
-    public void initAsDialogManager(@NonNull FragmentActivity activity, @NonNull PriorityStrategy priorityStrategy) {
-        initAsDialogManager(activity);
+    public void initAsDialogManager(@NonNull FragmentActivity activity, @NonNull PriorityStrategy priorityStrategy, @Nullable Bundle savedInstanceState) {
+        initAsDialogManager(activity, savedInstanceState);
         this.mPriorityStrategy = priorityStrategy;
+    }
+
+    @Override
+    public void onDialogManagerSaveInstanceState(@NonNull Bundle outState) {
+        outState.putString(BASE_DIALOG_MANAGER_UUID, managerUuid);
+        if (activity instanceof ActivityDialogHost) {
+            ((ActivityDialogHost) activity).onDialogHostSaveInstanceState(outState);
+        }
     }
 
     @NonNull

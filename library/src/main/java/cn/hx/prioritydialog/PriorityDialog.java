@@ -1,5 +1,7 @@
 package cn.hx.prioritydialog;
 
+import android.os.Bundle;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
@@ -36,13 +38,21 @@ public interface PriorityDialog {
 
     void setLockWindow(boolean lockWindow);
 
+    boolean isSupportRecreate();
+
+    void setSupportRecreate(boolean supportRecreate);
+
     @RestrictTo(RestrictTo.Scope.LIBRARY)
     void setDismissByHighPriorityDialog(boolean dismissByHighPriorityDialog);
 
     @RestrictTo({RestrictTo.Scope.SUBCLASSES})
     boolean isDismissByHighPriorityDialog();
 
-    void initAsPriorityDialog(DialogFragment dialogFragment);
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
+    void initAsPriorityDialog(@NonNull DialogFragment dialogFragment, @Nullable Bundle savedInstanceState);
+
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
+    void onPriorityDialogSaveInstanceState(@NonNull Bundle outState);
 
     void setOnCancelListener(@Nullable OnCancelListener<? extends DialogHost> listener);
 

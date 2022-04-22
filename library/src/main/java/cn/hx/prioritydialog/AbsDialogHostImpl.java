@@ -16,7 +16,6 @@ import java.util.Map;
 
 public abstract class AbsDialogHostImpl implements DialogHost {
 
-    public static String KEY_DIALOG_HOST_STATE = "cn.hx.base.dialogHost.state";
     public static String BASE_DIALOG_HOST_UUID = "cn.hx.base.dialogHost.uuid";
 
     private static final Map<String, ArrayDeque<FragmentAction>> pendingFragmentActionMap = new HashMap<>();
@@ -39,8 +38,34 @@ public abstract class AbsDialogHostImpl implements DialogHost {
         this.childFragmentManager = childFragmentManager;
         this.mWarpParentFragmentManager = new WarpFragmentManager(parentFragmentManager, this, false);
         this.mWarpChildFragmentManager = new WarpFragmentManager(childFragmentManager, this, true);
+        childFragmentManager.registerFragmentLifecycleCallbacks(new FragmentManager.FragmentLifecycleCallbacks() {
+            @Override
+            public void onFragmentPreCreated(@NonNull FragmentManager fm, @NonNull Fragment f, @Nullable Bundle savedInstanceState) {
+                if (f instanceof FragmentDialogHost) {
+                    ((FragmentDialogHost) f).initAsDialogHost(f, savedInstanceState);
+                }
+                if (f instanceof PriorityDialog && f instanceof DialogFragment) {
+                    ((PriorityDialog) f).initAsPriorityDialog((DialogFragment) f, savedInstanceState);
+                }
+            }
+
+            @Override
+            public void onFragmentSaveInstanceState(@NonNull FragmentManager fm, @NonNull Fragment f, @NonNull Bundle outState) {
+                if (f instanceof FragmentDialogHost) {
+                    ((FragmentDialogHost) f).onDialogHostSaveInstanceState(outState);
+                }
+                if (f instanceof PriorityDialog) {
+                    ((PriorityDialog) f).onPriorityDialogSaveInstanceState(outState);
+                }
+            }
+        }, false);
         needWarpPendingTransaction = true;
         init = true;
+    }
+
+    @Override
+    public void onDialogHostSaveInstanceState(@NonNull Bundle outState) {
+        outState.putString(BASE_DIALOG_HOST_UUID, uuid);
     }
 
     @NonNull
@@ -131,12 +156,12 @@ public abstract class AbsDialogHostImpl implements DialogHost {
             mDialogManager.setPendingShowDialog(newDialog);
             FragmentTransaction transaction = childFragmentManager.beginTransaction();
             ((DialogFragment) newDialog).show(transaction, PriorityDialog.BASE_DIALOG_TAG);
-            mWarpChildFragmentManager.registerFragmentLifecycleCallbacks(new FragmentManager.FragmentLifecycleCallbacks() {
+            childFragmentManager.registerFragmentLifecycleCallbacks(new FragmentManager.FragmentLifecycleCallbacks() {
                 @Override
                 public void onFragmentCreated(@NonNull FragmentManager fm, @NonNull Fragment f, @Nullable Bundle savedInstanceState) {
                     if (f.equals(mDialogManager.getPendingShowDialog())) {
                         mDialogManager.setPendingShowDialog(null);
-                        mWarpChildFragmentManager.unregisterFragmentLifecycleCallbacks(this);
+                        childFragmentManager.unregisterFragmentLifecycleCallbacks(this);
                     }
                 }
             }, false);

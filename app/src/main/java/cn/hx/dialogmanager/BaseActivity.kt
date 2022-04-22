@@ -13,10 +13,15 @@ open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImp
     val TAG = this::class.java.simpleName
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        initAsDialogManager(this, savedInstanceState)
         super.onCreate(savedInstanceState)
-        initAsDialogManager(this)
-        initAsDialogHost(this)
     }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        onDialogManagerSaveInstanceState(outState)
+    }
+
 
     @Deprecated("Deprecated in Java")
     @Suppress("DEPRECATION")
@@ -36,12 +41,12 @@ open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImp
         super.finish()
     }
 
-    fun showAlertDialog(title: String? = null, message: String, priority: Int = 0, onlyDismissByUser: Boolean = true, lockWindow: Boolean = false, uuid: String? = null) {
-        val dialog = createAlertDialog(title, message, priority, onlyDismissByUser, lockWindow, uuid)
+    fun showAlertDialog(title: String? = null, message: String, priority: Int = 0, onlyDismissByUser: Boolean = true, lockWindow: Boolean = false, isSupportRecreate: Boolean = true, uuid: String? = null) {
+        val dialog = createAlertDialog(title, message, priority, onlyDismissByUser, lockWindow, isSupportRecreate, uuid)
         showPriorityDialog(dialog)
     }
 
-    fun createAlertDialog(title: String? = null, message: String, priority: Int = 0, onlyDismissByUser: Boolean = true, lockWindow: Boolean = false, uuid: String? = null): BaseAlertDialog {
+    fun createAlertDialog(title: String? = null, message: String, priority: Int = 0, onlyDismissByUser: Boolean = true, lockWindow: Boolean = false, isSupportRecreate: Boolean = true, uuid: String? = null): BaseAlertDialog {
         val dialog = BaseAlertDialog.Builder()
                 .title(title)
                 .message(message)
@@ -51,6 +56,7 @@ open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImp
         dialog.priority = priority
         dialog.onlyDismissByUser = onlyDismissByUser
         dialog.lockWindow = lockWindow
+        dialog.isSupportRecreate = isSupportRecreate
         uuid?.let {
             dialog.uuid = it
         }

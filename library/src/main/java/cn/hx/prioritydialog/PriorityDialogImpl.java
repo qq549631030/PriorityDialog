@@ -18,12 +18,12 @@ import java.util.UUID;
 
 public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCancelListener {
 
-    String KEY_DIALOG_STATE = "cn.hx.base.dialog.state";
     String BASE_DIALOG_UUID = "cn.hx.base.dialog.uuid";
     String BASE_DIALOG_HOST_UUID = "cn.hx.base.dialog.host.uuid";
     String BASE_DIALOG_PRIORITY = "cn.hx.base.dialog.priority";
     String BASE_DIALOG_ONLY_DISMISS_BY_USER = "cn.hx.base.dialog.onlyDismissByUser";
     String BASE_DIALOG_LOCK_WINDOW = "cn.hx.base.dialog.lockWindow";
+    String BASE_DIALOG_SUPPORT_RECREATE = "cn.hx.base.dialog.supportRecreate";
 
     private static final Map<String, OnCancelListener<? extends DialogHost>> onCancelListenerMap = new HashMap<>();
     private static final Map<String, OnDismissListener<? extends DialogHost>> onDismissListenerMap = new HashMap<>();
@@ -36,6 +36,7 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
     private int mPriority = 0;
     private boolean mOnlyDismissByUser;
     private boolean mLockWindow = false;
+    private boolean mSupportRecreate = true;
     private boolean mDismissByHighPriorityDialog = false;
 
     public PriorityDialogImpl() {
@@ -102,6 +103,16 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
     }
 
     @Override
+    public boolean isSupportRecreate() {
+        return mSupportRecreate;
+    }
+
+    @Override
+    public void setSupportRecreate(boolean supportRecreate) {
+        this.mSupportRecreate = supportRecreate;
+    }
+
+    @Override
     public void setDismissByHighPriorityDialog(boolean dismissByHighPriorityDialog) {
         mDismissByHighPriorityDialog = dismissByHighPriorityDialog;
     }
@@ -111,28 +122,23 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
         return mDismissByHighPriorityDialog;
     }
 
-    public void initAsPriorityDialog(DialogFragment dialogFragment) {
+    @Override
+    public void initAsPriorityDialog(@NonNull DialogFragment dialogFragment, @Nullable Bundle savedInstanceState) {
         if (!(dialogFragment instanceof PriorityDialog)) {
             throw new IllegalArgumentException("dialogFragment must implements PriorityDialog");
         }
         this.mDialogFragment = dialogFragment;
-        Bundle savedState = mDialogFragment.getSavedStateRegistry().consumeRestoredStateForKey(KEY_DIALOG_STATE);
-        if (savedState != null) {
-            mUuid = savedState.getString(BASE_DIALOG_UUID);
-            mHostUuid = savedState.getString(BASE_DIALOG_HOST_UUID);
-            mPriority = savedState.getInt(BASE_DIALOG_PRIORITY, 0);
-            mOnlyDismissByUser = savedState.getBoolean(BASE_DIALOG_ONLY_DISMISS_BY_USER, true);
-            mLockWindow = savedState.getBoolean(BASE_DIALOG_LOCK_WINDOW);
+        if (savedInstanceState != null) {
+            mUuid = savedInstanceState.getString(BASE_DIALOG_UUID);
+            mHostUuid = savedInstanceState.getString(BASE_DIALOG_HOST_UUID);
+            mPriority = savedInstanceState.getInt(BASE_DIALOG_PRIORITY, 0);
+            mOnlyDismissByUser = savedInstanceState.getBoolean(BASE_DIALOG_ONLY_DISMISS_BY_USER, true);
+            mLockWindow = savedInstanceState.getBoolean(BASE_DIALOG_LOCK_WINDOW);
+            mSupportRecreate = savedInstanceState.getBoolean(BASE_DIALOG_SUPPORT_RECREATE, true);
+            if (!mSupportRecreate) {
+                dismissCurrent();
+            }
         }
-        mDialogFragment.getSavedStateRegistry().registerSavedStateProvider(KEY_DIALOG_STATE, () -> {
-            Bundle bundle = new Bundle();
-            bundle.putString(BASE_DIALOG_UUID, mUuid);
-            bundle.putString(BASE_DIALOG_HOST_UUID, mHostUuid);
-            bundle.putInt(BASE_DIALOG_PRIORITY, mPriority);
-            bundle.putBoolean(BASE_DIALOG_ONLY_DISMISS_BY_USER, mOnlyDismissByUser);
-            bundle.putBoolean(BASE_DIALOG_LOCK_WINDOW, mLockWindow);
-            return bundle;
-        });
         mDialogFragment.getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
             if (event == Lifecycle.Event.ON_START) {
                 Dialog dialog = mDialogFragment.getDialog();
@@ -184,6 +190,16 @@ public class PriorityDialogImpl implements PriorityDialog, DialogInterface.OnCan
                 }
             }
         });
+    }
+
+    @Override
+    public void onPriorityDialogSaveInstanceState(@NonNull Bundle outState) {
+        outState.putString(BASE_DIALOG_UUID, getUuid());
+        outState.putString(BASE_DIALOG_HOST_UUID, mHostUuid);
+        outState.putInt(BASE_DIALOG_PRIORITY, mPriority);
+        outState.putBoolean(BASE_DIALOG_ONLY_DISMISS_BY_USER, mOnlyDismissByUser);
+        outState.putBoolean(BASE_DIALOG_LOCK_WINDOW, mLockWindow);
+        outState.putBoolean(BASE_DIALOG_SUPPORT_RECREATE, mSupportRecreate);
     }
 
     @Override

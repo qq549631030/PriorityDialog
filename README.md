@@ -20,15 +20,8 @@ dependencies {
 
 PriorityDialog by PriorityDialogImpl()可实现将任意一个DialogFragment转变成优先级对话框
 
-并在onCreate方法调用initAsPriorityDialog(this)完成初始化
-
 ```kotlin
 open class BaseDialog : DialogFragment(), PriorityDialog by PriorityDialogImpl() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        initAsPriorityDialog(this)
-    }
 }
 ```
 
@@ -42,28 +35,29 @@ ActivityDialogHost by ActivityDialogHostImpl() 可实现将任意一个FragmentA
 
 FragmentDialogHost by FragmentDialogHostImpl()可实现将任意一个Fragment转变成对话框宿主
 
-在onCreate方法调用initAsDialogManager(this)、initAsDialogHost(this)完成初始化
 
-DialogManager仅可用于FragmentActivity
+
+在FragmentActivity的onCreate方法的super.onCreate(savedInstanceState)之前调用initAsDialogManager(this, savedInstanceState)完成初始化
+
+在FragmentActivity的onSaveInstanceState方法中调用onDialogManagerSaveInstanceState
 
 ```kotlin
 open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImpl(), ActivityDialogHost by ActivityDialogHostImpl() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        initAsDialogManager(this, savedInstanceState)
         super.onCreate(savedInstanceState)
-        initAsDialogManager(this)
-        initAsDialogHost(this)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        onDialogManagerSaveInstanceState(outState)
     }
 }
 ```
 
 ```kotlin
 open class BaseFragment : Fragment(), FragmentDialogHost by FragmentDialogHostImpl() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        initAsDialogHost(this)
-    }
 }
 ```
 
@@ -189,9 +183,13 @@ Fragment的 startActivity()、startActivityForResult()
 open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImpl(), ActivityDialogHost by ActivityDialogHostImpl() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        initAsDialogManager(this, savedInstanceState)
         super.onCreate(savedInstanceState)
-        initAsDialogManager(this)
-        initAsDialogHost(this)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        onDialogManagerSaveInstanceState(outState)
     }
 
     override fun startActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) {
@@ -237,6 +235,26 @@ warpParentFragmentManager.beginTransaction().replace(R.id.container, SecondFragm
 //当前显示的Fragment不变
 dialog.dismiss()
 //当前显示的Fragment变成了SecondFragment
+```
+
+##### 4、isSupportRecreate是否支持Activity重建前的dialog恢复显示（默认值true）
+
+```kotlin
+val dialog = BaseDialog()
+dialog.isSupportRecreate = true
+showPriorityDialog(dialog)
+//当前显示dialog
+Activity recreate
+//当前显示dialog
+```
+
+```kotlin
+val dialog = BaseDialog()
+dialog.isSupportRecreate = false
+showPriorityDialog(dialog)
+//当前显示dialog
+Activity recreate
+//当前无dialog
 ```
 
 ### 对话框事件处理

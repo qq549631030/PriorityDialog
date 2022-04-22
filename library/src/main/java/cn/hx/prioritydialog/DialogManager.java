@@ -1,5 +1,7 @@
 package cn.hx.prioritydialog;
 
+import android.os.Bundle;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
@@ -7,9 +9,11 @@ import androidx.fragment.app.FragmentActivity;
 
 public interface DialogManager {
 
-    void initAsDialogManager(@NonNull FragmentActivity activity);
+    void initAsDialogManager(@NonNull FragmentActivity activity, @Nullable Bundle savedInstanceState);
 
-    void initAsDialogManager(@NonNull FragmentActivity activity, @NonNull PriorityStrategy priorityStrategy);
+    void initAsDialogManager(@NonNull FragmentActivity activity, @NonNull PriorityStrategy priorityStrategy, @Nullable Bundle savedInstanceState);
+
+    void onDialogManagerSaveInstanceState(@NonNull Bundle outState);
 
     @NonNull
     @RestrictTo(RestrictTo.Scope.LIBRARY)

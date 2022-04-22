@@ -67,6 +67,13 @@ class MainActivity : BaseActivity() {
                 )
             }, 3000L)
         }
+        binding.btnUnSupportRecreate.setOnClickListener {
+            showAlertDialog(
+                    "first dialog",
+                    "this is the first dialog with  with isSupportRecreate = false\nthis will dismiss when recreate",
+                    isSupportRecreate = false
+            )
+        }
         binding.btnForStart.setOnClickListener {
             showAlertDialog(
                     "first dialog",

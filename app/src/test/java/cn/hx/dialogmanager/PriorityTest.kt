@@ -155,4 +155,36 @@ class PriorityTest {
             assert(it.currentDialog == null)
         }
     }
+
+    @Test
+    fun unSupportRecreate() {
+        activityRule.scenario.onActivity {
+            assert(it.currentDialog == null)
+            it.showAlertDialog(message = "first dialog", priority = 1)
+        }
+        activityRule.scenario.onActivity {
+            assert(it.currentDialog != null)
+            Espresso.onView(ViewMatchers.withId(R.id.message))
+                    .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
+                    .check(ViewAssertions.matches(ViewMatchers.withText("first dialog")))
+
+            it.showAlertDialog(message = "second dialog", priority = 2, isSupportRecreate = false)
+        }
+        activityRule.scenario.onActivity {
+            Espresso.onView(ViewMatchers.withId(R.id.message))
+                    .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
+                    .check(ViewAssertions.matches(ViewMatchers.withText("second dialog")))
+        }
+        activityRule.scenario.recreate()
+        activityRule.scenario.onActivity {
+            Espresso.onView(ViewMatchers.withId(R.id.message))
+                    .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
+                    .check(ViewAssertions.matches(ViewMatchers.withText("first dialog")))
+            Espresso.onView(ViewMatchers.withId(R.id.button1))
+                    .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
+                    .perform(ViewActions.click())
+
+            assert(it.currentDialog == null)
+        }
+    }
 }

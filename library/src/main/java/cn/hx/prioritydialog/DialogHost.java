@@ -20,6 +20,9 @@ public interface DialogHost {
     DialogManager getDialogManager();
 
     @RestrictTo(RestrictTo.Scope.LIBRARY)
+    void onDialogHostSaveInstanceState(@NonNull Bundle outState);
+
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
     boolean isReady();
 
     boolean showPriorityDialog(@NonNull PriorityDialog newDialog);

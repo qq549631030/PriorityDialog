@@ -9,7 +9,7 @@ import androidx.fragment.app.FragmentActivity;
 
 public interface ActivityDialogHost extends DialogHost {
 
-    void initAsDialogHost(@NonNull FragmentActivity activity);
+    void initAsDialogHost(@NonNull FragmentActivity activity, @Nullable Bundle savedInstanceState);
 
     boolean warpStartActivityForResult(@NonNull Intent intent, int requestCode, @Nullable Bundle options);
 
