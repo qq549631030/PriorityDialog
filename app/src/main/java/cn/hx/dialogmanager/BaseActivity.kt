@@ -3,25 +3,14 @@ package cn.hx.dialogmanager
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import cn.hx.prioritydialog.ActivityDialogHost
-import cn.hx.prioritydialog.ActivityDialogHostImpl
+import cn.hx.prioritydialog.DialogHost
+import cn.hx.prioritydialog.DialogHostImpl
 import cn.hx.prioritydialog.DialogManager
 import cn.hx.prioritydialog.DialogManagerImpl
 
-open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImpl(), ActivityDialogHost by ActivityDialogHostImpl() {
+open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImpl(), DialogHost by DialogHostImpl() {
 
     val TAG = this::class.java.simpleName
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        initAsDialogManager(this, savedInstanceState)
-        super.onCreate(savedInstanceState)
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        onDialogManagerSaveInstanceState(outState)
-    }
-
 
     @Deprecated("Deprecated in Java")
     @Suppress("DEPRECATION")

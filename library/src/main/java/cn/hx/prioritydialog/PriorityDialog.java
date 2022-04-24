@@ -1,15 +1,19 @@
 package cn.hx.prioritydialog;
 
-import android.os.Bundle;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
-import androidx.fragment.app.DialogFragment;
 
 public interface PriorityDialog {
 
     String BASE_DIALOG_TAG = "cn.hx.base.dialog.tag";
+
+    String BASE_DIALOG_UUID = "cn.hx.base.dialog.uuid";
+    String BASE_DIALOG_HOST_UUID = "cn.hx.base.dialog.host.uuid";
+    String BASE_DIALOG_PRIORITY = "cn.hx.base.dialog.priority";
+    String BASE_DIALOG_ONLY_DISMISS_BY_USER = "cn.hx.base.dialog.onlyDismissByUser";
+    String BASE_DIALOG_LOCK_WINDOW = "cn.hx.base.dialog.lockWindow";
+    String BASE_DIALOG_SUPPORT_RECREATE = "cn.hx.base.dialog.supportRecreate";
 
     //唯一标识
     @NonNull
@@ -45,14 +49,7 @@ public interface PriorityDialog {
     @RestrictTo(RestrictTo.Scope.LIBRARY)
     void setDismissByHighPriorityDialog(boolean dismissByHighPriorityDialog);
 
-    @RestrictTo({RestrictTo.Scope.SUBCLASSES})
     boolean isDismissByHighPriorityDialog();
-
-    @RestrictTo(RestrictTo.Scope.LIBRARY)
-    void initAsPriorityDialog(@NonNull DialogFragment dialogFragment, @Nullable Bundle savedInstanceState);
-
-    @RestrictTo(RestrictTo.Scope.LIBRARY)
-    void onPriorityDialogSaveInstanceState(@NonNull Bundle outState);
 
     void setOnCancelListener(@Nullable OnCancelListener<? extends DialogHost> listener);
 
@@ -63,8 +60,5 @@ public interface PriorityDialog {
     @RestrictTo({RestrictTo.Scope.SUBCLASSES})
     void onDialogEvent(@NonNull Object event);
 
-    void dismissCurrent();
-
-    @RestrictTo({RestrictTo.Scope.SUBCLASSES})
-    void reallyDismiss();
+    void onReallyDismiss();
 }

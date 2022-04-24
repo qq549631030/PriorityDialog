@@ -14,7 +14,19 @@ dependencies {
 
 ### 初始化配置
 
-#### 1、PriorityDialog配置
+#### 1、初始化
+在Application的onCreate方法调用PriorityDialogManager.init(this)初始化
+```kotlin
+class BaseApplication : Application() {
+
+    override fun onCreate() {
+        super.onCreate()
+        PriorityDialogManager.init(this)
+    }
+}
+```
+
+#### 2、PriorityDialog配置
 
 通过代理方式：
 
@@ -25,43 +37,25 @@ open class BaseDialog : DialogFragment(), PriorityDialog by PriorityDialogImpl()
 }
 ```
 
-#### 2、DialogManager，DialogHost配置
+#### 3、DialogManager，DialogHost配置
 
 通过代理方式：
 
 DialogManager by DialogManagerImpl() 可实现将任意一个FragmentActivity转变成对话框管理类
 
-ActivityDialogHost by ActivityDialogHostImpl() 可实现将任意一个FragmentActivity转变成对话框宿主
-
-FragmentDialogHost by FragmentDialogHostImpl()可实现将任意一个Fragment转变成对话框宿主
-
-
-
-在FragmentActivity的onCreate方法的super.onCreate(savedInstanceState)之前调用initAsDialogManager(this, savedInstanceState)完成初始化
-
-在FragmentActivity的onSaveInstanceState方法中调用onDialogManagerSaveInstanceState
+DialogHost by DialogHostImpl() 可实现将任意一个FragmentActivity、Fragment转变成对话框宿主
 
 ```kotlin
-open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImpl(), ActivityDialogHost by ActivityDialogHostImpl() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        initAsDialogManager(this, savedInstanceState)
-        super.onCreate(savedInstanceState)
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        onDialogManagerSaveInstanceState(outState)
-    }
+open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImpl(), DialogHost by DialogHostImpl() {
 }
 ```
 
 ```kotlin
-open class BaseFragment : Fragment(), FragmentDialogHost by FragmentDialogHostImpl() {
+open class BaseFragment : Fragment(), DialogHost by DialogHostImpl() {
 }
 ```
 
-#### 3、使用
+#### 4、使用
 
 在DialogHost(宿主)中调用showPriorityDialog(priorityDialog)即可
 
@@ -130,9 +124,11 @@ dialog1.dismiss()
 //当前无dialog
 ```
 
-以上是默认的优先级处理方式，1.0.4之后可以通过配置PriorityStrategy来自定义规则  
+以上是默认的优先级处理方式，也可以通过配置PriorityStrategy来自定义规则  
 
-通过initAsDialogManager(this，customPriorityStrategy)来实现
+通过PriorityDialogManager.init(this，priorityStrategy)初始化来实现  
+
+或通过PriorityDialogManager.updatePriorityStrategy(priorityStrategy)修改  
 
 具体实现方式可参数DefaultPriorityStrategy
 
@@ -180,17 +176,7 @@ Fragment的 startActivity()、startActivityForResult()
 要使这个属性生效，前面的BaseActivity配置要做如下调整：
 
 ```kotlin
-open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImpl(), ActivityDialogHost by ActivityDialogHostImpl() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        initAsDialogManager(this, savedInstanceState)
-        super.onCreate(savedInstanceState)
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        onDialogManagerSaveInstanceState(outState)
-    }
+open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImpl(), DialogHost by DialogHostImpl() {
 
     override fun startActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) {
         if (warpStartActivityForResult(intent, requestCode, options)) {

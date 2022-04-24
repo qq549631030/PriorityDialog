@@ -1,10 +1,10 @@
 package cn.hx.dialogmanager
 
 import androidx.fragment.app.Fragment
-import cn.hx.prioritydialog.FragmentDialogHost
-import cn.hx.prioritydialog.FragmentDialogHostImpl
+import cn.hx.prioritydialog.DialogHost
+import cn.hx.prioritydialog.DialogHostImpl
 
-open class BaseFragment : Fragment(), FragmentDialogHost by FragmentDialogHostImpl() {
+open class BaseFragment : Fragment(), DialogHost by DialogHostImpl() {
 
     val TAG = this::class.java.simpleName
 

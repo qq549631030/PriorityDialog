@@ -1,5 +1,6 @@
 package cn.hx.prioritydialog;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -10,41 +11,28 @@ import androidx.fragment.app.FragmentManager;
 
 public interface DialogHost {
 
-    @NonNull
-    FragmentManager getWarpParentFragmentManager();
+    String BASE_DIALOG_HOST_UUID = "cn.hx.base.dialogHost.uuid";
+
+    PriorityDialogHost getPriorityDialogHost();
 
     @NonNull
-    FragmentManager getWarpChildFragmentManager();
+    String getUuid();
 
     @NonNull
-    DialogManager getDialogManager();
+    WarpFragmentManager getWarpParentFragmentManager();
 
-    @RestrictTo(RestrictTo.Scope.LIBRARY)
-    void onDialogHostSaveInstanceState(@NonNull Bundle outState);
-
-    @RestrictTo(RestrictTo.Scope.LIBRARY)
-    boolean isReady();
+    @NonNull
+    WarpFragmentManager getWarpChildFragmentManager();
 
     boolean showPriorityDialog(@NonNull PriorityDialog newDialog);
-
-    @Nullable
-    @RestrictTo(RestrictTo.Scope.LIBRARY)
-    PriorityDialog findCurrentDialog();
 
     void onDialogEvent(@NonNull PriorityDialog priorityDialog, @NonNull Object event);
 
     void onCancel(@NonNull PriorityDialog priorityDialog);
 
-    void dismissCurrentDialog();
-
     void onDismiss(@NonNull PriorityDialog priorityDialog);
 
-    @RestrictTo(RestrictTo.Scope.LIBRARY)
-    void setPendingTransaction(@NonNull WarpBackStackRecord pendingTransaction, boolean isChildFragmentManager);
+    boolean warpStartActivityForResult(@NonNull Intent intent, int requestCode, @Nullable Bundle options);
 
-    @RestrictTo(RestrictTo.Scope.LIBRARY)
-    void setPendingPopBackStack(@NonNull Bundle pendingPopBackStack, boolean isChildFragmentManager);
-
-    @RestrictTo(RestrictTo.Scope.LIBRARY)
-    void tryPendingAction();
+    boolean warpFinish();
 }
