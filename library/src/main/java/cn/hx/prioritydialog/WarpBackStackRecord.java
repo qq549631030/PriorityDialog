@@ -40,7 +40,10 @@ public class WarpBackStackRecord extends FragmentTransaction {
         if (dialogManager.isWindowLockedByDialog()) {
             type = TYPE_COMMIT;
             // add to pending, this will lose the returned backStackIndex
-            dialogManager.setPendingFragmentAction(new FragmentAction(this, hostUuid, isChildFragmentManager));
+            PendingTransactionState pendingTransactionState = FragmentUtil.saveTransaction(type, transaction);
+            if (pendingTransactionState != null) {
+                dialogManager.setPendingFragmentAction(new FragmentAction(pendingTransactionState, hostUuid, isChildFragmentManager));
+            }
             return -1;
         }
         return transaction.commit();
@@ -51,7 +54,11 @@ public class WarpBackStackRecord extends FragmentTransaction {
         if (dialogManager.isWindowLockedByDialog()) {
             type = TYPE_COMMIT_ALLOWING_STATE_LOSS;
             // add to pending, this will lose the returned backStackIndex
-            dialogManager.setPendingFragmentAction(new FragmentAction(this, hostUuid, isChildFragmentManager));
+            PendingTransactionState pendingTransactionState = FragmentUtil.saveTransaction(type, transaction);
+            if (pendingTransactionState != null) {
+                dialogManager.setPendingFragmentAction(new FragmentAction(pendingTransactionState, hostUuid, isChildFragmentManager));
+            }
+            ;
             return -1;
         }
         return transaction.commitAllowingStateLoss();
@@ -62,7 +69,10 @@ public class WarpBackStackRecord extends FragmentTransaction {
         if (dialogManager.isWindowLockedByDialog()) {
             type = TYPE_COMMIT_NOW;
             // add to pending
-            dialogManager.setPendingFragmentAction(new FragmentAction(this, hostUuid, isChildFragmentManager));
+            PendingTransactionState pendingTransactionState = FragmentUtil.saveTransaction(type, transaction);
+            if (pendingTransactionState != null) {
+                dialogManager.setPendingFragmentAction(new FragmentAction(pendingTransactionState, hostUuid, isChildFragmentManager));
+            }
             return;
         }
         transaction.commitNow();
@@ -73,31 +83,13 @@ public class WarpBackStackRecord extends FragmentTransaction {
         if (dialogManager.isWindowLockedByDialog()) {
             type = TYPE_COMMIT_NOW_ALLOWING_STATE_LOSS;
             // add to pending
-            dialogManager.setPendingFragmentAction(new FragmentAction(this, hostUuid, isChildFragmentManager));
+            PendingTransactionState pendingTransactionState = FragmentUtil.saveTransaction(type, transaction);
+            if (pendingTransactionState != null) {
+                dialogManager.setPendingFragmentAction(new FragmentAction(pendingTransactionState, hostUuid, isChildFragmentManager));
+            }
             return;
         }
         transaction.commitNowAllowingStateLoss();
-    }
-
-    public boolean tryPendingAction() {
-        if (dialogManager.isWindowLockedByDialog()) {
-            return false;
-        }
-        switch (type) {
-            case TYPE_COMMIT:
-                commit();
-                break;
-            case TYPE_COMMIT_ALLOWING_STATE_LOSS:
-                commitAllowingStateLoss();
-                break;
-            case TYPE_COMMIT_NOW:
-                commitNow();
-                break;
-            case TYPE_COMMIT_NOW_ALLOWING_STATE_LOSS:
-                commitNowAllowingStateLoss();
-                break;
-        }
-        return true;
     }
 
     @NonNull

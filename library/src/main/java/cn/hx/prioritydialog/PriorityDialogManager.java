@@ -25,12 +25,14 @@ import java.util.TreeMap;
 
 public class PriorityDialogManager {
     private static final String PENDING_DIALOGS = "cn.hx.base.dialogManager.pendingDialogs";
+    private static final String PENDING_ACTIVITY_ACTIONS = "cn.hx.base.dialogManager.pendingActivityActions";
+    private static final String PENDING_FRAGMENT_ACTIONS = "cn.hx.base.dialogManager.pendingFragmentActions";
     private static PriorityStrategy mPriorityStrategy = new DefaultPriorityStrategy();
 
     private final Map<String, DialogHost> dialogHostMap = new HashMap<>();
     private final TreeMap<Integer, LinkedList<PendingDialogState>> pendingDialogMap = new TreeMap<>();
-    private static final Map<String, ArrayDeque<ActivityAction>> pendingActivityActionMap = new HashMap<>();
-    private static final Map<String, ArrayDeque<FragmentAction>> pendingFragmentActionMap = new HashMap<>();
+    private final Map<String, ArrayDeque<ActivityAction>> pendingActivityActionMap = new HashMap<>();
+    private final Map<String, ArrayDeque<FragmentAction>> pendingFragmentActionMap = new HashMap<>();
 
     static final Map<String, OnCancelListener<? extends DialogHost>> onCancelListenerMap = new HashMap<>();
     static final Map<String, OnDismissListener<? extends DialogHost>> onDismissListenerMap = new HashMap<>();
@@ -89,6 +91,8 @@ public class PriorityDialogManager {
                     PriorityDialogManager dialogManager = ((DialogManager) activity).getPriorityDialogManager();
                     //save the manager uuid
                     dialogManager.savePendingDialogs(bundle);
+                    dialogManager.savePendingActivityActions(bundle);
+                    dialogManager.savePendingFragmentActions(bundle);
                     if (activity instanceof DialogHost) {
                         // save activity host uuid
                         bundle.putString(DialogHost.BASE_DIALOG_HOST_UUID, ((DialogHost) activity).getUuid());
@@ -112,19 +116,16 @@ public class PriorityDialogManager {
     void initAsDialogManager(@NonNull FragmentActivity activity, @Nullable Bundle savedInstanceState) {
         this.activity = activity;
         restorePendingDialogs(savedInstanceState);
+        restorePendingActivityActions(savedInstanceState);
+        restorePendingFragmentActions(savedInstanceState);
         activity.getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
             if (activity instanceof DialogHost) {
                 DialogHost dialogHost = (DialogHost) activity;
-                if (event == Lifecycle.Event.ON_CREATE && savedInstanceState != null) {
-                    //reassign FragmentManager for pending transactions when recreate
-                    tryWarpPendingTransaction(dialogHost.getUuid(), activity.getSupportFragmentManager(), activity.getSupportFragmentManager());
-                }
                 if (event == Lifecycle.Event.ON_DESTROY && activity.isFinishing()) {
                     //clean activity dialogHost
                     unregisterDialogHost(dialogHost.getUuid());
                 }
             }
-
         });
         activity.getSupportFragmentManager().registerFragmentLifecycleCallbacks(new FragmentManager.FragmentLifecycleCallbacks() {
             @Override
@@ -159,14 +160,6 @@ public class PriorityDialogManager {
                             }
                         }
                     });
-                }
-            }
-
-            @Override
-            public void onFragmentCreated(@NonNull FragmentManager fm, @NonNull Fragment f, @Nullable Bundle savedInstanceState) {
-                if (f instanceof DialogHost && savedInstanceState != null) {
-                    //reassign FragmentManager for pending transactions when recreate
-                    tryWarpPendingTransaction(((DialogHost) f).getUuid(), f.getFragmentManager(), f.getChildFragmentManager());
                 }
             }
 
@@ -412,6 +405,48 @@ public class PriorityDialogManager {
         }
     }
 
+    void savePendingActivityActions(Bundle outState) {
+        Bundle activityActions = new Bundle();
+        for (Map.Entry<String, ArrayDeque<ActivityAction>> entry : pendingActivityActionMap.entrySet()) {
+            ArrayList<ActivityAction> list = new ArrayList<>(entry.getValue());
+            activityActions.putParcelableArrayList(entry.getKey(), list);
+        }
+        outState.putBundle(PENDING_ACTIVITY_ACTIONS, activityActions);
+    }
+
+    void restorePendingActivityActions(@Nullable Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            Bundle activityActions = savedInstanceState.getBundle(PENDING_ACTIVITY_ACTIONS);
+            if (activityActions != null) {
+                for (String key : activityActions.keySet()) {
+                    ArrayList<ActivityAction> list = activityActions.getParcelableArrayList(key);
+                    pendingActivityActionMap.put(key, new ArrayDeque<>(list));
+                }
+            }
+        }
+    }
+
+    void savePendingFragmentActions(Bundle outState) {
+        Bundle fragmentActions = new Bundle();
+        for (Map.Entry<String, ArrayDeque<FragmentAction>> entry : pendingFragmentActionMap.entrySet()) {
+            ArrayList<FragmentAction> list = new ArrayList<>(entry.getValue());
+            fragmentActions.putParcelableArrayList(entry.getKey(), list);
+        }
+        outState.putBundle(PENDING_FRAGMENT_ACTIONS, fragmentActions);
+    }
+
+    void restorePendingFragmentActions(@Nullable Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            Bundle fragmentActions = savedInstanceState.getBundle(PENDING_FRAGMENT_ACTIONS);
+            if (fragmentActions != null) {
+                for (String key : fragmentActions.keySet()) {
+                    ArrayList<FragmentAction> list = fragmentActions.getParcelableArrayList(key);
+                    pendingFragmentActionMap.put(key, new ArrayDeque<>(list));
+                }
+            }
+        }
+    }
+
     @NonNull
     ArrayDeque<ActivityAction> getPendingActivityActions(@NonNull String hostUuid) {
         ArrayDeque<ActivityAction> activityActions = pendingActivityActionMap.get(hostUuid);
@@ -438,20 +473,6 @@ public class PriorityDialogManager {
         getPendingFragmentActions(fragmentAction.hostUuid).addLast(fragmentAction);
     }
 
-    void tryWarpPendingTransaction(String hostUuid, FragmentManager parentFragmentManager, FragmentManager childFragmentManager) {
-        for (FragmentAction fragmentAction : getPendingFragmentActions(hostUuid)) {
-            if (fragmentAction.type == FragmentAction.TYPE_TRANSACTION) {
-                FragmentManager fragmentManager;
-                if (fragmentAction.isChildFragmentManager) {
-                    fragmentManager = childFragmentManager;
-                } else {
-                    fragmentManager = parentFragmentManager;
-                }
-                fragmentAction.transaction = fragmentAction.transaction.warpWithNewFragmentManager(fragmentManager, this, hostUuid);
-            }
-        }
-    }
-
     void tryAllPendingAction() {
         if (isWindowLockedByDialog()) {
             return;
@@ -473,17 +494,18 @@ public class PriorityDialogManager {
     }
 
     private void tryPendingFragmentActionsForFragment(Fragment fragment) {
-        FragmentManager fragmentFragmentManager = fragment.getFragmentManager();
-        if (fragmentFragmentManager != null) {
-            if (fragmentFragmentManager.isDestroyed()) {
+        FragmentManager fragmentManager = fragment.getFragmentManager();
+        if (fragmentManager != null) {
+            if (fragmentManager.isDestroyed()) {
                 return;
             }
         }
-        if (fragment instanceof DialogHost) {
-            tryPendingFragmentActions((DialogHost) fragment);
-        }
+        //child first
         for (Fragment child : fragment.getChildFragmentManager().getFragments()) {
             tryPendingFragmentActionsForFragment(child);
+        }
+        if (fragment instanceof DialogHost) {
+            tryPendingFragmentActions((DialogHost) fragment);
         }
     }
 
@@ -492,21 +514,18 @@ public class PriorityDialogManager {
         if (fragmentActions != null) {
             FragmentAction fragmentAction = fragmentActions.peekFirst();
             while (fragmentAction != null) {
+                WarpFragmentManager fragmentManager;
+                if (fragmentAction.isChildFragmentManager) {
+                    fragmentManager = dialogHost.getWarpChildFragmentManager();
+                } else {
+                    fragmentManager = dialogHost.getWarpParentFragmentManager();
+                }
                 switch (fragmentAction.type) {
                     case FragmentAction.TYPE_TRANSACTION:
-                        if (fragmentAction.transaction.tryPendingAction()) {
-                            fragmentActions.removeFirst();
-                        } else {
-                            return;
-                        }
+                        FragmentUtil.startPendingTransaction(fragmentAction.transaction, fragmentManager.fragmentManager);
+                        fragmentActions.removeFirst();
                         break;
                     case FragmentAction.TYPE_POP_BACKSTACK:
-                        WarpFragmentManager fragmentManager;
-                        if (fragmentAction.isChildFragmentManager) {
-                            fragmentManager = dialogHost.getWarpChildFragmentManager();
-                        } else {
-                            fragmentManager = dialogHost.getWarpParentFragmentManager();
-                        }
                         if (fragmentManager.tryPendingAction(fragmentAction.popBackStack)) {
                             fragmentActions.removeFirst();
                         } else {

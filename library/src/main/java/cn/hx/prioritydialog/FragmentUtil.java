@@ -9,12 +9,15 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentFactory;
 import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.savedstate.SavedStateRegistry;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FragmentUtil {
 
@@ -89,7 +92,7 @@ public class FragmentUtil {
     }
 
     @Nullable
-    static Fragment restoreFragment1_1(@Nullable Object fragmentState, @NonNull FragmentManager fragmentManager) {
+    private static Fragment restoreFragment1_1(@Nullable Object fragmentState, @NonNull FragmentManager fragmentManager) {
         try {
             String who = getWhoFromFragmentState(fragmentState);
             if (who != null) {
@@ -130,7 +133,7 @@ public class FragmentUtil {
     }
 
     @Nullable
-    static Fragment restoreFragment1_2(@Nullable Object fragmentState, @NonNull FragmentManager fragmentManager) {
+    private static Fragment restoreFragment1_2(@Nullable Object fragmentState, @NonNull FragmentManager fragmentManager) {
         String who = getWhoFromFragmentState(fragmentState);
         if (who != null) {
             try {
@@ -181,7 +184,7 @@ public class FragmentUtil {
     }
 
     @Nullable
-    static Fragment restoreFragment1_3(@Nullable Object fragmentState, @NonNull FragmentManager fragmentManager) {
+    private static Fragment restoreFragment1_3(@Nullable Object fragmentState, @NonNull FragmentManager fragmentManager) {
         String who = getWhoFromFragmentState(fragmentState);
         if (who != null) {
             try {
@@ -236,7 +239,7 @@ public class FragmentUtil {
     }
 
     @Nullable
-    static String getWhoFromFragmentState(@Nullable Object fragmentState) {
+    private static String getWhoFromFragmentState(@Nullable Object fragmentState) {
         try {
             Class<?> fragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
             Field mWhoField = fragmentStateClass.getDeclaredField("mWho");
@@ -252,8 +255,127 @@ public class FragmentUtil {
         return null;
     }
 
+    @Nullable
+    static PendingTransactionState saveTransaction(int type, @NonNull FragmentTransaction transaction) {
+        try {
+            Class<?> fragmentTransactionClass = Class.forName("androidx.fragment.app.FragmentTransaction");
+            Field mAddToBackStackField = fragmentTransactionClass.getDeclaredField("mAddToBackStack");
+            mAddToBackStackField.setAccessible(true);
+            boolean mAddToBackStack = mAddToBackStackField.getBoolean(transaction);
+            if (!mAddToBackStack) {//make it true first
+                mAddToBackStackField.setBoolean(transaction, true);
+            }
+            Class<?> backStackStateClass = Class.forName("androidx.fragment.app.BackStackState");
+            Class<?> backStackRecordClass = Class.forName("androidx.fragment.app.BackStackRecord");
+            Constructor<?> constructor = backStackStateClass.getDeclaredConstructor(backStackRecordClass);
+            constructor.setAccessible(true);
+            Parcelable backStackState = (Parcelable) constructor.newInstance(transaction);
+            Bundle fragmentStates = new Bundle();
+            Field mOpsField = fragmentTransactionClass.getDeclaredField("mOps");
+            mOpsField.setAccessible(true);
+            List<Object> mOps = (List<Object>) mOpsField.get(transaction);
+            if (mOps != null && !mOps.isEmpty()) {
+                Class<?> opClass = Class.forName("androidx.fragment.app.FragmentTransaction$Op");
+                Field mFragmentField = opClass.getDeclaredField("mFragment");
+                mFragmentField.setAccessible(true);
+                for (Object mOp : mOps) {
+                    Fragment fragment = (Fragment) mFragmentField.get(mOp);
+                    if (fragment != null) {
+                        Parcelable fragmentState = saveFragment(fragment);
+                        if (fragmentState != null) {
+                            String who = getWhoFromFragmentState(fragmentState);
+                            if (who != null) {
+                                fragmentStates.putParcelable(who, fragmentState);
+                            }
+                        }
+                    }
+                }
+            }
+            return new PendingTransactionState(type, mAddToBackStack, backStackState, fragmentStates);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
-    static boolean hasDeclaredField(@NonNull Class<?> clz, @NonNull String fieldName) {
+    static void startPendingTransaction(@NonNull PendingTransactionState pendingTransactionState, @NonNull FragmentManager fragmentManager) {
+        try {
+            Class<?> fragmentTransactionClass = Class.forName("androidx.fragment.app.FragmentTransaction");
+            Class<?> backStackStateClass = Class.forName("androidx.fragment.app.BackStackState");
+            Method instantiateMethod = backStackStateClass.getDeclaredMethod("instantiate", FragmentManager.class);
+            instantiateMethod.setAccessible(true);
+            FragmentTransaction newBackStackRecord = (FragmentTransaction) instantiateMethod.invoke(pendingTransactionState.backStackState, fragmentManager);
+            if (newBackStackRecord != null) {
+                if (!pendingTransactionState.addToBackStack) {
+                    Field mAddToBackStackField = fragmentTransactionClass.getDeclaredField("mAddToBackStack");
+                    mAddToBackStackField.setAccessible(true);
+                    mAddToBackStackField.setBoolean(newBackStackRecord, false);
+                }
+                Field mFragmentWhosField = backStackStateClass.getDeclaredField("mFragmentWhos");
+                mFragmentWhosField.setAccessible(true);
+                ArrayList<String> mFragmentWhos = (ArrayList<String>) mFragmentWhosField.get(pendingTransactionState.backStackState);
+                Field mOpsField = fragmentTransactionClass.getDeclaredField("mOps");
+                mOpsField.setAccessible(true);
+                List<Object> mOps = (List<Object>) mOpsField.get(newBackStackRecord);
+                if (mOps != null && mFragmentWhos != null && mOps.size() == mFragmentWhos.size()) {
+                    Class<?> opClass = Class.forName("androidx.fragment.app.FragmentTransaction$Op");
+                    Field mFragmentField = opClass.getDeclaredField("mFragment");
+                    mFragmentField.setAccessible(true);
+                    for (int i = 0; i < mOps.size(); i++) {
+                        Object op = mOps.get(i);
+                        if (mFragmentField.get(op) == null) {
+                            String who = mFragmentWhos.get(i);
+                            if (who != null) {
+                                Parcelable fragmentState = pendingTransactionState.fragmentStates.getParcelable(who);
+                                if (fragmentState != null) {
+                                    Fragment fragment = restoreFragment(fragmentState, fragmentManager);
+                                    if (fragment != null) {
+                                        mFragmentField.set(op, fragment);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                switch (pendingTransactionState.type) {
+                    case PendingTransactionState.TYPE_COMMIT:
+                        newBackStackRecord.commit();
+                        break;
+                    case PendingTransactionState.TYPE_COMMIT_ALLOWING_STATE_LOSS:
+                        newBackStackRecord.commitAllowingStateLoss();
+                        break;
+                    case PendingTransactionState.TYPE_COMMIT_NOW:
+                        newBackStackRecord.commitNow();
+                        break;
+                    case PendingTransactionState.TYPE_COMMIT_NOW_ALLOWING_STATE_LOSS:
+                        newBackStackRecord.commitNowAllowingStateLoss();
+                        break;
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static boolean hasDeclaredField(@NonNull Class<?> clz, @NonNull String fieldName) {
         Field[] declaredFields = clz.getDeclaredFields();
         for (Field declaredField : declaredFields) {
             if (declaredField.getName().equals(fieldName)) {
