@@ -45,7 +45,7 @@ open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImp
         dialog.priority = priority
         dialog.onlyDismissByUser = onlyDismissByUser
         dialog.lockWindow = lockWindow
-        dialog.setSupportRecreate(isSupportRecreate)
+        dialog.isSupportRecreate = isSupportRecreate
         uuid?.let {
             dialog.uuid = it
         }

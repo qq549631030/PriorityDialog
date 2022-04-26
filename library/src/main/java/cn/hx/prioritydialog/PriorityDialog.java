@@ -43,6 +43,8 @@ public interface PriorityDialog {
 
     void setSupportRecreate(boolean supportRecreate);
 
+    boolean isSupportRecreate();
+
     @RestrictTo(RestrictTo.Scope.LIBRARY)
     void setDismissByHighPriorityDialog(boolean dismissByHighPriorityDialog);
 

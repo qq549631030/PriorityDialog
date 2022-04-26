@@ -265,7 +265,14 @@ public class FragmentUtil {
             if (!mAddToBackStack) {//make it true first
                 mAddToBackStackField.setBoolean(transaction, true);
             }
-            Class<?> backStackStateClass = Class.forName("androidx.fragment.app.BackStackState");
+            Class<?> backStackStateClass;
+            try {
+                //fragment 1.4.x
+                backStackStateClass = Class.forName("androidx.fragment.app.BackStackRecordState");
+            } catch (ClassNotFoundException e) {
+                //fragment 1.1.x ~ 1.3.x
+                backStackStateClass = Class.forName("androidx.fragment.app.BackStackState");
+            }
             Class<?> backStackRecordClass = Class.forName("androidx.fragment.app.BackStackRecord");
             Constructor<?> constructor = backStackStateClass.getDeclaredConstructor(backStackRecordClass);
             constructor.setAccessible(true);
@@ -311,7 +318,14 @@ public class FragmentUtil {
     static void startPendingTransaction(@NonNull PendingTransactionState pendingTransactionState, @NonNull FragmentManager fragmentManager) {
         try {
             Class<?> fragmentTransactionClass = Class.forName("androidx.fragment.app.FragmentTransaction");
-            Class<?> backStackStateClass = Class.forName("androidx.fragment.app.BackStackState");
+            Class<?> backStackStateClass;
+            try {
+                //fragment 1.4.x
+                backStackStateClass = Class.forName("androidx.fragment.app.BackStackRecordState");
+            } catch (ClassNotFoundException e) {
+                //fragment 1.1.x ~ 1.3.x
+                backStackStateClass = Class.forName("androidx.fragment.app.BackStackState");
+            }
             Method instantiateMethod = backStackStateClass.getDeclaredMethod("instantiate", FragmentManager.class);
             instantiateMethod.setAccessible(true);
             FragmentTransaction newBackStackRecord = (FragmentTransaction) instantiateMethod.invoke(pendingTransactionState.backStackState, fragmentManager);

@@ -79,6 +79,11 @@ public class PriorityDialogImpl implements PriorityDialog {
     }
 
     @Override
+    public boolean isSupportRecreate() {
+        return delegate.getConfig().isSupportRecreate();
+    }
+
+    @Override
     public void setDismissByHighPriorityDialog(boolean dismissByHighPriorityDialog) {
         delegate.setDismissByHighPriorityDialog(dismissByHighPriorityDialog);
     }
