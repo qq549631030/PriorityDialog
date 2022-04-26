@@ -30,7 +30,7 @@ public class FragmentUtil {
             fragmentStateField.setAccessible(true);
             int state = fragmentStateField.getInt(fragment);
             FragmentManager fragmentManager = fragment.getFragmentManager();
-            if (fragmentManager != null && state > -1) {
+            if (fragmentManager != null && state > 0) {
                 savedState = fragmentManager.saveFragmentInstanceState(fragment);
                 Class<?> savedStateClass = Class.forName("androidx.fragment.app.Fragment$SavedState");
                 if (savedState != null) {
@@ -326,7 +326,16 @@ public class FragmentUtil {
                 //fragment 1.1.x ~ 1.3.x
                 backStackStateClass = Class.forName("androidx.fragment.app.BackStackState");
             }
-            Method instantiateMethod = backStackStateClass.getDeclaredMethod("instantiate", FragmentManager.class);
+            Method instantiateMethod;
+            try {
+                Class.forName("androidx.fragment.app.FragmentStateManager");
+                //fragment 1.2.0 +
+                instantiateMethod = backStackStateClass.getDeclaredMethod("instantiate", FragmentManager.class);
+            } catch (ClassNotFoundException e) {
+                //fragment 1.1.0
+                Class<?> fragmentManagerImplClass = Class.forName("androidx.fragment.app.FragmentManagerImpl");
+                instantiateMethod = backStackStateClass.getDeclaredMethod("instantiate", fragmentManagerImplClass);
+            }
             instantiateMethod.setAccessible(true);
             FragmentTransaction newBackStackRecord = (FragmentTransaction) instantiateMethod.invoke(pendingTransactionState.backStackState, fragmentManager);
             if (newBackStackRecord != null) {
