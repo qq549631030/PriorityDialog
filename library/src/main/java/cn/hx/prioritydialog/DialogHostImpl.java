@@ -8,34 +8,35 @@ import androidx.annotation.Nullable;
 
 public class DialogHostImpl implements DialogHost {
 
-    private final PriorityDialogHost mPriorityDialogHost = new PriorityDialogHost();
+    private final PriorityDialogHostDelegate mPriorityDialogHostDelegate = new PriorityDialogHostDelegate();
 
+    @NonNull
     @Override
-    public PriorityDialogHost getPriorityDialogHost() {
-        return mPriorityDialogHost;
+    public PriorityDialogHostDelegate getPriorityDialogHostDelegate() {
+        return mPriorityDialogHostDelegate;
     }
 
     @NonNull
     @Override
     public String getUuid() {
-        return mPriorityDialogHost.getUuid();
+        return mPriorityDialogHostDelegate.getUuid();
     }
 
     @NonNull
     @Override
     public WarpFragmentManager getWarpParentFragmentManager() {
-        return mPriorityDialogHost.getWarpParentFragmentManager();
+        return mPriorityDialogHostDelegate.getWarpParentFragmentManager();
     }
 
     @NonNull
     @Override
     public WarpFragmentManager getWarpChildFragmentManager() {
-        return mPriorityDialogHost.getWarpChildFragmentManager();
+        return mPriorityDialogHostDelegate.getWarpChildFragmentManager();
     }
 
     @Override
     public boolean showPriorityDialog(@NonNull PriorityDialog newDialog) {
-        return mPriorityDialogHost.showPriorityDialog(newDialog);
+        return mPriorityDialogHostDelegate.showPriorityDialog(newDialog);
     }
 
     @Override
@@ -55,11 +56,11 @@ public class DialogHostImpl implements DialogHost {
 
     @Override
     public boolean warpStartActivityForResult(@NonNull Intent intent, int requestCode, @Nullable Bundle options) {
-        return mPriorityDialogHost.warpStartActivityForResult(intent, requestCode, options);
+        return mPriorityDialogHostDelegate.warpStartActivityForResult(intent, requestCode, options);
     }
 
     @Override
     public boolean warpFinish() {
-        return mPriorityDialogHost.warpFinish();
+        return mPriorityDialogHostDelegate.warpFinish();
     }
 }

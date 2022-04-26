@@ -6,14 +6,15 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
-import androidx.fragment.app.FragmentManager;
 
 
 public interface DialogHost {
 
     String BASE_DIALOG_HOST_UUID = "cn.hx.base.dialogHost.uuid";
 
-    PriorityDialogHost getPriorityDialogHost();
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
+    @NonNull
+    PriorityDialogHostDelegate getPriorityDialogHostDelegate();
 
     @NonNull
     String getUuid();

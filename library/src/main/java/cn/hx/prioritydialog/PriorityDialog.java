@@ -8,12 +8,11 @@ public interface PriorityDialog {
 
     String BASE_DIALOG_TAG = "cn.hx.base.dialog.tag";
 
-    String BASE_DIALOG_UUID = "cn.hx.base.dialog.uuid";
-    String BASE_DIALOG_HOST_UUID = "cn.hx.base.dialog.host.uuid";
-    String BASE_DIALOG_PRIORITY = "cn.hx.base.dialog.priority";
-    String BASE_DIALOG_ONLY_DISMISS_BY_USER = "cn.hx.base.dialog.onlyDismissByUser";
-    String BASE_DIALOG_LOCK_WINDOW = "cn.hx.base.dialog.lockWindow";
-    String BASE_DIALOG_SUPPORT_RECREATE = "cn.hx.base.dialog.supportRecreate";
+    String BASE_DIALOG_CONFIG = "cn.hx.base.dialog.config";
+
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
+    @NonNull
+    PriorityDialogDelegate getDelegate();
 
     //唯一标识
     @NonNull
@@ -41,8 +40,6 @@ public interface PriorityDialog {
     boolean getLockWindow();
 
     void setLockWindow(boolean lockWindow);
-
-    boolean isSupportRecreate();
 
     void setSupportRecreate(boolean supportRecreate);
 

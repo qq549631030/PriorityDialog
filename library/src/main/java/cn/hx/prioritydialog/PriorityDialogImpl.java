@@ -3,99 +3,89 @@ package cn.hx.prioritydialog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.util.UUID;
-
 public class PriorityDialogImpl implements PriorityDialog {
 
-    private String mUuid;
-    private String mHostUuid;
-    private int mPriority = 0;
-    private boolean mOnlyDismissByUser;
-    private boolean mLockWindow = false;
-    private boolean mSupportRecreate = true;
-    private boolean mDismissByHighPriorityDialog = false;
+    private final PriorityDialogDelegate delegate = new PriorityDialogDelegate();
 
     public PriorityDialogImpl() {
         this(false);
     }
 
     public PriorityDialogImpl(boolean onlyDismissByUser) {
-        this.mOnlyDismissByUser = onlyDismissByUser;
+        delegate.getConfig().setOnlyDismissByUser(onlyDismissByUser);
+    }
+
+    @NonNull
+    @Override
+    public PriorityDialogDelegate getDelegate() {
+        return delegate;
     }
 
     @NonNull
     @Override
     public String getUuid() {
-        if (mUuid == null) {
-            mUuid = UUID.randomUUID().toString();
-        }
-        return mUuid;
+        return delegate.getConfig().getUuid();
     }
 
     @Override
     public void setUuid(@NonNull String uuid) {
-        mUuid = uuid;
+        delegate.getConfig().setUuid(uuid);
     }
 
     @Nullable
     @Override
     public String getHostUuid() {
-        return mHostUuid;
+        return delegate.getConfig().getHostUuid();
     }
 
     @Override
     public void setHostUuid(@Nullable String uuid) {
-        mHostUuid = uuid;
+        delegate.getConfig().setHostUuid(uuid);
     }
 
     @Override
     public int getPriority() {
-        return mPriority;
+        return delegate.getConfig().getPriority();
     }
 
     @Override
     public void setPriority(int priority) {
-        mPriority = priority;
+        delegate.getConfig().setPriority(priority);
     }
 
     @Override
     public boolean getOnlyDismissByUser() {
-        return mOnlyDismissByUser;
+        return delegate.getConfig().isOnlyDismissByUser();
     }
 
     @Override
     public void setOnlyDismissByUser(boolean onlyDismissByUser) {
-        mOnlyDismissByUser = onlyDismissByUser;
+        delegate.getConfig().setOnlyDismissByUser(onlyDismissByUser);
     }
 
     @Override
     public boolean getLockWindow() {
-        return mLockWindow;
+        return delegate.getConfig().isLockWindow();
     }
 
     @Override
     public void setLockWindow(boolean lockWindow) {
-        mLockWindow = lockWindow;
-    }
-
-    @Override
-    public boolean isSupportRecreate() {
-        return mSupportRecreate;
+        delegate.getConfig().setLockWindow(lockWindow);
     }
 
     @Override
     public void setSupportRecreate(boolean supportRecreate) {
-        this.mSupportRecreate = supportRecreate;
+        delegate.getConfig().setSupportRecreate(supportRecreate);
     }
 
     @Override
     public void setDismissByHighPriorityDialog(boolean dismissByHighPriorityDialog) {
-        mDismissByHighPriorityDialog = dismissByHighPriorityDialog;
+        delegate.setDismissByHighPriorityDialog(dismissByHighPriorityDialog);
     }
 
     @Override
     public boolean isDismissByHighPriorityDialog() {
-        return mDismissByHighPriorityDialog;
+        return delegate.isDismissByHighPriorityDialog();
     }
 
     @Override
@@ -115,7 +105,7 @@ public class PriorityDialogImpl implements PriorityDialog {
 
     @Override
     public void onDialogEvent(@NonNull Object event) {
-        PriorityDialogManager.dispatchDialogEvent(this, event);
+        getDelegate().getDialogManager().dispatchDialogEvent(this, event);
     }
 
     @Override

@@ -13,7 +13,7 @@ import androidx.fragment.app.FragmentTransaction;
 import java.util.ArrayDeque;
 import java.util.UUID;
 
-public class PriorityDialogHost {
+public class PriorityDialogHostDelegate {
 
     PriorityDialogManager mDialogManager;
     private String mUuid;
@@ -57,7 +57,7 @@ public class PriorityDialogHost {
                 if (currentDialog instanceof DialogFragment) {
                     DialogFragment current = (DialogFragment) currentDialog;
                     FragmentManager fm = current.getFragmentManager();
-                    if (fm != null && !fm.isStateSaved() && !fm.isDestroyed()) {
+                    if (fm != null && !fm.isDestroyed()) {
                         fm.beginTransaction().remove(current).commit();
                     }
                 }
