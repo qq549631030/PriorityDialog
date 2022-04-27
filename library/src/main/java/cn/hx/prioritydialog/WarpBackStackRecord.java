@@ -5,23 +5,12 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Lifecycle;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
 public class WarpBackStackRecord extends FragmentTransaction {
 
-    public static final int TYPE_COMMIT = 1;
-    public static final int TYPE_COMMIT_ALLOWING_STATE_LOSS = 2;
-    public static final int TYPE_COMMIT_NOW = 3;
-    public static final int TYPE_COMMIT_NOW_ALLOWING_STATE_LOSS = 4;
-
-    public int type = TYPE_COMMIT;
+    public int type = FragmentAction.TRANSACTION_TYPE_COMMIT;
 
     final FragmentTransaction transaction;
     final PriorityDialogManager dialogManager;
@@ -38,12 +27,9 @@ public class WarpBackStackRecord extends FragmentTransaction {
     @Override
     public int commit() {
         if (dialogManager.isWindowLockedByDialog()) {
-            type = TYPE_COMMIT;
+            type = FragmentAction.TRANSACTION_TYPE_COMMIT;
             // add to pending, this will lose the returned backStackIndex
-            PendingTransactionState pendingTransactionState = FragmentUtil.saveTransaction(type, transaction);
-            if (pendingTransactionState != null) {
-                dialogManager.setPendingFragmentAction(new FragmentAction(pendingTransactionState, hostUuid, isChildFragmentManager));
-            }
+            dialogManager.setPendingFragmentAction(new FragmentAction(type, transaction, hostUuid, isChildFragmentManager));
             return -1;
         }
         return transaction.commit();
@@ -52,13 +38,9 @@ public class WarpBackStackRecord extends FragmentTransaction {
     @Override
     public int commitAllowingStateLoss() {
         if (dialogManager.isWindowLockedByDialog()) {
-            type = TYPE_COMMIT_ALLOWING_STATE_LOSS;
+            type = FragmentAction.TRANSACTION_TYPE_COMMIT_ALLOWING_STATE_LOSS;
             // add to pending, this will lose the returned backStackIndex
-            PendingTransactionState pendingTransactionState = FragmentUtil.saveTransaction(type, transaction);
-            if (pendingTransactionState != null) {
-                dialogManager.setPendingFragmentAction(new FragmentAction(pendingTransactionState, hostUuid, isChildFragmentManager));
-            }
-            ;
+            dialogManager.setPendingFragmentAction(new FragmentAction(type, transaction, hostUuid, isChildFragmentManager));
             return -1;
         }
         return transaction.commitAllowingStateLoss();
@@ -67,12 +49,9 @@ public class WarpBackStackRecord extends FragmentTransaction {
     @Override
     public void commitNow() {
         if (dialogManager.isWindowLockedByDialog()) {
-            type = TYPE_COMMIT_NOW;
+            type = FragmentAction.TRANSACTION_TYPE_COMMIT_NOW;
             // add to pending
-            PendingTransactionState pendingTransactionState = FragmentUtil.saveTransaction(type, transaction);
-            if (pendingTransactionState != null) {
-                dialogManager.setPendingFragmentAction(new FragmentAction(pendingTransactionState, hostUuid, isChildFragmentManager));
-            }
+            dialogManager.setPendingFragmentAction(new FragmentAction(type, transaction, hostUuid, isChildFragmentManager));
             return;
         }
         transaction.commitNow();
@@ -81,12 +60,9 @@ public class WarpBackStackRecord extends FragmentTransaction {
     @Override
     public void commitNowAllowingStateLoss() {
         if (dialogManager.isWindowLockedByDialog()) {
-            type = TYPE_COMMIT_NOW_ALLOWING_STATE_LOSS;
+            type = FragmentAction.TRANSACTION_TYPE_COMMIT_NOW_ALLOWING_STATE_LOSS;
             // add to pending
-            PendingTransactionState pendingTransactionState = FragmentUtil.saveTransaction(type, transaction);
-            if (pendingTransactionState != null) {
-                dialogManager.setPendingFragmentAction(new FragmentAction(pendingTransactionState, hostUuid, isChildFragmentManager));
-            }
+            dialogManager.setPendingFragmentAction(new FragmentAction(type, transaction, hostUuid, isChildFragmentManager));
             return;
         }
         transaction.commitNowAllowingStateLoss();
@@ -283,51 +259,5 @@ public class WarpBackStackRecord extends FragmentTransaction {
     public FragmentTransaction runOnCommit(@NonNull Runnable runnable) {
         transaction.runOnCommit(runnable);
         return this;
-    }
-
-    @SuppressWarnings({"JavaReflectionMemberAccess", "JavaReflectionInvocation"})
-    @Nullable
-    public WarpBackStackRecord warpWithNewFragmentManager(FragmentManager fragmentManager, PriorityDialogManager dialogManager, String hostUuid) {
-
-        try {
-            Class<?> fragmentTransactionClass = Class.forName("androidx.fragment.app.FragmentTransaction");
-            Field mAddToBackStackField = fragmentTransactionClass.getDeclaredField("mAddToBackStack");
-            Field mOpsField = fragmentTransactionClass.getDeclaredField("mOps");
-            mAddToBackStackField.setAccessible(true);
-            mOpsField.setAccessible(true);
-            boolean mAddToBackStack = mAddToBackStackField.getBoolean(transaction);
-            if (!mAddToBackStack) {
-                mAddToBackStackField.setBoolean(transaction, true);
-            }
-            Object mOps = mOpsField.get(transaction);
-            Class<?> backStackStateClass = Class.forName("androidx.fragment.app.BackStackState");
-            Class<?> backStackRecordClass = Class.forName("androidx.fragment.app.BackStackRecord");
-            Constructor<?> constructor = backStackStateClass.getDeclaredConstructor(backStackRecordClass);
-            constructor.setAccessible(true);
-            Object backStackState = constructor.newInstance(transaction);
-            Method instantiateMethod = backStackStateClass.getDeclaredMethod("instantiate", FragmentManager.class);
-            instantiateMethod.setAccessible(true);
-            Object newBackStackRecord = instantiateMethod.invoke(backStackState, fragmentManager);
-            if (!mAddToBackStack) {
-                mAddToBackStackField.setBoolean(newBackStackRecord, false);
-            }
-            mOpsField.set(newBackStackRecord, mOps);
-            WarpBackStackRecord newWarpBackStackRecord = new WarpBackStackRecord((FragmentTransaction) newBackStackRecord, dialogManager, hostUuid, isChildFragmentManager);
-            newWarpBackStackRecord.type = type;
-            return newWarpBackStackRecord;
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 }

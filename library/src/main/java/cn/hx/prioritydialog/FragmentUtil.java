@@ -256,7 +256,7 @@ public class FragmentUtil {
     }
 
     @Nullable
-    static PendingTransactionState saveTransaction(int type, @NonNull FragmentTransaction transaction) {
+    static PendingTransactionState saveTransaction(@NonNull FragmentTransaction transaction) {
         try {
             Class<?> fragmentTransactionClass = Class.forName("androidx.fragment.app.FragmentTransaction");
             Field mAddToBackStackField = fragmentTransactionClass.getDeclaredField("mAddToBackStack");
@@ -298,7 +298,7 @@ public class FragmentUtil {
                     }
                 }
             }
-            return new PendingTransactionState(type, mAddToBackStack, backStackState, fragmentStates);
+            return new PendingTransactionState(mAddToBackStack, backStackState, fragmentStates);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (NoSuchFieldException e) {
@@ -315,7 +315,8 @@ public class FragmentUtil {
         return null;
     }
 
-    static void startPendingTransaction(@NonNull PendingTransactionState pendingTransactionState, @NonNull FragmentManager fragmentManager) {
+    @Nullable
+    static FragmentTransaction restorePendingTransaction(@NonNull PendingTransactionState pendingTransactionState, @NonNull FragmentManager fragmentManager) {
         try {
             Class<?> fragmentTransactionClass = Class.forName("androidx.fragment.app.FragmentTransaction");
             Class<?> backStackStateClass;
@@ -370,20 +371,7 @@ public class FragmentUtil {
                         }
                     }
                 }
-                switch (pendingTransactionState.type) {
-                    case PendingTransactionState.TYPE_COMMIT:
-                        newBackStackRecord.commit();
-                        break;
-                    case PendingTransactionState.TYPE_COMMIT_ALLOWING_STATE_LOSS:
-                        newBackStackRecord.commitAllowingStateLoss();
-                        break;
-                    case PendingTransactionState.TYPE_COMMIT_NOW:
-                        newBackStackRecord.commitNow();
-                        break;
-                    case PendingTransactionState.TYPE_COMMIT_NOW_ALLOWING_STATE_LOSS:
-                        newBackStackRecord.commitNowAllowingStateLoss();
-                        break;
-                }
+                return newBackStackRecord;
             }
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -396,6 +384,7 @@ public class FragmentUtil {
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
         }
+        return null;
     }
 
     private static boolean hasDeclaredField(@NonNull Class<?> clz, @NonNull String fieldName) {

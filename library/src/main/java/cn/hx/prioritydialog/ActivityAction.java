@@ -34,7 +34,7 @@ public class ActivityAction implements Parcelable {
         type = in.readInt();
         intent = in.readParcelable(Intent.class.getClassLoader());
         requestCode = in.readInt();
-        options = in.readBundle(PendingTransactionState.class.getClassLoader());
+        options = in.readBundle(Bundle.class.getClassLoader());
     }
 
     @Override

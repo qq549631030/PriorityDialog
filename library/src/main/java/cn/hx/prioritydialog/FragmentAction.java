@@ -5,20 +5,33 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.FragmentTransaction;
 
 public class FragmentAction implements Parcelable {
     public static final int TYPE_TRANSACTION = 1;
     public static final int TYPE_POP_BACKSTACK = 2;
+
+    public static final int TRANSACTION_TYPE_COMMIT = 1;
+    public static final int TRANSACTION_TYPE_COMMIT_ALLOWING_STATE_LOSS = 2;
+    public static final int TRANSACTION_TYPE_COMMIT_NOW = 3;
+    public static final int TRANSACTION_TYPE_COMMIT_NOW_ALLOWING_STATE_LOSS = 4;
+
     public final String hostUuid;
     public final int type;
     public final boolean isChildFragmentManager;
-    public PendingTransactionState transaction;
+    public int transactionType;
+    @Nullable
+    public FragmentTransaction transaction;
+    public PendingTransactionState transactionState;
     public Bundle popBackStack;
 
-    public FragmentAction(@NonNull PendingTransactionState transaction, String hostUuid, boolean isChildFragmentManager) {
+    public FragmentAction(int transactionType, @NonNull FragmentTransaction transaction, String hostUuid, boolean isChildFragmentManager) {
         this.isChildFragmentManager = isChildFragmentManager;
         this.type = TYPE_TRANSACTION;
+        this.transactionType = transactionType;
         this.transaction = transaction;
+        this.transactionState = FragmentUtil.saveTransaction(transaction);
         this.hostUuid = hostUuid;
     }
 
@@ -32,17 +45,19 @@ public class FragmentAction implements Parcelable {
     protected FragmentAction(Parcel in) {
         hostUuid = in.readString();
         type = in.readInt();
+        transactionType = in.readInt();
         isChildFragmentManager = in.readByte() != 0;
-        transaction = in.readParcelable(PendingTransactionState.class.getClassLoader());
-        popBackStack = in.readBundle(PendingTransactionState.class.getClassLoader());
+        transactionState = in.readParcelable(PendingTransactionState.class.getClassLoader());
+        popBackStack = in.readBundle(Bundle.class.getClassLoader());
     }
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(hostUuid);
         dest.writeInt(type);
+        dest.writeInt(transactionType);
         dest.writeByte((byte) (isChildFragmentManager ? 1 : 0));
-        dest.writeParcelable(transaction, flags);
+        dest.writeParcelable(transactionState, flags);
         dest.writeBundle(popBackStack);
     }
 

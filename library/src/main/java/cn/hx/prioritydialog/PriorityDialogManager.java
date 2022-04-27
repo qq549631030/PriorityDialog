@@ -12,6 +12,7 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 
@@ -30,6 +31,7 @@ public class PriorityDialogManager {
     private static PriorityStrategy mPriorityStrategy = new DefaultPriorityStrategy();
 
     private final Map<String, DialogHost> dialogHostMap = new HashMap<>();
+    private final Map<String, PriorityDialog> cachePendingDialogMap = new TreeMap<>();
     private final TreeMap<Integer, LinkedList<PendingDialogState>> pendingDialogMap = new TreeMap<>();
     private final Map<String, ArrayDeque<ActivityAction>> pendingActivityActionMap = new HashMap<>();
     private final Map<String, ArrayDeque<FragmentAction>> pendingFragmentActionMap = new HashMap<>();
@@ -219,10 +221,10 @@ public class PriorityDialogManager {
         dialogHostMap.put(uuid, dialogHost);
     }
 
-    void unregisterDialogHost(@NonNull String uuid) {
-        dialogHostMap.remove(uuid);
-        pendingActivityActionMap.remove(uuid);
-        pendingFragmentActionMap.remove(uuid);
+    void unregisterDialogHost(@NonNull String hostUuid) {
+        dialogHostMap.remove(hostUuid);
+        pendingActivityActionMap.remove(hostUuid);
+        pendingFragmentActionMap.remove(hostUuid);
         //remove related pendingDialog
         Map.Entry<Integer, LinkedList<PendingDialogState>> lastEntry = pendingDialogMap.lastEntry();
         while (lastEntry != null) {
@@ -231,7 +233,8 @@ public class PriorityDialogManager {
                 ListIterator<PendingDialogState> listIterator = linkedList.listIterator(linkedList.size());
                 while (listIterator.hasPrevious()) {
                     PendingDialogState dialogInfo = listIterator.previous();
-                    if (uuid.equals(dialogInfo.config.getUuid())) {
+                    if (hostUuid.equals(dialogInfo.config.getHostUuid())) {
+                        cachePendingDialogMap.remove(dialogInfo.config.getUuid());
                         listIterator.remove();
                     }
                 }
@@ -300,6 +303,7 @@ public class PriorityDialogManager {
         if (priorityDialog.getHostUuid() == null || !(priorityDialog instanceof DialogFragment)) {
             return;
         }
+        cachePendingDialogMap.put(priorityDialog.getUuid(), priorityDialog);
         Parcelable fragmentState = FragmentUtil.saveFragment((Fragment) priorityDialog);
         if (fragmentState != null) {
             LinkedList<PendingDialogState> linkedList = pendingDialogMap.get(priorityDialog.getPriority());
@@ -328,15 +332,20 @@ public class PriorityDialogManager {
                     dialogInfo = temp.pollLast();
                 }
                 while (dialogInfo != null) {
+                    String uuid = dialogInfo.config.getUuid();
                     String hostUuid = dialogInfo.config.getHostUuid();
                     DialogHost dialogHost = dialogHostMap.get(hostUuid);
                     if (dialogHost != null) {
-                        FragmentManager fragmentManager = dialogHost.getPriorityDialogHostDelegate().childFragmentManager;
-                        PriorityDialog dialog = (PriorityDialog) FragmentUtil.restoreFragment(dialogInfo.fragmentState, fragmentManager);
+                        PriorityDialog dialog = cachePendingDialogMap.get(uuid);
+                        if (dialog == null) {
+                            FragmentManager fragmentManager = dialogHost.getPriorityDialogHostDelegate().childFragmentManager;
+                            dialog = (PriorityDialog) FragmentUtil.restoreFragment(dialogInfo.fragmentState, fragmentManager);
+                        }
                         if (dialog != null) {
                             dialog.getDelegate().getConfig().copyFrom(dialogInfo.config);
                             if (isReady(hostUuid) && canPendingDialogShow(dialog)) {
                                 if (dialogHost.showPriorityDialog(dialog)) {
+                                    cachePendingDialogMap.remove(uuid);
                                     linkedList.remove(dialogInfo);
                                     if (linkedList.isEmpty()) {
                                         pendingDialogMap.remove(lastEntry.getKey());
@@ -430,6 +439,9 @@ public class PriorityDialogManager {
         Bundle fragmentActions = new Bundle();
         for (Map.Entry<String, ArrayDeque<FragmentAction>> entry : pendingFragmentActionMap.entrySet()) {
             ArrayList<FragmentAction> list = new ArrayList<>(entry.getValue());
+            for (FragmentAction fragmentAction : list) {
+                fragmentAction.transaction = null;//the cached transaction not use after recreate
+            }
             fragmentActions.putParcelableArrayList(entry.getKey(), list);
         }
         outState.putBundle(PENDING_FRAGMENT_ACTIONS, fragmentActions);
@@ -522,8 +534,27 @@ public class PriorityDialogManager {
                 }
                 switch (fragmentAction.type) {
                     case FragmentAction.TYPE_TRANSACTION:
-                        FragmentUtil.startPendingTransaction(fragmentAction.transaction, fragmentManager.fragmentManager);
-                        fragmentActions.removeFirst();
+                        FragmentTransaction transaction = fragmentAction.transaction;
+                        if (transaction == null) {
+                            transaction = FragmentUtil.restorePendingTransaction(fragmentAction.transactionState, fragmentManager.fragmentManager);
+                        }
+                        if (transaction != null) {
+                            switch (fragmentAction.transactionType) {
+                                case FragmentAction.TRANSACTION_TYPE_COMMIT:
+                                    transaction.commit();
+                                    break;
+                                case FragmentAction.TRANSACTION_TYPE_COMMIT_ALLOWING_STATE_LOSS:
+                                    transaction.commitAllowingStateLoss();
+                                    break;
+                                case FragmentAction.TRANSACTION_TYPE_COMMIT_NOW:
+                                    transaction.commitNow();
+                                    break;
+                                case FragmentAction.TRANSACTION_TYPE_COMMIT_NOW_ALLOWING_STATE_LOSS:
+                                    transaction.commitNowAllowingStateLoss();
+                                    break;
+                            }
+                            fragmentActions.removeFirst();
+                        }
                         break;
                     case FragmentAction.TYPE_POP_BACKSTACK:
                         if (fragmentManager.tryPendingAction(fragmentAction.popBackStack)) {
