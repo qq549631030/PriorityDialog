@@ -41,7 +41,7 @@ public class WarpFragmentManager extends FragmentManager {
     @NonNull
     @Override
     public FragmentTransaction beginTransaction() {
-        return new WarpBackStackRecord(fragmentManager.beginTransaction(), dialogManager, hostUuid, isChildFragmentManager);
+        return new WarpFragmentTransaction(fragmentManager.beginTransaction(), dialogManager, hostUuid, isChildFragmentManager);
     }
 
     @Override

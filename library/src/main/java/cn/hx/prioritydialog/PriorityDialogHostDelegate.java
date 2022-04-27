@@ -30,7 +30,7 @@ public class PriorityDialogHostDelegate {
         return mUuid;
     }
 
-    void initAsDialogHost(@NonNull PriorityDialogManager dialogManager, @NonNull FragmentManager parentFragmentManager, @NonNull FragmentManager childFragmentManager, @Nullable Bundle savedInstanceState) {
+    void init(@NonNull PriorityDialogManager dialogManager, @NonNull FragmentManager parentFragmentManager, @NonNull FragmentManager childFragmentManager, @Nullable Bundle savedInstanceState) {
         this.mDialogManager = dialogManager;
         this.parentFragmentManager = parentFragmentManager;
         this.childFragmentManager = childFragmentManager;
@@ -51,7 +51,7 @@ public class PriorityDialogHostDelegate {
             PriorityStrategy priorityStrategy = mDialogManager.getPriorityStrategy();
             if (priorityStrategy.canNewShow(currentDialog, newDialog)) {
                 if (priorityStrategy.shouldPreAddToPendingWhenNewShow(currentDialog, newDialog)) {
-                    currentDialog.setDismissByHighPriorityDialog(true);
+                    currentDialog.getDelegate().setDismissByHighPriorityDialog(true);
                     mDialogManager.addToPendingDialog(currentDialog);
                 }
                 if (currentDialog instanceof DialogFragment) {
@@ -69,7 +69,7 @@ public class PriorityDialogHostDelegate {
             }
         }
         if (newDialog instanceof DialogFragment) {
-            newDialog.setDismissByHighPriorityDialog(false);
+            newDialog.getDelegate().setDismissByHighPriorityDialog(false);
             mDialogManager.setPendingShowDialog(newDialog);
             FragmentTransaction transaction = childFragmentManager.beginTransaction();
             ((DialogFragment) newDialog).show(transaction, PriorityDialog.BASE_DIALOG_TAG);

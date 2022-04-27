@@ -8,7 +8,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Lifecycle;
 
-public class WarpBackStackRecord extends FragmentTransaction {
+public class WarpFragmentTransaction extends FragmentTransaction {
 
     public int type = FragmentAction.TRANSACTION_TYPE_COMMIT;
 
@@ -17,7 +17,7 @@ public class WarpBackStackRecord extends FragmentTransaction {
     final String hostUuid;
     final boolean isChildFragmentManager;
 
-    WarpBackStackRecord(FragmentTransaction transaction, PriorityDialogManager dialogManager, String hostUuid, boolean isChildFragmentManager) {
+    WarpFragmentTransaction(FragmentTransaction transaction, PriorityDialogManager dialogManager, String hostUuid, boolean isChildFragmentManager) {
         this.transaction = transaction;
         this.dialogManager = dialogManager;
         this.hostUuid = hostUuid;

@@ -3,6 +3,7 @@ package cn.hx.prioritydialog;
 import android.app.Activity;
 import android.app.Application;
 import android.app.Dialog;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Parcelable;
 
@@ -44,13 +45,13 @@ public class PriorityDialogManager {
 
     PriorityDialog pendingShowDialog;
 
-    public static void init(Application application, @NonNull PriorityStrategy priorityStrategy) {
+    public static void init(Context context, @NonNull PriorityStrategy priorityStrategy) {
         mPriorityStrategy = priorityStrategy;
-        init(application);
+        init(context);
     }
 
-    public static void init(Application application) {
-        application.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+    public static void init(Context context) {
+        ((Application) context.getApplicationContext()).registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
 
             @Override
             public void onActivityPreCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
@@ -58,10 +59,10 @@ public class PriorityDialogManager {
                     PriorityDialogManager dialogManager = ((DialogManager) activity).getPriorityDialogManager();
                     FragmentActivity fragmentActivity = (FragmentActivity) activity;
                     //init DialogManager
-                    dialogManager.initAsDialogManager(fragmentActivity, savedInstanceState);
+                    dialogManager.init(fragmentActivity, savedInstanceState);
                     if (activity instanceof DialogHost) {//init Activity DialogHost
                         DialogHost dialogHost = (DialogHost) activity;
-                        dialogHost.getPriorityDialogHostDelegate().initAsDialogHost(dialogManager, fragmentActivity.getSupportFragmentManager(), fragmentActivity.getSupportFragmentManager(), savedInstanceState);
+                        dialogHost.getPriorityDialogHostDelegate().init(dialogManager, fragmentActivity.getSupportFragmentManager(), fragmentActivity.getSupportFragmentManager(), savedInstanceState);
                         dialogManager.registerDialogHost(dialogHost.getUuid(), dialogHost);
                     }
                 }
@@ -115,7 +116,7 @@ public class PriorityDialogManager {
     /**
      * init dialog manager
      */
-    void initAsDialogManager(@NonNull FragmentActivity activity, @Nullable Bundle savedInstanceState) {
+    void init(@NonNull FragmentActivity activity, @Nullable Bundle savedInstanceState) {
         this.activity = activity;
         restorePendingDialogs(savedInstanceState);
         restorePendingActivityActions(savedInstanceState);
@@ -134,7 +135,7 @@ public class PriorityDialogManager {
             public void onFragmentPreCreated(@NonNull FragmentManager fm, @NonNull Fragment f, @Nullable Bundle savedInstanceState) {
                 if (f instanceof DialogHost) {//init Fragment DialogHost
                     DialogHost dialogHost = (DialogHost) f;
-                    dialogHost.getPriorityDialogHostDelegate().initAsDialogHost(PriorityDialogManager.this, f.requireFragmentManager(), f.getChildFragmentManager(), savedInstanceState);
+                    dialogHost.getPriorityDialogHostDelegate().init(PriorityDialogManager.this, f.requireFragmentManager(), f.getChildFragmentManager(), savedInstanceState);
                     registerDialogHost(dialogHost.getUuid(), dialogHost);
                 }
                 if (f instanceof PriorityDialog && f instanceof DialogFragment) {//init PriorityDialog

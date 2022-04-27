@@ -84,11 +84,6 @@ public class PriorityDialogImpl implements PriorityDialog {
     }
 
     @Override
-    public void setDismissByHighPriorityDialog(boolean dismissByHighPriorityDialog) {
-        delegate.setDismissByHighPriorityDialog(dismissByHighPriorityDialog);
-    }
-
-    @Override
     public boolean isDismissByHighPriorityDialog() {
         return delegate.isDismissByHighPriorityDialog();
     }

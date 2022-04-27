@@ -45,9 +45,6 @@ public interface PriorityDialog {
 
     boolean isSupportRecreate();
 
-    @RestrictTo(RestrictTo.Scope.LIBRARY)
-    void setDismissByHighPriorityDialog(boolean dismissByHighPriorityDialog);
-
     boolean isDismissByHighPriorityDialog();
 
     void setOnCancelListener(@Nullable OnCancelListener<? extends DialogHost> listener);
