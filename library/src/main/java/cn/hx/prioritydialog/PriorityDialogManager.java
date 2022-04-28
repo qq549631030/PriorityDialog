@@ -441,7 +441,7 @@ public class PriorityDialogManager {
         for (Map.Entry<String, ArrayDeque<FragmentAction>> entry : pendingFragmentActionMap.entrySet()) {
             ArrayList<FragmentAction> list = new ArrayList<>(entry.getValue());
             for (FragmentAction fragmentAction : list) {
-                fragmentAction.transaction = null;//the cached transaction not use after recreate
+                fragmentAction.cachedTransaction = null;//the cached transaction not use after recreate
             }
             fragmentActions.putParcelableArrayList(entry.getKey(), list);
         }
@@ -535,7 +535,7 @@ public class PriorityDialogManager {
                 }
                 switch (fragmentAction.type) {
                     case FragmentAction.TYPE_TRANSACTION:
-                        FragmentTransaction transaction = fragmentAction.transaction;
+                        FragmentTransaction transaction = fragmentAction.cachedTransaction;
                         if (transaction == null) {
                             transaction = FragmentUtil.restorePendingTransaction(fragmentAction.transactionState, fragmentManager.fragmentManager);
                         }

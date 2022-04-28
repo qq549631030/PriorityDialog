@@ -22,16 +22,16 @@ public class FragmentAction implements Parcelable {
     public final boolean isChildFragmentManager;
     public int transactionType;
     @Nullable
-    public FragmentTransaction transaction;
+    public FragmentTransaction cachedTransaction;
     public PendingTransactionState transactionState;
     public Bundle popBackStack;
 
-    public FragmentAction(int transactionType, @NonNull FragmentTransaction transaction, String hostUuid, boolean isChildFragmentManager) {
+    public FragmentAction(int transactionType, @NonNull FragmentTransaction cachedTransaction, String hostUuid, boolean isChildFragmentManager) {
         this.isChildFragmentManager = isChildFragmentManager;
         this.type = TYPE_TRANSACTION;
         this.transactionType = transactionType;
-        this.transaction = transaction;
-        this.transactionState = FragmentUtil.saveTransaction(transaction);
+        this.cachedTransaction = cachedTransaction;
+        this.transactionState = FragmentUtil.saveTransaction(cachedTransaction);
         this.hostUuid = hostUuid;
     }
 
