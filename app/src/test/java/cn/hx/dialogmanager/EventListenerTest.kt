@@ -9,9 +9,6 @@ import androidx.test.espresso.matcher.RootMatchers
 import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import cn.hx.prioritydialog.OnCancelListener
-import cn.hx.prioritydialog.OnDialogEventListener
-import cn.hx.prioritydialog.OnDismissListener
 import org.hamcrest.Matchers
 import org.junit.Rule
 import org.junit.Test
@@ -142,11 +139,9 @@ class EventListenerTest {
         activityRule.scenario.onActivity {
             assert(it.currentDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
-            dialog.setOnCancelListener(object : OnCancelListener<FragmentTestActivity>() {
-                override fun onCancel(host: FragmentTestActivity) {
-                    host.finish()
-                }
-            })
+            dialog.setOnCancelListener { priorityDialog ->
+                (priorityDialog.dialogHost as FragmentTestActivity).finish()
+            }
             it.showPriorityDialog(dialog)
         }
         activityRule.scenario.onActivity {
@@ -163,11 +158,9 @@ class EventListenerTest {
         activityRule.scenario.onActivity {
             assert(it.currentDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
-            dialog.setOnCancelListener(object : OnCancelListener<FragmentTestActivity>() {
-                override fun onCancel(host: FragmentTestActivity) {
-                    host.finish()
-                }
-            })
+            dialog.setOnCancelListener { priorityDialog ->
+                (priorityDialog.dialogHost as FragmentTestActivity).finish()
+            }
             it.showPriorityDialog(dialog)
         }
         activityRule.scenario.onActivity {
@@ -192,11 +185,9 @@ class EventListenerTest {
         activityRule.scenario.onActivity {
             assert(it.currentDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
-            dialog.setOnDismissListener(object : OnDismissListener<FragmentTestActivity>() {
-                override fun onDismiss(host: FragmentTestActivity) {
-                    host.finish()
-                }
-            })
+            dialog.setOnDismissListener { priorityDialog ->
+                (priorityDialog.dialogHost as FragmentTestActivity).finish()
+            }
             it.showPriorityDialog(dialog)
         }
         activityRule.scenario.onActivity {
@@ -213,11 +204,9 @@ class EventListenerTest {
         activityRule.scenario.onActivity {
             assert(it.currentDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
-            dialog.setOnDismissListener(object : OnDismissListener<FragmentTestActivity>() {
-                override fun onDismiss(host: FragmentTestActivity) {
-                    host.finish()
-                }
-            })
+            dialog.setOnDismissListener { priorityDialog ->
+                (priorityDialog.dialogHost as FragmentTestActivity).finish()
+            }
             it.showPriorityDialog(dialog)
         }
         activityRule.scenario.onActivity {
@@ -243,11 +232,9 @@ class EventListenerTest {
         activityRule.scenario.onActivity {
             assert(it.currentDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
-            dialog.setOnDialogEventListener(object : OnDialogEventListener<FragmentTestActivity>() {
-                override fun onDialogEvent(host: FragmentTestActivity, event: Any) {
-                    Toast.makeText(host, "button ${(event as? BaseAlertDialog.AlertDialogClickEvent)?.which} clicked", Toast.LENGTH_SHORT).show()
-                }
-            })
+            dialog.setOnDialogEventListener { priorityDialog, event ->
+                Toast.makeText(priorityDialog.dialogHost as FragmentTestActivity, "button ${(event as? BaseAlertDialog.AlertDialogClickEvent)?.which} clicked", Toast.LENGTH_SHORT).show()
+            }
             it.showPriorityDialog(dialog)
         }
         activityRule.scenario.onActivity {
@@ -267,11 +254,9 @@ class EventListenerTest {
         activityRule.scenario.onActivity {
             assert(it.currentDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
-            dialog.setOnDialogEventListener(object : OnDialogEventListener<FragmentTestActivity>() {
-                override fun onDialogEvent(host: FragmentTestActivity, event: Any) {
-                    Toast.makeText(host, "button ${(event as? BaseAlertDialog.AlertDialogClickEvent)?.which} clicked", Toast.LENGTH_SHORT).show()
-                }
-            })
+            dialog.setOnDialogEventListener { priorityDialog, event ->
+                Toast.makeText(priorityDialog.dialogHost as FragmentTestActivity, "button ${(event as? BaseAlertDialog.AlertDialogClickEvent)?.which} clicked", Toast.LENGTH_SHORT).show()
+            }
             it.showPriorityDialog(dialog)
         }
         activityRule.scenario.onActivity {

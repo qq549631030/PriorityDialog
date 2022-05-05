@@ -45,13 +45,13 @@ public class PriorityDialogHostDelegate {
         if (!mDialogManager.isReady(mUuid)) {
             return false;
         }
-        newDialog.setHostUuid(mUuid);
+        newDialog.getPriorityDialogDelegate().getConfig().setHostUuid(mUuid);
         PriorityDialog currentDialog = mDialogManager.getCurrentDialog();
         if (currentDialog != null) {
             PriorityStrategy priorityStrategy = mDialogManager.getPriorityStrategy();
             if (priorityStrategy.canNewShow(currentDialog, newDialog)) {
                 if (priorityStrategy.shouldPreAddToPendingWhenNewShow(currentDialog, newDialog)) {
-                    currentDialog.getDelegate().setDismissByHighPriorityDialog(true);
+                    currentDialog.getPriorityDialogDelegate().setDismissByHighPriorityDialog(true);
                     mDialogManager.addToPendingDialog(currentDialog);
                 }
                 if (currentDialog instanceof DialogFragment) {
@@ -69,7 +69,7 @@ public class PriorityDialogHostDelegate {
             }
         }
         if (newDialog instanceof DialogFragment) {
-            newDialog.getDelegate().setDismissByHighPriorityDialog(false);
+            newDialog.getPriorityDialogDelegate().setDismissByHighPriorityDialog(false);
             mDialogManager.setPendingShowDialog(newDialog);
             FragmentTransaction transaction = childFragmentManager.beginTransaction();
             ((DialogFragment) newDialog).show(transaction, PriorityDialog.BASE_DIALOG_TAG);

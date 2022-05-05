@@ -17,7 +17,7 @@ public class PriorityDialogImpl implements PriorityDialog {
 
     @NonNull
     @Override
-    public PriorityDialogDelegate getDelegate() {
+    public PriorityDialogDelegate getPriorityDialogDelegate() {
         return delegate;
     }
 
@@ -34,13 +34,8 @@ public class PriorityDialogImpl implements PriorityDialog {
 
     @Nullable
     @Override
-    public String getHostUuid() {
-        return delegate.getConfig().getHostUuid();
-    }
-
-    @Override
-    public void setHostUuid(@Nullable String uuid) {
-        delegate.getConfig().setHostUuid(uuid);
+    public DialogHost getDialogHost() {
+        return delegate.getDialogManager().getDialogHost(delegate.getConfig().getHostUuid());
     }
 
     @Override
@@ -89,23 +84,23 @@ public class PriorityDialogImpl implements PriorityDialog {
     }
 
     @Override
-    public void setOnCancelListener(@Nullable OnCancelListener<? extends DialogHost> listener) {
+    public void setOnCancelListener(@Nullable OnCancelListener listener) {
         PriorityDialogManager.onCancelListenerMap.put(getUuid(), listener);
     }
 
     @Override
-    public void setOnDismissListener(@Nullable OnDismissListener<? extends DialogHost> listener) {
+    public void setOnDismissListener(@Nullable OnDismissListener listener) {
         PriorityDialogManager.onDismissListenerMap.put(getUuid(), listener);
     }
 
     @Override
-    public void setOnDialogEventListener(@Nullable OnDialogEventListener<? extends DialogHost> listener) {
+    public void setOnDialogEventListener(@Nullable OnDialogEventListener listener) {
         PriorityDialogManager.onDialogEventListenerMap.put(getUuid(), listener);
     }
 
     @Override
     public void onDialogEvent(@NonNull Object event) {
-        getDelegate().getDialogManager().dispatchDialogEvent(this, event);
+        getPriorityDialogDelegate().getDialogManager().dispatchDialogEvent(this, event);
     }
 
     @Override

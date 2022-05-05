@@ -37,9 +37,9 @@ public class PriorityDialogManager {
     private final Map<String, ArrayDeque<ActivityAction>> pendingActivityActionMap = new HashMap<>();
     private final Map<String, ArrayDeque<FragmentAction>> pendingFragmentActionMap = new HashMap<>();
 
-    static final Map<String, OnCancelListener<? extends DialogHost>> onCancelListenerMap = new HashMap<>();
-    static final Map<String, OnDismissListener<? extends DialogHost>> onDismissListenerMap = new HashMap<>();
-    static final Map<String, OnDialogEventListener<? extends DialogHost>> onDialogEventListenerMap = new HashMap<>();
+    static final Map<String, OnCancelListener> onCancelListenerMap = new HashMap<>();
+    static final Map<String, OnDismissListener> onDismissListenerMap = new HashMap<>();
+    static final Map<String, OnDialogEventListener> onDialogEventListenerMap = new HashMap<>();
 
     FragmentActivity activity;
 
@@ -140,13 +140,13 @@ public class PriorityDialogManager {
                 }
                 if (f instanceof PriorityDialog && f instanceof DialogFragment) {//init PriorityDialog
                     PriorityDialog priorityDialog = (PriorityDialog) f;
-                    priorityDialog.getDelegate().init(PriorityDialogManager.this);
+                    priorityDialog.getPriorityDialogDelegate().init(PriorityDialogManager.this);
                     if (savedInstanceState != null) {
                         PriorityDialogConfig config = savedInstanceState.getParcelable(PriorityDialog.BASE_DIALOG_CONFIG);
                         if (config != null) {
-                            priorityDialog.getDelegate().getConfig().copyFrom(config);
+                            priorityDialog.getPriorityDialogDelegate().getConfig().copyFrom(config);
                         }
-                        if (!priorityDialog.getDelegate().getConfig().isSupportRecreate()) {
+                        if (!priorityDialog.getPriorityDialogDelegate().getConfig().isSupportRecreate()) {
                             //dismiss when un support recreate
                             ((DialogFragment) f).dismiss();
                         }
@@ -174,7 +174,7 @@ public class PriorityDialogManager {
                 }
                 if (f instanceof PriorityDialog) {
                     //save dialog info when recreate
-                    outState.putParcelable(PriorityDialog.BASE_DIALOG_CONFIG, ((PriorityDialog) f).getDelegate().getConfig());
+                    outState.putParcelable(PriorityDialog.BASE_DIALOG_CONFIG, ((PriorityDialog) f).getPriorityDialogDelegate().getConfig());
                 }
             }
 
@@ -249,6 +249,11 @@ public class PriorityDialogManager {
         }
     }
 
+    @Nullable
+    DialogHost getDialogHost(String hostUuid) {
+        return dialogHostMap.get(hostUuid);
+    }
+
     PriorityDialog getPendingShowDialog() {
         return pendingShowDialog;
     }
@@ -301,7 +306,7 @@ public class PriorityDialogManager {
     }
 
     synchronized void addToPendingDialog(@NonNull PriorityDialog priorityDialog) {
-        if (priorityDialog.getHostUuid() == null || !(priorityDialog instanceof DialogFragment)) {
+        if (priorityDialog.getPriorityDialogDelegate().getConfig().getHostUuid() == null || !(priorityDialog instanceof DialogFragment)) {
             return;
         }
         cachePendingDialogMap.put(priorityDialog.getUuid(), priorityDialog);
@@ -312,7 +317,7 @@ public class PriorityDialogManager {
                 linkedList = new LinkedList<>();
                 pendingDialogMap.put(priorityDialog.getPriority(), linkedList);
             }
-            linkedList.addLast(new PendingDialogState(priorityDialog.getDelegate().getConfig(), fragmentState));
+            linkedList.addLast(new PendingDialogState(priorityDialog.getPriorityDialogDelegate().getConfig(), fragmentState));
         }
 
     }
@@ -335,7 +340,7 @@ public class PriorityDialogManager {
                 while (dialogInfo != null) {
                     String uuid = dialogInfo.config.getUuid();
                     String hostUuid = dialogInfo.config.getHostUuid();
-                    DialogHost dialogHost = dialogHostMap.get(hostUuid);
+                    DialogHost dialogHost = getDialogHost(hostUuid);
                     if (dialogHost != null) {
                         PriorityDialog dialog = cachePendingDialogMap.get(uuid);
                         if (dialog == null) {
@@ -343,7 +348,7 @@ public class PriorityDialogManager {
                             dialog = (PriorityDialog) FragmentUtil.restoreFragment(dialogInfo.fragmentState, fragmentManager);
                         }
                         if (dialog != null) {
-                            dialog.getDelegate().getConfig().copyFrom(dialogInfo.config);
+                            dialog.getPriorityDialogDelegate().getConfig().copyFrom(dialogInfo.config);
                             if (isReady(hostUuid) && canPendingDialogShow(dialog)) {
                                 if (dialogHost.showPriorityDialog(dialog)) {
                                     cachePendingDialogMap.remove(uuid);
@@ -381,7 +386,7 @@ public class PriorityDialogManager {
     }
 
     boolean isReady(String hostUuid) {
-        DialogHost dialogHost = dialogHostMap.get(hostUuid);
+        DialogHost dialogHost = getDialogHost(hostUuid);
         if (dialogHost instanceof Fragment) {
             Fragment fragment = (Fragment) dialogHost;
             if (fragment.isRemoving() || !fragment.isVisible()) {
@@ -599,35 +604,35 @@ public class PriorityDialogManager {
     }
 
     void dispatchDialogEvent(@NonNull PriorityDialog dialog, @NonNull Object event) {
-        DialogHost dialogHost = dialogHostMap.get(dialog.getHostUuid());
+        DialogHost dialogHost = dialog.getDialogHost();
         if (dialogHost != null) {
             dialogHost.onDialogEvent(dialog, event);
-            OnDialogEventListener<? extends DialogHost> listener = onDialogEventListenerMap.get(dialog.getUuid());
-            if (listener != null) {
-                listener.dispatch(dialogHost, event);
-            }
+        }
+        OnDialogEventListener listener = onDialogEventListenerMap.get(dialog.getUuid());
+        if (listener != null) {
+            listener.onDialogEvent(dialog, event);
         }
     }
 
     void dispatchDialogCancel(@NonNull PriorityDialog dialog) {
-        DialogHost dialogHost = dialogHostMap.get(dialog.getHostUuid());
+        DialogHost dialogHost = dialog.getDialogHost();
         if (dialogHost != null) {
             dialogHost.onCancel(dialog);
-            OnCancelListener<? extends DialogHost> listener = onCancelListenerMap.get(dialog.getUuid());
-            if (listener != null) {
-                listener.dispatch(dialogHost);
-            }
+        }
+        OnCancelListener listener = onCancelListenerMap.get(dialog.getUuid());
+        if (listener != null) {
+            listener.onCancel(dialog);
         }
     }
 
     void dispatchDialogDismiss(@NonNull PriorityDialog dialog) {
-        DialogHost dialogHost = dialogHostMap.get(dialog.getHostUuid());
+        DialogHost dialogHost = dialog.getDialogHost();
         if (dialogHost != null) {
             dialogHost.onDismiss(dialog);
-            OnDismissListener<? extends DialogHost> listener = onDismissListenerMap.get(dialog.getUuid());
-            if (listener != null) {
-                listener.dispatch(dialogHost);
-            }
+        }
+        OnDismissListener listener = onDismissListenerMap.get(dialog.getUuid());
+        if (listener != null) {
+            listener.onDismiss(dialog);
         }
     }
 }

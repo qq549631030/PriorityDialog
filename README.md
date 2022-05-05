@@ -256,11 +256,12 @@ override fun onCancel(priorityDialog: PriorityDialog) {
 ```
 也可用setOnCancelListener
 ```kotlin
-dialog.setOnCancelListener(object : OnCancelListener<FragmentTestActivity>() {
-            override fun onCancel(host: FragmentTestActivity) {
-                //这里只能通过host访问外部类的方法、属性
-                //不可直接访问外部类方法、属性，因为Activity recreate后的情况下原host已经不存在了
-                host.publicMethod()
+dialog.setOnCancelListener(object : OnCancelListener {
+            override fun onCancel(dialog: PriorityDialog) {
+                //这里只能通过dialog.dialogHost访问外部类的方法、属性
+                //不可直接访问外部类方法、属性，因为Activity recreate后的情况下原dialogHost已经不存在了
+                (dialog.dialogHost as? YourHostActivity)?.publicMethod()
+                //(dialog.dialogHost as? YourHostFragment)?.publicMethod()
             }
         })
 ```
@@ -276,11 +277,12 @@ override fun onDismiss(priorityDialog: PriorityDialog) {
 ```
 也可用setOnDismissListener
 ```kotlin
-dialog.setOnDismissListener(object : OnDismissListener<FragmentTestActivity>() {
-            override fun onDismiss(host: FragmentTestActivity) {
-                //这里只能通过host访问外部类的方法、属性
-                //不可直接访问外部类方法、属性，因为Activity recreate后的情况下原host已经不存在了
-                host.publicMethod()
+dialog.setOnDismissListener(object : OnDismissListener{
+            override fun onDismiss(dialog: PriorityDialog) {
+                //这里只能通过dialog.dialogHost访问外部类的方法、属性
+                //不可直接访问外部类方法、属性，因为Activity recreate后的情况下原dialogHost已经不存在了
+                (dialog.dialogHost as? YourHostActivity)?.publicMethod()
+                //(dialog.dialogHost as? YourHostFragment)?.publicMethod()
             }
         })
 ```
@@ -305,11 +307,12 @@ override fun onDialogEvent(priorityDialog: PriorityDialog, event: Any) {
 ```
 也可用setOnDialogEventListener
 ```kotlin
-dialog.setOnDialogEventListener(object : OnDialogEventListener<FragmentTestActivity>() {
-            override fun onDialogEvent(host: FragmentTestActivity, event: Any) {
-                //这里只能通过host访问外部类的方法、属性
-                //不可直接访问外部类方法、属性，因为Activity recreate后的情况下原host已经不存在了
-                host.publicMethod()
+dialog.setOnDialogEventListener(object : OnDialogEventListener {
+            override fun onDialogEvent(dialog: PriorityDialog, event: Any) {
+                //这里只能通过dialog.dialogHost访问外部类的方法、属性
+                //不可直接访问外部类方法、属性，因为Activity recreate后的情况下原dialogHost已经不存在了
+                (dialog.dialogHost as? YourHostActivity)?.publicMethod()
+                //(dialog.dialogHost as? YourHostFragment)?.publicMethod()
             }
         })
 ```

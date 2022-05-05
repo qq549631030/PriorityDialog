@@ -12,7 +12,7 @@ public interface PriorityDialog {
 
     @RestrictTo(RestrictTo.Scope.LIBRARY)
     @NonNull
-    PriorityDialogDelegate getDelegate();
+    PriorityDialogDelegate getPriorityDialogDelegate();
 
     //唯一标识
     @NonNull
@@ -22,9 +22,7 @@ public interface PriorityDialog {
 
     //Host唯一标识
     @Nullable
-    String getHostUuid();
-
-    void setHostUuid(@Nullable String uuid);
+    DialogHost getDialogHost();
 
     //优先级，值越大优先级越高
     int getPriority();
@@ -47,11 +45,11 @@ public interface PriorityDialog {
 
     boolean isDismissByHighPriorityDialog();
 
-    void setOnCancelListener(@Nullable OnCancelListener<? extends DialogHost> listener);
+    void setOnCancelListener(@Nullable OnCancelListener listener);
 
-    void setOnDismissListener(@Nullable OnDismissListener<? extends DialogHost> listener);
+    void setOnDismissListener(@Nullable OnDismissListener listener);
 
-    void setOnDialogEventListener(@Nullable OnDialogEventListener<? extends DialogHost> listener);
+    void setOnDialogEventListener(@Nullable OnDialogEventListener listener);
 
     @RestrictTo({RestrictTo.Scope.SUBCLASSES})
     void onDialogEvent(@NonNull Object event);
