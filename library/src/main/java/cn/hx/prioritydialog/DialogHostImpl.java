@@ -40,6 +40,16 @@ public class DialogHostImpl implements DialogHost {
     }
 
     @Override
+    public void dismissCurrentDialog(boolean allowStateLoss) {
+        mPriorityDialogHostDelegate.mDialogManager.dismissCurrentDialog(allowStateLoss);
+    }
+
+    @Override
+    public void dismissByUuid(@NonNull String uuid, boolean allowStateLoss) {
+        mPriorityDialogHostDelegate.mDialogManager.dismissDialog(uuid, allowStateLoss);
+    }
+
+    @Override
     public void onDialogEvent(@NonNull PriorityDialog priorityDialog, @NonNull Object event) {
 
     }

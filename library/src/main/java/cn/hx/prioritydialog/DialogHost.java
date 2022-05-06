@@ -27,6 +27,10 @@ public interface DialogHost {
 
     boolean showPriorityDialog(@NonNull PriorityDialog newDialog);
 
+    void dismissCurrentDialog(boolean allowStateLoss);
+
+    void dismissByUuid(@NonNull String uuid, boolean allowStateLoss);
+
     void onDialogEvent(@NonNull PriorityDialog priorityDialog, @NonNull Object event);
 
     void onCancel(@NonNull PriorityDialog priorityDialog);
