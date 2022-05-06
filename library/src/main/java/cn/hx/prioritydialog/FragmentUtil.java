@@ -24,39 +24,22 @@ public class FragmentUtil {
     @Nullable
     static Parcelable saveFragment(@NonNull Fragment fragment) {
         try {
-            Fragment.SavedState savedState;
-            Object mState = null;
+            Bundle savedFragmentState;
             Field fragmentStateField = Fragment.class.getDeclaredField("mState");
             fragmentStateField.setAccessible(true);
             int state = fragmentStateField.getInt(fragment);
-            FragmentManager fragmentManager = fragment.getFragmentManager();
-            if (fragmentManager != null && state > 0) {
-                savedState = fragmentManager.saveFragmentInstanceState(fragment);
-                Class<?> savedStateClass = Class.forName("androidx.fragment.app.Fragment$SavedState");
-                if (savedState != null) {
-                    Field mStateField = savedStateClass.getDeclaredField("mState");
-                    mStateField.setAccessible(true);
-                    mState = mStateField.get(savedState);
-                }
-
+            if (state > 0) {
+                savedFragmentState = saveFragmentStateWhenAttached(fragment);
             } else {//not attached
-                Bundle outState = new Bundle();
-                fragment.onSaveInstanceState(outState);
-                SavedStateRegistry savedStateRegistry = fragment.getSavedStateRegistry();
-                Method performSaveMethod = SavedStateRegistry.class.getDeclaredMethod("performSave", Bundle.class);
-                performSaveMethod.setAccessible(true);
-                performSaveMethod.invoke(savedStateRegistry, outState);
-                mState = outState;
+                savedFragmentState = saveFragmentStateWhenNotAttached(fragment);
             }
             Class<?> fragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
             Constructor<?> constructor = fragmentStateClass.getDeclaredConstructor(Fragment.class);
             constructor.setAccessible(true);
             Object fragmentState = constructor.newInstance(fragment);
-            if (mState != null) {
-                Field mSavedFragmentStateField = fragmentStateClass.getDeclaredField("mSavedFragmentState");
-                mSavedFragmentStateField.setAccessible(true);
-                mSavedFragmentStateField.set(fragmentState, mState);
-            }
+            Field mSavedFragmentStateField = fragmentStateClass.getDeclaredField("mSavedFragmentState");
+            mSavedFragmentStateField.setAccessible(true);
+            mSavedFragmentStateField.set(fragmentState, savedFragmentState);
             return (Parcelable) fragmentState;
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -72,6 +55,40 @@ public class FragmentUtil {
             e.printStackTrace();
         }
         return null;
+    }
+
+    private static Bundle saveFragmentStateWhenAttached(@NonNull Fragment fragment) {
+        Bundle outState = new Bundle();
+        try {
+            Method performSaveInstanceStateMethod = Fragment.class.getDeclaredMethod("performSaveInstanceState", Bundle.class);
+            performSaveInstanceStateMethod.setAccessible(true);
+            performSaveInstanceStateMethod.invoke(fragment, outState);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return outState;
+    }
+
+    private static Bundle saveFragmentStateWhenNotAttached(@NonNull Fragment fragment) {
+        Bundle outState = new Bundle();
+        fragment.onSaveInstanceState(outState);
+        try {
+            SavedStateRegistry savedStateRegistry = fragment.getSavedStateRegistry();
+            Method performSaveMethod = SavedStateRegistry.class.getDeclaredMethod("performSave", Bundle.class);
+            performSaveMethod.setAccessible(true);
+            performSaveMethod.invoke(savedStateRegistry, outState);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return outState;
     }
 
     @Nullable

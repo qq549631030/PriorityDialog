@@ -14,8 +14,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleEventObserver;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -116,6 +114,11 @@ public class PriorityDialogManager {
 
             @Override
             public void onActivityDestroyed(@NonNull Activity activity) {
+                if (activity instanceof DialogHost && activity.isFinishing()) {
+                    DialogHost dialogHost = (DialogHost) activity;
+                    //clean activity dialogHost
+                    dialogHost.getPriorityDialogHostDelegate().mDialogManager.unregisterDialogHost(dialogHost.getUuid());
+                }
             }
         });
     }
@@ -139,15 +142,6 @@ public class PriorityDialogManager {
                 pendingDismissDialogUuids.addAll(list);
             }
         }
-        activity.getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
-            if (activity instanceof DialogHost) {
-                DialogHost dialogHost = (DialogHost) activity;
-                if (event == Lifecycle.Event.ON_DESTROY && activity.isFinishing()) {
-                    //clean activity dialogHost
-                    unregisterDialogHost(dialogHost.getUuid());
-                }
-            }
-        });
         activity.getSupportFragmentManager().registerFragmentLifecycleCallbacks(new FragmentManager.FragmentLifecycleCallbacks() {
             @Override
             public void onFragmentPreCreated(@NonNull FragmentManager fm, @NonNull Fragment f, @Nullable Bundle savedInstanceState) {
@@ -159,6 +153,9 @@ public class PriorityDialogManager {
                 if (f instanceof PriorityDialog && f instanceof DialogFragment) {//init PriorityDialog
                     PriorityDialog priorityDialog = (PriorityDialog) f;
                     priorityDialog.getPriorityDialogDelegate().init(PriorityDialogManager.this);
+                    if (priorityDialog.equals(pendingShowDialog)) {
+                        pendingShowDialog = null;
+                    }
                     if (savedInstanceState != null) {
                         PriorityDialogConfig config = savedInstanceState.getParcelable(PriorityDialog.BASE_DIALOG_CONFIG);
                         if (config != null) {
@@ -292,7 +289,6 @@ public class PriorityDialogManager {
     }
 
     private boolean removePendingDialogBytUuid(String uuid) {
-        boolean doSomeThing = false;
         Map.Entry<Integer, LinkedList<PendingDialogState>> lastEntry = pendingDialogMap.lastEntry();
         while (lastEntry != null) {
             LinkedList<PendingDialogState> linkedList = lastEntry.getValue();
@@ -303,7 +299,7 @@ public class PriorityDialogManager {
                     if (uuid.equals(dialogInfo.config.getUuid())) {
                         cachePendingDialogMap.remove(dialogInfo.config.getUuid());
                         listIterator.remove();
-                        doSomeThing = true;
+                        return true;
                     }
                 }
             }
@@ -314,16 +310,12 @@ public class PriorityDialogManager {
                 lastEntry = pendingDialogMap.lowerEntry(lastEntry.getKey());
             }
         }
-        return doSomeThing;
+        return false;
     }
 
     @Nullable
     DialogHost getDialogHost(String hostUuid) {
         return dialogHostMap.get(hostUuid);
-    }
-
-    PriorityDialog getPendingShowDialog() {
-        return pendingShowDialog;
     }
 
     void setPendingShowDialog(PriorityDialog pendingShowDialog) {
