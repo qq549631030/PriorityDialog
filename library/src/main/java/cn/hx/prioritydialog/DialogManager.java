@@ -11,5 +11,5 @@ public interface DialogManager {
     PriorityDialogManager getPriorityDialogManager();
 
     @Nullable
-    PriorityDialog getCurrentDialog();
+    PriorityDialog getCurrentPriorityDialog();
 }

@@ -21,11 +21,11 @@ class PriorityTest {
     @Test
     fun highPriorityCoverLowPriority() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             it.showAlertDialog(message = "first dialog", priority = 1)
         }
         activityRule.scenario.onActivity {
-            assert(it.currentDialog != null)
+            assert(it.currentPriorityDialog != null)
             Espresso.onView(ViewMatchers.withId(R.id.message))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .check(ViewAssertions.matches(ViewMatchers.withText("first dialog")))
@@ -45,18 +45,18 @@ class PriorityTest {
             Espresso.onView(ViewMatchers.withId(R.id.button1))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .perform(ViewActions.click())
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
         }
     }
 
     @Test
     fun samePriority() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             it.showAlertDialog(message = "first dialog", priority = 1)
         }
         activityRule.scenario.onActivity {
-            assert(it.currentDialog != null)
+            assert(it.currentPriorityDialog != null)
             Espresso.onView(ViewMatchers.withId(R.id.message))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .check(ViewAssertions.matches(ViewMatchers.withText("first dialog")))
@@ -76,18 +76,18 @@ class PriorityTest {
             Espresso.onView(ViewMatchers.withId(R.id.button1))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .perform(ViewActions.click())
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
         }
     }
 
     @Test
     fun lowPriorityAfterHighPriority() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             it.showAlertDialog(message = "first dialog", priority = 2)
         }
         activityRule.scenario.onActivity {
-            assert(it.currentDialog != null)
+            assert(it.currentPriorityDialog != null)
             Espresso.onView(ViewMatchers.withId(R.id.message))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .check(ViewAssertions.matches(ViewMatchers.withText("first dialog")))
@@ -95,7 +95,7 @@ class PriorityTest {
             it.showAlertDialog(message = "second dialog", priority = 1)
         }
         activityRule.scenario.onActivity {
-            assert(it.currentDialog != null)
+            assert(it.currentPriorityDialog != null)
             Espresso.onView(ViewMatchers.withId(R.id.message))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .check(ViewAssertions.matches(ViewMatchers.withText("first dialog")))
@@ -112,18 +112,18 @@ class PriorityTest {
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .perform(ViewActions.click())
 
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
         }
     }
 
     @Test
     fun recreate() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             it.showAlertDialog(message = "first dialog", priority = 1)
         }
         activityRule.scenario.onActivity {
-            assert(it.currentDialog != null)
+            assert(it.currentPriorityDialog != null)
             Espresso.onView(ViewMatchers.withId(R.id.message))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .check(ViewAssertions.matches(ViewMatchers.withText("first dialog")))
@@ -152,18 +152,18 @@ class PriorityTest {
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .perform(ViewActions.click())
 
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
         }
     }
 
     @Test
     fun unSupportRecreate() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             it.showAlertDialog(message = "first dialog", priority = 1)
         }
         activityRule.scenario.onActivity {
-            assert(it.currentDialog != null)
+            assert(it.currentPriorityDialog != null)
             Espresso.onView(ViewMatchers.withId(R.id.message))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .check(ViewAssertions.matches(ViewMatchers.withText("first dialog")))
@@ -184,7 +184,7 @@ class PriorityTest {
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .perform(ViewActions.click())
 
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
         }
     }
 }

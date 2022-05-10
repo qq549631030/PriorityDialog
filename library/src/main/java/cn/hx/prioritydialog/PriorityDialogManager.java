@@ -476,7 +476,7 @@ public class PriorityDialogManager {
         DialogHost dialogHost = getDialogHost(hostUuid);
         if (dialogHost instanceof Fragment) {
             Fragment fragment = (Fragment) dialogHost;
-            if (fragment.isRemoving() || !fragment.isVisible()) {
+            if (fragment.isDetached() || fragment.isRemoving() || !fragment.isAdded()) {
                 return false;
             }
         }
@@ -600,10 +600,8 @@ public class PriorityDialogManager {
 
     private void tryPendingFragmentActionsForFragment(Fragment fragment) {
         FragmentManager fragmentManager = fragment.getFragmentManager();
-        if (fragmentManager != null) {
-            if (fragmentManager.isDestroyed()) {
-                return;
-            }
+        if (fragmentManager == null || fragmentManager.isDestroyed() || fragment.getHost() == null) {
+            return;
         }
         //child first
         for (Fragment child : fragment.getChildFragmentManager().getFragments()) {

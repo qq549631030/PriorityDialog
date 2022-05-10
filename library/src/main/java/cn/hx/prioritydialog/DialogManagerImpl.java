@@ -15,7 +15,7 @@ public class DialogManagerImpl implements DialogManager {
 
     @Nullable
     @Override
-    public PriorityDialog getCurrentDialog() {
+    public PriorityDialog getCurrentPriorityDialog() {
         return dialogManager.getCurrentDialog();
     }
 }

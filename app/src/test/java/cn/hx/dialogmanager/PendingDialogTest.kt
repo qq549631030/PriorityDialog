@@ -25,7 +25,7 @@ class PendingDialogTest {
     @Test
     fun multiPending() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             it.showAlertDialog(message = "dialog1_1", priority = 1)
             it.showAlertDialog(message = "dialog1_2", priority = 1)
             it.showAlertDialog(message = "dialog1_3", priority = 1)
@@ -103,14 +103,14 @@ class PendingDialogTest {
                     .perform(ViewActions.click())
         }
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
         }
     }
 
     @Test
     fun multiPending_recreate() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             it.showAlertDialog(message = "dialog1_1", priority = 1)
             it.showAlertDialog(message = "dialog1_2", priority = 1)
             it.showAlertDialog(message = "dialog1_3", priority = 1)
@@ -194,7 +194,7 @@ class PendingDialogTest {
                     .perform(ViewActions.click())
         }
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
         }
     }
 
@@ -237,7 +237,7 @@ class PendingDialogTest {
         }
         activityRule.scenario.onActivity {
             assert(getCurrentFragment(it)?.javaClass?.simpleName == TestFragment::class.java.simpleName)
-            assert(it.currentDialog != null)
+            assert(it.currentPriorityDialog != null)
             Espresso.onView(ViewMatchers.withId(android.R.id.message))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .check(ViewAssertions.matches(ViewMatchers.withText("dialog3_1")))
@@ -260,7 +260,7 @@ class PendingDialogTest {
             Espresso.onView(ViewMatchers.withId(android.R.id.button1))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .perform(ViewActions.click())
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
         }
     }
 }

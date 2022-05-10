@@ -16,7 +16,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.List;
 
 public class FragmentUtil {
@@ -149,6 +148,7 @@ public class FragmentUtil {
         return null;
     }
 
+    @SuppressWarnings({"JavaReflectionMemberAccess", "JavaReflectionInvocation"})
     @Nullable
     private static Fragment restoreFragment1_2(@Nullable Object fragmentState, @NonNull FragmentManager fragmentManager) {
         String who = getWhoFromFragmentState(fragmentState);
@@ -200,6 +200,7 @@ public class FragmentUtil {
         return null;
     }
 
+    @SuppressWarnings({"JavaReflectionMemberAccess", "JavaReflectionInvocation"})
     @Nullable
     private static Fragment restoreFragment1_3(@Nullable Object fragmentState, @NonNull FragmentManager fragmentManager) {
         String who = getWhoFromFragmentState(fragmentState);
@@ -272,6 +273,7 @@ public class FragmentUtil {
         return null;
     }
 
+    @SuppressWarnings({"JavaReflectionInvocation", "unchecked"})
     @Nullable
     static PendingTransactionState saveTransaction(@NonNull FragmentTransaction transaction) {
         try {
@@ -332,6 +334,7 @@ public class FragmentUtil {
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     @Nullable
     static FragmentTransaction restorePendingTransaction(@NonNull PendingTransactionState pendingTransactionState, @NonNull FragmentManager fragmentManager) {
         try {
@@ -364,7 +367,7 @@ public class FragmentUtil {
                 }
                 Field mFragmentWhosField = backStackStateClass.getDeclaredField("mFragmentWhos");
                 mFragmentWhosField.setAccessible(true);
-                ArrayList<String> mFragmentWhos = (ArrayList<String>) mFragmentWhosField.get(pendingTransactionState.backStackState);
+                List<String> mFragmentWhos = (List<String>) mFragmentWhosField.get(pendingTransactionState.backStackState);
                 Field mOpsField = fragmentTransactionClass.getDeclaredField("mOps");
                 mOpsField.setAccessible(true);
                 List<Object> mOps = (List<Object>) mOpsField.get(newBackStackRecord);
@@ -404,6 +407,7 @@ public class FragmentUtil {
         return null;
     }
 
+    @SuppressWarnings("SameParameterValue")
     private static boolean hasDeclaredField(@NonNull Class<?> clz, @NonNull String fieldName) {
         Field[] declaredFields = clz.getDeclaredFields();
         for (Field declaredField : declaredFields) {

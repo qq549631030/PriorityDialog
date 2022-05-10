@@ -137,7 +137,7 @@ class EventListenerTest {
     @Test
     fun onCancelListener() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
             dialog.setOnCancelListener { priorityDialog ->
                 (priorityDialog.dialogHost as FragmentTestActivity).finish()
@@ -156,7 +156,7 @@ class EventListenerTest {
     @Test
     fun onCancelListener_recreate() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
             dialog.setOnCancelListener { priorityDialog ->
                 (priorityDialog.dialogHost as FragmentTestActivity).finish()
@@ -183,7 +183,7 @@ class EventListenerTest {
     @Test
     fun onDismissListener() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
             dialog.setOnDismissListener { priorityDialog ->
                 (priorityDialog.dialogHost as FragmentTestActivity).finish()
@@ -202,7 +202,7 @@ class EventListenerTest {
     @Test
     fun onDismissListener_recreate() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
             dialog.setOnDismissListener { priorityDialog ->
                 (priorityDialog.dialogHost as FragmentTestActivity).finish()
@@ -230,7 +230,7 @@ class EventListenerTest {
     @Test
     fun onDialogEventListener() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
             dialog.setOnDialogEventListener { priorityDialog, event ->
                 Toast.makeText(priorityDialog.dialogHost as FragmentTestActivity, "button ${(event as? BaseAlertDialog.AlertDialogClickEvent)?.which} clicked", Toast.LENGTH_SHORT).show()
@@ -252,7 +252,7 @@ class EventListenerTest {
     @Test
     fun onDialogEventListener_recreate() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
             dialog.setOnDialogEventListener { priorityDialog, event ->
                 Toast.makeText(priorityDialog.dialogHost as FragmentTestActivity, "button ${(event as? BaseAlertDialog.AlertDialogClickEvent)?.which} clicked", Toast.LENGTH_SHORT).show()

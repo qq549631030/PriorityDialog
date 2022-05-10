@@ -21,11 +21,11 @@ class OnlyDismissByUserTest {
     @Test
     fun onlyDismissByUser_true() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             it.showAlertDialog(message = "first dialog", priority = 1)
         }
         activityRule.scenario.onActivity {
-            assert(it.currentDialog != null)
+            assert(it.currentPriorityDialog != null)
             Espresso.onView(ViewMatchers.withId(R.id.message))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .check(ViewAssertions.matches(ViewMatchers.withText("first dialog")))
@@ -45,18 +45,18 @@ class OnlyDismissByUserTest {
             Espresso.onView(ViewMatchers.withId(R.id.button1))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .perform(ViewActions.click())
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
         }
     }
 
     @Test
     fun onlyDismissByUser_false() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             it.showAlertDialog(message = "first dialog", priority = 1, onlyDismissByUser = false)
         }
         activityRule.scenario.onActivity {
-            assert(it.currentDialog != null)
+            assert(it.currentPriorityDialog != null)
 
             Espresso.onView(ViewMatchers.withId(R.id.message))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
@@ -73,7 +73,7 @@ class OnlyDismissByUserTest {
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .perform(ViewActions.click())
 
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
         }
     }
 }

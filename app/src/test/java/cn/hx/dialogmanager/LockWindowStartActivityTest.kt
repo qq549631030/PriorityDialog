@@ -27,11 +27,11 @@ class LockWindowStartActivityTest {
     @Test
     fun activity_startActivity() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             it.showAlertDialog(message = "first dialog", lockWindow = true)
         }
         activityRule.scenario.onActivity {
-            assert(it.currentDialog != null)
+            assert(it.currentPriorityDialog != null)
             Espresso.onView(ViewMatchers.withId(android.R.id.message))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .check(ViewAssertions.matches(ViewMatchers.withText("first dialog")))
@@ -50,11 +50,11 @@ class LockWindowStartActivityTest {
     @Test
     fun activity_startActivity_multi() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             it.showAlertDialog(message = "first dialog", lockWindow = true)
         }
         activityRule.scenario.onActivity {
-            assert(it.currentDialog != null)
+            assert(it.currentPriorityDialog != null)
             Espresso.onView(ViewMatchers.withId(android.R.id.message))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .check(ViewAssertions.matches(ViewMatchers.withText("first dialog")))
@@ -74,11 +74,11 @@ class LockWindowStartActivityTest {
     @Test
     fun activity_startActivity_recreate() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             it.showAlertDialog(message = "first dialog", lockWindow = true)
         }
         activityRule.scenario.onActivity {
-            assert(it.currentDialog != null)
+            assert(it.currentPriorityDialog != null)
             Espresso.onView(ViewMatchers.withId(android.R.id.message))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .check(ViewAssertions.matches(ViewMatchers.withText("first dialog")))
@@ -90,7 +90,7 @@ class LockWindowStartActivityTest {
         activityRule.scenario.recreate()
 
         activityRule.scenario.onActivity {
-            assert(it.currentDialog != null)
+            assert(it.currentPriorityDialog != null)
             Espresso.onView(ViewMatchers.withId(android.R.id.message))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .check(ViewAssertions.matches(ViewMatchers.withText("first dialog")))
@@ -107,13 +107,13 @@ class LockWindowStartActivityTest {
     @Test
     fun fragment_startActivity() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             getCurrentFragment(it)?.run {
                 showAlertDialog(message = "first dialog", lockWindow = true)
             }
         }
         activityRule.scenario.onActivity {
-            assert(it.currentDialog != null)
+            assert(it.currentPriorityDialog != null)
             getCurrentFragment(it)?.run {
                 Espresso.onView(ViewMatchers.withId(android.R.id.message))
                         .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
@@ -134,13 +134,13 @@ class LockWindowStartActivityTest {
     @Test
     fun fragment_startActivity_recreate() {
         activityRule.scenario.onActivity {
-            assert(it.currentDialog == null)
+            assert(it.currentPriorityDialog == null)
             getCurrentFragment(it)?.run {
                 showAlertDialog(message = "first dialog", lockWindow = true)
             }
         }
         activityRule.scenario.onActivity {
-            assert(it.currentDialog != null)
+            assert(it.currentPriorityDialog != null)
             getCurrentFragment(it)?.run {
                 Espresso.onView(ViewMatchers.withId(android.R.id.message))
                         .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
@@ -152,7 +152,7 @@ class LockWindowStartActivityTest {
         }
         activityRule.scenario.recreate()
         activityRule.scenario.onActivity {
-            assert(it.currentDialog != null)
+            assert(it.currentPriorityDialog != null)
             getCurrentFragment(it)?.run {
                 Espresso.onView(ViewMatchers.withId(android.R.id.message))
                         .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
