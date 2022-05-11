@@ -35,6 +35,10 @@ android {
         unitTests {
             includeAndroidResources = true
             returnDefaultValues = true
+            all {
+                systemProperty 'robolectric.dependency.repo.url', 'https://maven.aliyun.com/repository/public/'
+                systemProperty 'robolectric.dependency.repo.id', 'aliyun'
+            }
         }
     }
 }

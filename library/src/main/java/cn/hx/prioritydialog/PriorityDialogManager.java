@@ -27,7 +27,7 @@ import java.util.TreeMap;
 
 public class PriorityDialogManager {
 
-    private final String TAG = "PriorityDialogManager";
+    private static final String TAG = "PriorityDialogManager";
 
     private static final String PENDING_DIALOGS = "cn.hx.base.dialogManager.pendingDialogs";
     private static final String PENDING_ACTIVITY_ACTIONS = "cn.hx.base.dialogManager.pendingActivityActions";
@@ -61,22 +61,18 @@ public class PriorityDialogManager {
         ((Application) context.getApplicationContext()).registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
 
             @Override
-            public void onActivityPreCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
+            public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle bundle) {
                 if (activity instanceof DialogManager && activity instanceof FragmentActivity) {
                     PriorityDialogManager dialogManager = ((DialogManager) activity).getPriorityDialogManager();
                     FragmentActivity fragmentActivity = (FragmentActivity) activity;
                     //init DialogManager
-                    dialogManager.init(fragmentActivity, savedInstanceState);
+                    dialogManager.init(fragmentActivity, bundle);
                     if (activity instanceof DialogHost) {//init Activity DialogHost
                         DialogHost dialogHost = (DialogHost) activity;
-                        dialogHost.getPriorityDialogHostDelegate().init(dialogManager, fragmentActivity.getSupportFragmentManager(), fragmentActivity.getSupportFragmentManager(), savedInstanceState);
+                        dialogHost.getPriorityDialogHostDelegate().init(dialogManager, fragmentActivity.getSupportFragmentManager(), fragmentActivity.getSupportFragmentManager(), bundle);
                         dialogManager.registerDialogHost(dialogHost.getUuid(), dialogHost);
                     }
                 }
-            }
-
-            @Override
-            public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle bundle) {
             }
 
             @Override
@@ -144,7 +140,7 @@ public class PriorityDialogManager {
         }
         activity.getSupportFragmentManager().registerFragmentLifecycleCallbacks(new FragmentManager.FragmentLifecycleCallbacks() {
             @Override
-            public void onFragmentPreCreated(@NonNull FragmentManager fm, @NonNull Fragment f, @Nullable Bundle savedInstanceState) {
+            public void onFragmentCreated(@NonNull FragmentManager fm, @NonNull Fragment f, @Nullable Bundle savedInstanceState) {
                 if (f instanceof DialogHost) {//init Fragment DialogHost
                     DialogHost dialogHost = (DialogHost) f;
                     dialogHost.getPriorityDialogHostDelegate().init(PriorityDialogManager.this, f.requireFragmentManager(), f.getChildFragmentManager(), savedInstanceState);
