@@ -2,9 +2,14 @@ package cn.hx.dialogmanager
 
 import android.os.Bundle
 import android.widget.Toast
+import androidx.annotation.VisibleForTesting
 import cn.hx.prioritydialog.PriorityDialog
 
 class FragmentTestActivity : BaseActivity() {
+
+    @VisibleForTesting
+    var dismissAfterSavedState = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_fragment_test)
@@ -33,5 +38,12 @@ class FragmentTestActivity : BaseActivity() {
                 else -> {}
             }
         }
+    }
+
+    override fun onDestroy() {
+        if (dismissAfterSavedState) {
+            dismissCurrentDialog(true)
+        }
+        super.onDestroy()
     }
 }

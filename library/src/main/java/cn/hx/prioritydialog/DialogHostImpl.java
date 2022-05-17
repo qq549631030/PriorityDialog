@@ -46,7 +46,7 @@ public class DialogHostImpl implements DialogHost {
 
     @Override
     public void dismissByUuid(@NonNull String uuid, boolean allowStateLoss) {
-        mPriorityDialogHostDelegate.mDialogManager.dismissDialog(uuid, allowStateLoss);
+        mPriorityDialogHostDelegate.mDialogManager.dismissDialog(mPriorityDialogHostDelegate.getUuid(), uuid, allowStateLoss);
     }
 
     @Override
