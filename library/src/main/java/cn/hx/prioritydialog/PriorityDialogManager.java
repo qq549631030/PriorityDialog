@@ -108,10 +108,15 @@ public class PriorityDialogManager {
 
             @Override
             public void onActivityDestroyed(@NonNull Activity activity) {
-                if (activity instanceof DialogHost && activity.isFinishing()) {
+                if (activity instanceof DialogHost) {
                     DialogHost dialogHost = (DialogHost) activity;
                     //clean activity dialogHost
                     dialogHost.getPriorityDialogHostDelegate().mDialogManager.unregisterDialogHost(dialogHost.getUuid());
+                    if (activity.isFinishing()) {
+                        //remove related pendingDialog
+                        dialogHost.getPriorityDialogHostDelegate().mDialogManager.removePendingDialogByHostUuid(dialogHost.getUuid());
+                        pendingDismissDialogUuidMap.remove(dialogHost.getUuid());
+                    }
                 }
             }
         });
@@ -203,8 +208,12 @@ public class PriorityDialogManager {
             @Override
             public void onFragmentDestroyed(@NonNull FragmentManager fm, @NonNull Fragment f) {
                 if (f instanceof DialogHost) {
+                    DialogHost dialogHost = (DialogHost) f;
+                    unregisterDialogHost(dialogHost.getUuid());
                     if (f.requireActivity().isFinishing() || f.isRemoving()) {
-                        unregisterDialogHost(((DialogHost) f).getUuid());
+                        //remove related pendingDialog
+                        removePendingDialogByHostUuid(dialogHost.getUuid());
+                        pendingDismissDialogUuidMap.remove(dialogHost.getUuid());
                     }
                 }
                 if (f instanceof PriorityDialog && f instanceof DialogFragment) {
@@ -225,9 +234,7 @@ public class PriorityDialogManager {
                         dispatchDialogDismiss(((PriorityDialog) f));
                         ((PriorityDialog) f).onReallyDismiss();
                         PriorityDialogConfig config = ((PriorityDialog) f).getPriorityDialogDelegate().getConfig();
-                        onCancelListenerMap.remove(config.getUuid());
-                        onDismissListenerMap.remove(config.getUuid());
-                        onDialogEventListenerMap.remove(config.getUuid());
+                        onDialogRemoved(config.getUuid());
                         if (currentDialogConfig != null && config.getUuid().equals(currentDialogConfig.getUuid())) {
                             currentDialogConfig = null;
                         }
@@ -252,9 +259,6 @@ public class PriorityDialogManager {
         dialogHostMap.remove(hostUuid);
         pendingActivityActionMap.remove(hostUuid);
         pendingFragmentActionMap.remove(hostUuid);
-        pendingDismissDialogUuidMap.remove(hostUuid);
-        //remove related pendingDialog
-        removePendingDialogByHostUuid(hostUuid);
     }
 
     private void removePendingDialogByHostUuid(String hostUuid) {
@@ -266,7 +270,11 @@ public class PriorityDialogManager {
                 while (listIterator.hasPrevious()) {
                     PendingDialogState dialogInfo = listIterator.previous();
                     if (hostUuid.equals(dialogInfo.config.getHostUuid())) {
-                        cachePendingDialogMap.remove(dialogInfo.config.getUuid());
+                        PriorityDialog removed = cachePendingDialogMap.remove(dialogInfo.config.getUuid());
+                        if (removed != null) {
+                            removed.onReallyDismiss();
+                        }
+                        onDialogRemoved(dialogInfo.config.getUuid());
                         listIterator.remove();
                     }
                 }
@@ -289,7 +297,11 @@ public class PriorityDialogManager {
                 while (listIterator.hasPrevious()) {
                     PendingDialogState dialogInfo = listIterator.previous();
                     if (uuid.equals(dialogInfo.config.getUuid())) {
-                        cachePendingDialogMap.remove(dialogInfo.config.getUuid());
+                        PriorityDialog removed = cachePendingDialogMap.remove(dialogInfo.config.getUuid());
+                        if (removed != null) {
+                            removed.onReallyDismiss();
+                        }
+                        onDialogRemoved(dialogInfo.config.getUuid());
                         listIterator.remove();
                         return true;
                     }
@@ -669,6 +681,12 @@ public class PriorityDialogManager {
                 }
             }
         }
+    }
+
+    void onDialogRemoved(String uuid) {
+        onCancelListenerMap.remove(uuid);
+        onDismissListenerMap.remove(uuid);
+        onDialogEventListenerMap.remove(uuid);
     }
 
     boolean isWindowLockedByDialog() {

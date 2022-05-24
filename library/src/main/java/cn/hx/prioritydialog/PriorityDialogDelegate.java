@@ -2,22 +2,14 @@ package cn.hx.prioritydialog;
 
 public class PriorityDialogDelegate {
 
-    private PriorityDialogManager mDialogManager;
+    PriorityDialogManager dialogManager;
 
     private final PriorityDialogConfig config = new PriorityDialogConfig();
 
     private boolean mDismissByHighPriorityDialog = false;
 
     void init(PriorityDialogManager dialogManager) {
-        mDialogManager = dialogManager;
-    }
-
-    public PriorityDialogManager getDialogManager() {
-        return mDialogManager;
-    }
-
-    public void setDialogManager(PriorityDialogManager mDialogManager) {
-        this.mDialogManager = mDialogManager;
+        this.dialogManager = dialogManager;
     }
 
     public PriorityDialogConfig getConfig() {

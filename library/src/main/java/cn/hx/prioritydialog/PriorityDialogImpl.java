@@ -35,7 +35,10 @@ public class PriorityDialogImpl implements PriorityDialog {
     @Nullable
     @Override
     public DialogHost getDialogHost() {
-        return delegate.getDialogManager().getDialogHost(delegate.getConfig().getHostUuid());
+        if (delegate.dialogManager != null) {
+            return delegate.dialogManager.getDialogHost(delegate.getConfig().getHostUuid());
+        }
+        return null;
     }
 
     @Override
@@ -100,7 +103,9 @@ public class PriorityDialogImpl implements PriorityDialog {
 
     @Override
     public void onDialogEvent(@NonNull Object event) {
-        getPriorityDialogDelegate().getDialogManager().dispatchDialogEvent(this, event);
+        if (delegate.dialogManager != null) {
+            delegate.dialogManager.dispatchDialogEvent(this, event);
+        }
     }
 
     @Override
