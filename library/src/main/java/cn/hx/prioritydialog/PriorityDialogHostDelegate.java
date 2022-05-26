@@ -41,7 +41,8 @@ public class PriorityDialogHostDelegate {
     }
 
     boolean showPriorityDialog(@NonNull PriorityDialog newDialog) {
-        if (!mDialogManager.isReady(mUuid)) {
+        if (!mDialogManager.isReady(mUuid) || childFragmentManager.isStateSaved()) {
+            newDialog.onReallyDismiss();
             return false;
         }
         newDialog.getPriorityDialogDelegate().getConfig().setHostUuid(mUuid);
@@ -63,6 +64,8 @@ public class PriorityDialogHostDelegate {
             } else {
                 if (priorityStrategy.shouldNewAddToPendingWhenCanNotShow(currentDialog, newDialog)) {
                     mDialogManager.addToPendingDialog(newDialog);
+                } else {
+                    newDialog.onReallyDismiss();
                 }
                 return false;
             }
