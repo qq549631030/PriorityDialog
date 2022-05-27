@@ -16,9 +16,9 @@ import org.junit.runner.RunWith
 class LockWindowFragmentActionTest {
 
     @get:Rule
-    val activityRule = ActivityScenarioRule(FragmentTestActivity::class.java)
+    val activityRule = ActivityScenarioRule(TestActivity::class.java)
 
-    private fun getCurrentFragment(activity: FragmentTestActivity): BaseFragment? {
+    private fun getCurrentFragment(activity: TestActivity): BaseFragment? {
         return activity.supportFragmentManager.findFragmentById(R.id.container) as? BaseFragment
     }
 

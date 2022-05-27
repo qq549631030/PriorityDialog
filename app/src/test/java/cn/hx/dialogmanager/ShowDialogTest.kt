@@ -1,6 +1,7 @@
 package cn.hx.dialogmanager
 
 import androidx.test.espresso.Espresso
+import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.assertion.ViewAssertions
 import androidx.test.espresso.matcher.RootMatchers
 import androidx.test.espresso.matcher.ViewMatchers
@@ -12,41 +13,35 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class DismissDialogTest {
+class ShowDialogTest {
 
     @get:Rule
     val activityRule = ActivityScenarioRule(TestActivity::class.java)
 
     @Test
-    fun dismissCurrentDialog() {
+    fun showDialogAfterSavedState() {
         activityRule.scenario.onActivity {
-            it.showAlertDialog(message = "first dialog")
+            val dialog1 = it.createAlertDialog(message = "first dialog", priority = 1)
+            it.showPriorityDialog(dialog1)
+            val dialog2 = it.createAlertDialog(message = "second dialog", priority = 2)
+            it.showPriorityDialog(dialog2)
+            val dialog3 = it.createAlertDialog(message = "third dialog", priority = 3)
+            dialog3.setOnDialogEventListener { dialog, _ ->
+                (dialog.dialogHost as? TestActivity)?.finish()
+            }
+            it.showPriorityDialog(dialog3)
         }
         activityRule.scenario.onActivity {
             Espresso.onView(ViewMatchers.withId(android.R.id.message))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
-                    .check(ViewAssertions.matches(ViewMatchers.withText("first dialog")))
-            it.dismissCurrentDialog(true)
-        }
-        activityRule.scenario.onActivity {
-            assert(it.currentPriorityDialog == null)
-        }
-    }
+                    .check(ViewAssertions.matches(ViewMatchers.withText("third dialog")))
 
-    @Test
-    fun dismissCurrentDialog_AfterSavedState() {
-        activityRule.scenario.onActivity {
-            it.showAlertDialog(message = "first dialog")
-        }
-        activityRule.scenario.onActivity {
-            Espresso.onView(ViewMatchers.withId(android.R.id.message))
+            Espresso.onView(ViewMatchers.withId(android.R.id.button1))
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
-                    .check(ViewAssertions.matches(ViewMatchers.withText("first dialog")))
-            it.dismissAfterSavedState = true
+                    .perform(ViewActions.click())
         }
-        activityRule.scenario.recreate()
         activityRule.scenario.onActivity {
-            assert(it.currentPriorityDialog == null)
+            assert(it.isFinishing)
         }
     }
 }

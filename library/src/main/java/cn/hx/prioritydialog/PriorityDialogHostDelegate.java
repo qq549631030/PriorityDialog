@@ -41,8 +41,10 @@ public class PriorityDialogHostDelegate {
     }
 
     boolean showPriorityDialog(@NonNull PriorityDialog newDialog) {
-        if (!mDialogManager.isReady(mUuid) || childFragmentManager.isStateSaved()) {
-            newDialog.onReallyDismiss();
+        if (!mDialogManager.isReady(mUuid)) {
+            if (!newDialog.getPriorityDialogDelegate().isInPendingQueue()) {
+                mDialogManager.release(newDialog);
+            }
             return false;
         }
         newDialog.getPriorityDialogDelegate().getConfig().setHostUuid(mUuid);
@@ -62,10 +64,12 @@ public class PriorityDialogHostDelegate {
                     }
                 }
             } else {
-                if (priorityStrategy.shouldNewAddToPendingWhenCanNotShow(currentDialog, newDialog)) {
-                    mDialogManager.addToPendingDialog(newDialog);
-                } else {
-                    newDialog.onReallyDismiss();
+                if (!newDialog.getPriorityDialogDelegate().isInPendingQueue()) {
+                    if (priorityStrategy.shouldNewAddToPendingWhenCanNotShow(currentDialog, newDialog)) {
+                        mDialogManager.addToPendingDialog(newDialog);
+                    } else {
+                        mDialogManager.release(newDialog);
+                    }
                 }
                 return false;
             }
@@ -75,6 +79,7 @@ public class PriorityDialogHostDelegate {
             mDialogManager.setPendingShowDialog(newDialog);
             FragmentTransaction transaction = childFragmentManager.beginTransaction();
             ((DialogFragment) newDialog).show(transaction, PriorityDialog.BASE_DIALOG_TAG);
+            newDialog.getPriorityDialogDelegate().setInPendingQueue(false);
             return true;
         }
         return false;

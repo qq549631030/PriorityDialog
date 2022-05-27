@@ -19,7 +19,7 @@ import org.robolectric.shadows.ShadowToast
 class EventListenerTest {
 
     @get:Rule
-    val activityRule = ActivityScenarioRule(FragmentTestActivity::class.java)
+    val activityRule = ActivityScenarioRule(TestActivity::class.java)
 
     @Test
     fun onCancel() {
@@ -140,7 +140,7 @@ class EventListenerTest {
             assert(it.currentPriorityDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
             dialog.setOnCancelListener { priorityDialog ->
-                (priorityDialog.dialogHost as FragmentTestActivity).finish()
+                (priorityDialog.dialogHost as TestActivity).finish()
             }
             it.showPriorityDialog(dialog)
         }
@@ -159,7 +159,7 @@ class EventListenerTest {
             assert(it.currentPriorityDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
             dialog.setOnCancelListener { priorityDialog ->
-                (priorityDialog.dialogHost as FragmentTestActivity).finish()
+                (priorityDialog.dialogHost as TestActivity).finish()
             }
             it.showPriorityDialog(dialog)
         }
@@ -186,7 +186,7 @@ class EventListenerTest {
             assert(it.currentPriorityDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
             dialog.setOnDismissListener { priorityDialog ->
-                (priorityDialog.dialogHost as FragmentTestActivity).finish()
+                (priorityDialog.dialogHost as TestActivity).finish()
             }
             it.showPriorityDialog(dialog)
         }
@@ -195,6 +195,8 @@ class EventListenerTest {
                     .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
                     .check(ViewAssertions.matches(ViewMatchers.withText("first dialog")))
             Espresso.pressBack()
+        }
+        activityRule.scenario.onActivity {
             assert(it.isFinishing)
         }
     }
@@ -205,7 +207,7 @@ class EventListenerTest {
             assert(it.currentPriorityDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
             dialog.setOnDismissListener { priorityDialog ->
-                (priorityDialog.dialogHost as FragmentTestActivity).finish()
+                (priorityDialog.dialogHost as TestActivity).finish()
             }
             it.showPriorityDialog(dialog)
         }
@@ -233,7 +235,7 @@ class EventListenerTest {
             assert(it.currentPriorityDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
             dialog.setOnDialogEventListener { priorityDialog, event ->
-                Toast.makeText(priorityDialog.dialogHost as FragmentTestActivity, "button ${(event as? BaseAlertDialog.AlertDialogClickEvent)?.which} clicked", Toast.LENGTH_SHORT).show()
+                Toast.makeText(priorityDialog.dialogHost as TestActivity, "button ${(event as? BaseAlertDialog.AlertDialogClickEvent)?.which} clicked", Toast.LENGTH_SHORT).show()
             }
             it.showPriorityDialog(dialog)
         }
@@ -255,7 +257,7 @@ class EventListenerTest {
             assert(it.currentPriorityDialog == null)
             val dialog = it.createAlertDialog(message = "first dialog")
             dialog.setOnDialogEventListener { priorityDialog, event ->
-                Toast.makeText(priorityDialog.dialogHost as FragmentTestActivity, "button ${(event as? BaseAlertDialog.AlertDialogClickEvent)?.which} clicked", Toast.LENGTH_SHORT).show()
+                Toast.makeText(priorityDialog.dialogHost as TestActivity, "button ${(event as? BaseAlertDialog.AlertDialogClickEvent)?.which} clicked", Toast.LENGTH_SHORT).show()
             }
             it.showPriorityDialog(dialog)
         }

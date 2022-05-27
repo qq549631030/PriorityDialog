@@ -8,6 +8,8 @@ public class PriorityDialogDelegate {
 
     private boolean mDismissByHighPriorityDialog = false;
 
+    private boolean isInPendingQueue = false;
+
     void init(PriorityDialogManager dialogManager) {
         this.dialogManager = dialogManager;
     }
@@ -22,5 +24,13 @@ public class PriorityDialogDelegate {
 
     public void setDismissByHighPriorityDialog(boolean dismissByHighPriorityDialog) {
         this.mDismissByHighPriorityDialog = dismissByHighPriorityDialog;
+    }
+
+    public boolean isInPendingQueue() {
+        return isInPendingQueue;
+    }
+
+    public void setInPendingQueue(boolean inPendingQueue) {
+        isInPendingQueue = inPendingQueue;
     }
 }
