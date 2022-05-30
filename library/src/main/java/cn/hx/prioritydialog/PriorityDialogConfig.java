@@ -16,6 +16,7 @@ public class PriorityDialogConfig implements Parcelable {
     private boolean mOnlyDismissByUser;
     private boolean mLockWindow = false;
     private boolean mSupportRecreate = true;
+    private boolean allowStateLoss = false;
 
     public PriorityDialogConfig() {
     }
@@ -27,6 +28,7 @@ public class PriorityDialogConfig implements Parcelable {
         mOnlyDismissByUser = in.readByte() != 0;
         mLockWindow = in.readByte() != 0;
         mSupportRecreate = in.readByte() != 0;
+        allowStateLoss = in.readByte() != 0;
     }
 
     @Override
@@ -37,6 +39,7 @@ public class PriorityDialogConfig implements Parcelable {
         dest.writeByte((byte) (mOnlyDismissByUser ? 1 : 0));
         dest.writeByte((byte) (mLockWindow ? 1 : 0));
         dest.writeByte((byte) (mSupportRecreate ? 1 : 0));
+        dest.writeByte((byte) (allowStateLoss ? 1 : 0));
     }
 
     @Override
@@ -109,6 +112,13 @@ public class PriorityDialogConfig implements Parcelable {
         this.mSupportRecreate = mSupportRecreate;
     }
 
+    public boolean isAllowStateLoss() {
+        return allowStateLoss;
+    }
+
+    public void setAllowStateLoss(boolean allowStateLoss) {
+        this.allowStateLoss = allowStateLoss;
+    }
 
     public void copyFrom(@NonNull PriorityDialogConfig other) {
         this.mUuid = other.getUuid();
@@ -117,5 +127,6 @@ public class PriorityDialogConfig implements Parcelable {
         this.mOnlyDismissByUser = other.isOnlyDismissByUser();
         this.mLockWindow = other.isLockWindow();
         this.mSupportRecreate = other.isSupportRecreate();
+        this.allowStateLoss = other.isAllowStateLoss();
     }
 }

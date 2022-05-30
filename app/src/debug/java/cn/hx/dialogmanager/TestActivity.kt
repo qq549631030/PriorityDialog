@@ -38,11 +38,10 @@ class TestActivity : BaseActivity() {
         }
     }
 
-
-    override fun onDestroy() {
+    override fun onStop() {
+        super.onStop()
         if (dismissAfterSavedState) {
             dismissCurrentDialog(true)
         }
-        super.onDestroy()
     }
 }

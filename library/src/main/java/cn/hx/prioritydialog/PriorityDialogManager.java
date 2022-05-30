@@ -440,7 +440,7 @@ public class PriorityDialogManager {
                             dialog.getPriorityDialogDelegate().getConfig().copyFrom(dialogInfo.config);
                             if (isReady(hostUuid) && canPendingDialogShow(dialog)) {
                                 dialog.getPriorityDialogDelegate().setInPendingQueue(true);
-                                if (dialogHost.showPriorityDialog(dialog)) {
+                                if (dialogHost.showPriorityDialog(dialog, dialog.getPriorityDialogDelegate().getConfig().isAllowStateLoss())) {
                                     cachePendingDialogMap.remove(uuid);
                                     linkedList.remove(dialogInfo);
                                     if (linkedList.isEmpty()) {
@@ -482,11 +482,11 @@ public class PriorityDialogManager {
             if (fragment.isDetached() || fragment.isRemoving() || !fragment.isAdded()) {
                 return false;
             }
-            if (fragment.getHost() == null || fragment.getChildFragmentManager().isStateSaved()) {
+            if (fragment.getHost() == null) {
                 return false;
             }
         }
-        return !activity.isFinishing() && !activity.getSupportFragmentManager().isStateSaved();
+        return !activity.isFinishing();
     }
 
     void savePendingDialogs(Bundle outState) {

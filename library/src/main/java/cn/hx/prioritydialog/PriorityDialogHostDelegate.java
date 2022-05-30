@@ -40,14 +40,15 @@ public class PriorityDialogHostDelegate {
         this.mWarpChildFragmentManager = new WarpFragmentManager(childFragmentManager, dialogManager, getUuid(), true);
     }
 
-    boolean showPriorityDialog(@NonNull PriorityDialog newDialog) {
-        if (!mDialogManager.isReady(mUuid)) {
+    boolean showPriorityDialog(@NonNull PriorityDialog newDialog, boolean allowStateLoss) {
+        if (!mDialogManager.isReady(mUuid) || !allowStateLoss && childFragmentManager.isStateSaved()) {
             if (!newDialog.getPriorityDialogDelegate().isInPendingQueue()) {
                 mDialogManager.release(newDialog);
             }
             return false;
         }
         newDialog.getPriorityDialogDelegate().getConfig().setHostUuid(mUuid);
+        newDialog.getPriorityDialogDelegate().getConfig().setAllowStateLoss(allowStateLoss);
         PriorityDialog currentDialog = mDialogManager.getCurrentDialog();
         if (currentDialog != null) {
             PriorityStrategy priorityStrategy = mDialogManager.getPriorityStrategy();
@@ -60,7 +61,7 @@ public class PriorityDialogHostDelegate {
                     DialogFragment current = (DialogFragment) currentDialog;
                     FragmentManager fm = current.getFragmentManager();
                     if (fm != null && !fm.isDestroyed()) {
-                        fm.beginTransaction().remove(current).commit();
+                        fm.beginTransaction().remove(current).commitAllowingStateLoss();
                     }
                 }
             } else {
@@ -78,7 +79,11 @@ public class PriorityDialogHostDelegate {
             newDialog.getPriorityDialogDelegate().setDismissByHighPriorityDialog(false);
             mDialogManager.setPendingShowDialog(newDialog);
             FragmentTransaction transaction = childFragmentManager.beginTransaction();
-            ((DialogFragment) newDialog).show(transaction, PriorityDialog.BASE_DIALOG_TAG);
+            if (allowStateLoss) {
+                transaction.add((DialogFragment) newDialog, PriorityDialog.BASE_DIALOG_TAG).commitAllowingStateLoss();
+            } else {
+                ((DialogFragment) newDialog).show(transaction, PriorityDialog.BASE_DIALOG_TAG);
+            }
             newDialog.getPriorityDialogDelegate().setInPendingQueue(false);
             return true;
         }

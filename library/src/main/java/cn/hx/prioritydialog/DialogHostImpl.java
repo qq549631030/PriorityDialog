@@ -36,7 +36,12 @@ public class DialogHostImpl implements DialogHost {
 
     @Override
     public boolean showPriorityDialog(@NonNull PriorityDialog newDialog) {
-        return mPriorityDialogHostDelegate.showPriorityDialog(newDialog);
+        return showPriorityDialog(newDialog, false);
+    }
+
+    @Override
+    public boolean showPriorityDialog(@NonNull PriorityDialog newDialog, boolean allowStateLoss) {
+        return mPriorityDialogHostDelegate.showPriorityDialog(newDialog, allowStateLoss);
     }
 
     @Override
