@@ -126,9 +126,11 @@ dialog1.dismiss()
 
 以上是默认的优先级处理方式，也可以通过配置PriorityStrategy来自定义规则  
 
-通过PriorityDialogManager.init(this，priorityStrategy)初始化来实现  
+通过PriorityDialogManager.init(this，priorityStrategy)初始化全局策略 
 
-或通过PriorityDialogManager.updatePriorityStrategy(priorityStrategy)修改  
+或通过PriorityDialogManager.updatePriorityStrategy(priorityStrategy)修改全局策略  
+
+也可以通过DialogManager.setCurrentPriorityStrategy(priorityStrategy)来设置单个Activity的策略  
 
 具体实现方式可参数DefaultPriorityStrategy
 
@@ -136,12 +138,14 @@ dialog1.dismiss()
 public interface PriorityStrategy {
 	//新对话框是否能取代现有对话框而显示
     boolean canNewShow(@NonNull PriorityDialog preDialog, @NonNull PriorityDialog newDialog);
-	//新对话框不可显示时，是否要加入等待队列
+	//新对话框不可显示时，是否要加入等待队列，默认true
     boolean shouldNewAddToPendingWhenCanNotShow(@NonNull PriorityDialog preDialog, @NonNull PriorityDialog newDialog);
 	//新对话框可显示时，现有对话框是否要加入等待队列
     boolean shouldPreAddToPendingWhenNewShow(@NonNull PriorityDialog preDialog, @NonNull PriorityDialog newDialog);
-    //等待队列中相同优先级的对话框弹出顺序是不是先进先出
+    //等待队列中相同优先级的对话框弹出顺序是不是先进先出，默认false
     boolean firstInFirstOutWhenSamePriority();
+    //等待队列中的对话框是否在当前对话框关闭时立即弹出，默认true
+    boolean showNextPendingImmediateAfterPreDismiss();
 }
 ```
 
@@ -230,7 +234,9 @@ val dialog = BaseDialog()
 dialog.isSupportRecreate = true
 showPriorityDialog(dialog)
 //当前显示dialog
-Activity recreate
+
+//Activity recreate
+
 //当前显示dialog
 ```
 
@@ -239,7 +245,9 @@ val dialog = BaseDialog()
 dialog.isSupportRecreate = false
 showPriorityDialog(dialog)
 //当前显示dialog
-Activity recreate
+
+//Activity recreate
+
 //当前无dialog
 ```
 

@@ -22,4 +22,9 @@ public class DefaultPriorityStrategy implements PriorityStrategy {
     public boolean firstInFirstOutWhenSamePriority() {
         return false;
     }
+
+    @Override
+    public boolean showNextPendingImmediateAfterPreDismiss() {
+        return true;
+    }
 }

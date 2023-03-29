@@ -91,7 +91,7 @@ public class FragmentUtil {
     }
 
     @Nullable
-    static Fragment restoreFragment(@Nullable Object fragmentState, @NonNull FragmentManager fragmentManager) {
+    static Fragment restoreFragment(@NonNull Object fragmentState, @NonNull FragmentManager fragmentManager) {
         try {
             Class<?> fragmentStateManagerClass = Class.forName("androidx.fragment.app.FragmentStateManager");
             if (!hasDeclaredField(fragmentStateManagerClass, "mFragmentStore")) {
@@ -108,7 +108,7 @@ public class FragmentUtil {
     }
 
     @Nullable
-    private static Fragment restoreFragment1_1(@Nullable Object fragmentState, @NonNull FragmentManager fragmentManager) {
+    private static Fragment restoreFragment1_1(@NonNull Object fragmentState, @NonNull FragmentManager fragmentManager) {
         try {
             String who = getWhoFromFragmentState(fragmentState);
             if (who != null) {
@@ -150,7 +150,7 @@ public class FragmentUtil {
 
     @SuppressWarnings({"JavaReflectionMemberAccess", "JavaReflectionInvocation"})
     @Nullable
-    private static Fragment restoreFragment1_2(@Nullable Object fragmentState, @NonNull FragmentManager fragmentManager) {
+    private static Fragment restoreFragment1_2(@NonNull Object fragmentState, @NonNull FragmentManager fragmentManager) {
         String who = getWhoFromFragmentState(fragmentState);
         if (who != null) {
             try {
@@ -202,7 +202,7 @@ public class FragmentUtil {
 
     @SuppressWarnings({"JavaReflectionMemberAccess", "JavaReflectionInvocation"})
     @Nullable
-    private static Fragment restoreFragment1_3(@Nullable Object fragmentState, @NonNull FragmentManager fragmentManager) {
+    private static Fragment restoreFragment1_3(@NonNull Object fragmentState, @NonNull FragmentManager fragmentManager) {
         String who = getWhoFromFragmentState(fragmentState);
         if (who != null) {
             try {
@@ -257,12 +257,30 @@ public class FragmentUtil {
     }
 
     @Nullable
-    private static String getWhoFromFragmentState(@Nullable Object fragmentState) {
+    private static String getWhoFromFragmentState(@NonNull Object fragmentState) {
+        try {
+            return (String) getFieldFromFragmentState(fragmentState, "mWho");
+        } catch (ClassCastException e) {
+            return null;
+        }
+    }
+
+    @Nullable
+    static Bundle getArgumentsFromFragmentState(@NonNull Object fragmentState) {
+        try {
+            return (Bundle) getFieldFromFragmentState(fragmentState, "mArguments");
+        } catch (ClassCastException e) {
+            return null;
+        }
+    }
+
+    @Nullable
+    private static Object getFieldFromFragmentState(@NonNull Object fragmentState, @NonNull String fieldName) {
         try {
             Class<?> fragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
-            Field mWhoField = fragmentStateClass.getDeclaredField("mWho");
+            Field mWhoField = fragmentStateClass.getDeclaredField(fieldName);
             mWhoField.setAccessible(true);
-            return (String) mWhoField.get(fragmentState);
+            return mWhoField.get(fragmentState);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (NoSuchFieldException e) {

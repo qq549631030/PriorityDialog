@@ -17,9 +17,11 @@ import androidx.fragment.app.FragmentTransaction;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +35,7 @@ public class PriorityDialogManager {
     private static final String PENDING_ACTIVITY_ACTIONS = "cn.hx.base.dialogManager.pendingActivityActions";
     private static final String PENDING_FRAGMENT_ACTIONS = "cn.hx.base.dialogManager.pendingFragmentActions";
     private static final String CURRENT_DIALOG_CONFIG = "cn.hx.base.dialogManager.currentDialogConfig";
-    private static PriorityStrategy mPriorityStrategy = new DefaultPriorityStrategy();
+    private static PriorityStrategy globalPriorityStrategy = new DefaultPriorityStrategy();
 
     private final Map<String, DialogHost> dialogHostMap = new HashMap<>();
     private final Map<String, PriorityDialog> cachePendingDialogMap = new TreeMap<>();
@@ -51,8 +53,10 @@ public class PriorityDialogManager {
     PriorityDialog pendingShowDialog;
     private PriorityDialogConfig currentDialogConfig;
 
+    private PriorityStrategy currentPriorityStrategy = null;
+
     public static void init(Context context, @NonNull PriorityStrategy priorityStrategy) {
-        mPriorityStrategy = priorityStrategy;
+        globalPriorityStrategy = priorityStrategy;
         init(context);
     }
 
@@ -123,7 +127,11 @@ public class PriorityDialogManager {
     }
 
     public static void updatePriorityStrategy(@NonNull PriorityStrategy priorityStrategy) {
-        mPriorityStrategy = priorityStrategy;
+        globalPriorityStrategy = priorityStrategy;
+    }
+
+    public void setCurrentPriorityStrategy(@Nullable PriorityStrategy priorityStrategy) {
+        currentPriorityStrategy = priorityStrategy;
     }
 
     /**
@@ -236,7 +244,9 @@ public class PriorityDialogManager {
                         if (currentDialogConfig != null && config.getUuid().equals(currentDialogConfig.getUuid())) {
                             currentDialogConfig = null;
                         }
-                        tryShowNextPendingDialog();
+                        if (getPriorityStrategy().showNextPendingImmediateAfterPreDismiss()) {
+                            tryShowNextPendingDialog();
+                        }
                         tryAllPendingAction();
                     }
                 }
@@ -246,7 +256,10 @@ public class PriorityDialogManager {
 
     @NonNull
     PriorityStrategy getPriorityStrategy() {
-        return mPriorityStrategy;
+        if (currentPriorityStrategy != null) {
+            return currentPriorityStrategy;
+        }
+        return globalPriorityStrategy;
     }
 
     void registerDialogHost(@NonNull String uuid, @NonNull DialogHost dialogHost) {
@@ -411,6 +424,15 @@ public class PriorityDialogManager {
 
     }
 
+    List<PendingDialogState> getAllPendingDialog() {
+        ArrayList<PendingDialogState> list = new ArrayList<>();
+        Collection<LinkedList<PendingDialogState>> values = pendingDialogMap.descendingMap().values();
+        for (LinkedList<PendingDialogState> value : values) {
+            list.addAll(value);
+        }
+        return list;
+    }
+
     synchronized void tryShowNextPendingDialog() {
         if (isWindowLockedByDialog()) {
             return;
@@ -421,37 +443,16 @@ public class PriorityDialogManager {
             if (!linkedList.isEmpty()) {
                 LinkedList<PendingDialogState> temp = new LinkedList<>(linkedList);
                 PendingDialogState dialogInfo;
-                if (mPriorityStrategy.firstInFirstOutWhenSamePriority()) {
+                if (getPriorityStrategy().firstInFirstOutWhenSamePriority()) {
                     dialogInfo = temp.pollFirst();
                 } else {
                     dialogInfo = temp.pollLast();
                 }
                 while (dialogInfo != null) {
-                    String uuid = dialogInfo.config.getUuid();
-                    String hostUuid = dialogInfo.config.getHostUuid();
-                    DialogHost dialogHost = getDialogHost(hostUuid);
-                    if (dialogHost != null) {
-                        PriorityDialog dialog = cachePendingDialogMap.get(uuid);
-                        if (dialog == null) {
-                            FragmentManager fragmentManager = dialogHost.getPriorityDialogHostDelegate().childFragmentManager;
-                            dialog = (PriorityDialog) FragmentUtil.restoreFragment(dialogInfo.fragmentState, fragmentManager);
-                        }
-                        if (dialog != null) {
-                            dialog.getPriorityDialogDelegate().getConfig().copyFrom(dialogInfo.config);
-                            if (isReady(hostUuid) && canPendingDialogShow(dialog)) {
-                                dialog.getPriorityDialogDelegate().setInPendingQueue(true);
-                                if (dialogHost.showPriorityDialog(dialog, dialog.getPriorityDialogDelegate().getConfig().isAllowStateLoss())) {
-                                    cachePendingDialogMap.remove(uuid);
-                                    linkedList.remove(dialogInfo);
-                                    if (linkedList.isEmpty()) {
-                                        pendingDialogMap.remove(lastEntry.getKey());
-                                    }
-                                    return;
-                                }
-                            }
-                        }
+                    if (tryShowPendingDialog(dialogInfo)) {
+                        return;
                     }
-                    if (mPriorityStrategy.firstInFirstOutWhenSamePriority()) {
+                    if (getPriorityStrategy().firstInFirstOutWhenSamePriority()) {
                         dialogInfo = temp.pollFirst();
                     } else {
                         dialogInfo = temp.pollLast();
@@ -465,10 +466,46 @@ public class PriorityDialogManager {
         }
     }
 
+    boolean tryShowPendingDialog(PendingDialogState dialogInfo) {
+        if (isWindowLockedByDialog()) {
+            return false;
+        }
+        int priority = dialogInfo.config.getPriority();
+        LinkedList<PendingDialogState> samePriorityDialogs = pendingDialogMap.get(priority);
+        if (samePriorityDialogs == null || !samePriorityDialogs.contains(dialogInfo)) {
+            return false;
+        }
+        String uuid = dialogInfo.config.getUuid();
+        String hostUuid = dialogInfo.config.getHostUuid();
+        DialogHost dialogHost = getDialogHost(hostUuid);
+        if (dialogHost != null) {
+            PriorityDialog dialog = cachePendingDialogMap.get(uuid);
+            if (dialog == null) {
+                FragmentManager fragmentManager = dialogHost.getPriorityDialogHostDelegate().childFragmentManager;
+                dialog = (PriorityDialog) FragmentUtil.restoreFragment(dialogInfo.fragmentState, fragmentManager);
+            }
+            if (dialog != null) {
+                dialog.getPriorityDialogDelegate().getConfig().copyFrom(dialogInfo.config);
+                if (isReady(hostUuid) && canPendingDialogShow(dialog)) {
+                    dialog.getPriorityDialogDelegate().setInPendingQueue(true);
+                    if (dialogHost.showPriorityDialog(dialog, dialog.getPriorityDialogDelegate().getConfig().isAllowStateLoss())) {
+                        cachePendingDialogMap.remove(uuid);
+                        samePriorityDialogs.remove(dialogInfo);
+                        if (samePriorityDialogs.isEmpty()) {
+                            pendingDialogMap.remove(priority);
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     private boolean canPendingDialogShow(@NonNull PriorityDialog newDialog) {
         PriorityDialog currentDialog = getCurrentDialog();
         if (currentDialog != null) {
-            if (mPriorityStrategy.canNewShow(currentDialog, newDialog)) {
+            if (getPriorityStrategy().canNewShow(currentDialog, newDialog)) {
                 return true;
             }
         }

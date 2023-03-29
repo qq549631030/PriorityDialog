@@ -19,7 +19,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:text="priority low to high" />
+        android:text="priority high to low" />
 
     <Button
         android:id="@+id/btn_dismiss_by_user_false"
