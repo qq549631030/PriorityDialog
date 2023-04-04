@@ -6,8 +6,14 @@ public class PriorityDialogDelegate {
 
     private final PriorityDialogConfig config = new PriorityDialogConfig();
 
+    /**
+     * 是否是被其它对话框剂掉的
+     */
     private boolean mDismissByHighPriorityDialog = false;
 
+    /**
+     * 当前对话框是否是在等待队列中的
+     */
     private boolean isInPendingQueue = false;
 
     void init(PriorityDialogManager dialogManager) {

@@ -15,61 +15,21 @@ public interface PriorityDialog {
     PriorityDialogDelegate getPriorityDialogDelegate();
 
     /**
-     * 获取对话框唯一标识
+     * 获取当前对话框配置
      */
     @NonNull
-    String getUuid();
+    PriorityDialogConfig getPriorityConfig();
 
     /**
-     * 设置对话框唯一标识
+     * 默认对话框配置
      */
-    void setUuid(@NonNull String uuid);
+    void defaultPriorityConfig(@NonNull PriorityDialogConfig config);
 
     /**
      * 获取对话框宿主
      */
     @Nullable
     DialogHost getDialogHost();
-
-    /**
-     * 优先级，值越大优先级越高
-     */
-    int getPriority();
-
-    /**
-     * 设置优先级
-     */
-    void setPriority(int priority);
-
-    /**
-     * 对话框是否只有用户才能真正关闭
-     */
-    boolean getOnlyDismissByUser();
-
-    /**
-     * 设置对话框是否只有用户才能真正关闭
-     */
-    void setOnlyDismissByUser(boolean onlyDismissByUser);
-
-    /**
-     * 是否锁定窗口，若为true则弹框显示时只能停留在当前页面，无法关闭无法跳走
-     */
-    boolean getLockWindow();
-
-    /**
-     * 设置锁定窗口
-     */
-    void setLockWindow(boolean lockWindow);
-
-    /**
-     * 设置是否支持Activity重建后对话框也重新显示
-     */
-    void setSupportRecreate(boolean supportRecreate);
-
-    /**
-     * 是否支持Activity重建后对话框也重新显示
-     */
-    boolean isSupportRecreate();
 
     /**
      * 当前对话框是否是被高优先级对话框关闭的

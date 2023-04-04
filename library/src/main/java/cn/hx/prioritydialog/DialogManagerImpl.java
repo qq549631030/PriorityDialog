@@ -34,11 +34,21 @@ public class DialogManagerImpl implements DialogManager {
 
     @Override
     public void tryShowNextPendingDialog() {
-        dialogManager.tryShowNextPendingDialog();
+        dialogManager.tryShowNextPendingDialog(false, false);
     }
 
     @Override
     public boolean tryShowPendingDialog(@NonNull PendingDialogState dialogInfo) {
         return dialogManager.tryShowPendingDialog(dialogInfo);
+    }
+
+    @Override
+    public void registerPriorityDialogListener(@NonNull PriorityDialogListener priorityDialogListener) {
+        dialogManager.registerPriorityDialogListener(priorityDialogListener);
+    }
+
+    @Override
+    public void unregisterPriorityDialogListener(@NonNull PriorityDialogListener priorityDialogListener) {
+        dialogManager.unregisterPriorityDialogListener(priorityDialogListener);
     }
 }

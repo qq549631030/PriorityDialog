@@ -41,4 +41,14 @@ public interface DialogManager {
      * @return 是否显示成功
      */
     boolean tryShowPendingDialog(@NonNull PendingDialogState dialogInfo);
+
+    /**
+     * 注册监听
+     */
+    void registerPriorityDialogListener(@NonNull PriorityDialogListener priorityDialogListener);
+
+    /**
+     * 取消监听
+     */
+    void unregisterPriorityDialogListener(@NonNull PriorityDialogListener priorityDialogListener);
 }

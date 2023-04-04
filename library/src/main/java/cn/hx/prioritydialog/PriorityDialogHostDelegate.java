@@ -50,10 +50,10 @@ public class PriorityDialogHostDelegate {
         newDialog.getPriorityDialogDelegate().getConfig().setHostUuid(mUuid);
         newDialog.getPriorityDialogDelegate().getConfig().setAllowStateLoss(allowStateLoss);
         PriorityDialog currentDialog = mDialogManager.getCurrentDialog();
+        PriorityStrategy priorityStrategy = mDialogManager.getPriorityStrategy();
         if (currentDialog != null) {
-            PriorityStrategy priorityStrategy = mDialogManager.getPriorityStrategy();
             if (priorityStrategy.canNewShow(currentDialog, newDialog)) {
-                if (priorityStrategy.shouldPreAddToPendingWhenNewShow(currentDialog, newDialog)) {
+                if (currentDialog.getPriorityConfig().isAddToPendingWhenReplaceByOther()) {
                     currentDialog.getPriorityDialogDelegate().setDismissByHighPriorityDialog(true);
                     mDialogManager.addToPendingDialog(currentDialog);
                 }
@@ -66,13 +66,27 @@ public class PriorityDialogHostDelegate {
                 }
             } else {
                 if (!newDialog.getPriorityDialogDelegate().isInPendingQueue()) {
-                    if (priorityStrategy.shouldNewAddToPendingWhenCanNotShow(currentDialog, newDialog)) {
+                    if (newDialog.getPriorityConfig().isAddToPendingWhenCanNotShow()) {
                         mDialogManager.addToPendingDialog(newDialog);
                     } else {
                         mDialogManager.release(newDialog);
                     }
                 }
                 return false;
+            }
+        } else {
+            if (newDialog.getPriorityConfig().isCasePending() && mDialogManager.getAllPendingDialog().size() > 0) {
+                if (!priorityStrategy.canNewShowCasePending(mDialogManager.getAllPendingDialog(), newDialog)) {
+                    if (!newDialog.getPriorityDialogDelegate().isInPendingQueue()) {
+                        if (newDialog.getPriorityConfig().isAddToPendingWhenCanNotShow()) {
+                            mDialogManager.addToPendingDialog(newDialog);
+                        } else {
+                            mDialogManager.release(newDialog);
+                        }
+                        mDialogManager.tryShowNextPendingDialog(false, true);
+                    }
+                    return false;
+                }
             }
         }
         if (newDialog instanceof DialogFragment) {
@@ -83,6 +97,9 @@ public class PriorityDialogHostDelegate {
                 transaction.add((DialogFragment) newDialog, PriorityDialog.BASE_DIALOG_TAG).commitAllowingStateLoss();
             } else {
                 ((DialogFragment) newDialog).show(transaction, PriorityDialog.BASE_DIALOG_TAG);
+            }
+            if (!newDialog.getPriorityDialogDelegate().isInPendingQueue()) {
+                mDialogManager.removePendingDialogByUuid(newDialog.getPriorityConfig().getUuid());//删除等待队列里相同uuid的对话框
             }
             newDialog.getPriorityDialogDelegate().setInPendingQueue(false);
             return true;

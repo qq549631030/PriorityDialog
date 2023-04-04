@@ -8,22 +8,26 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 public class PendingDialogState implements Parcelable {
-    final PriorityDialogConfig config;
-    final Parcelable fragmentState;
+    public final PriorityDialogConfig config;
+    public final Parcelable fragmentState;
+    @Nullable
+    private final Bundle arguments;
 
     public PendingDialogState(@NonNull PriorityDialogConfig config, @NonNull Parcelable fragmentState) {
         this.config = config;
         this.fragmentState = fragmentState;
+        arguments = FragmentUtil.getArgumentsFromFragmentState(fragmentState);
     }
 
     protected PendingDialogState(Parcel in) {
         config = in.readParcelable(PriorityDialogConfig.class.getClassLoader());
         fragmentState = in.readParcelable(PriorityDialogConfig.class.getClassLoader());
+        arguments = FragmentUtil.getArgumentsFromFragmentState(fragmentState);
     }
 
     @Nullable
     public Bundle getArguments() {
-        return FragmentUtil.getArgumentsFromFragmentState(fragmentState);
+        return arguments;
     }
 
     public static final Creator<PendingDialogState> CREATOR = new Creator<PendingDialogState>() {

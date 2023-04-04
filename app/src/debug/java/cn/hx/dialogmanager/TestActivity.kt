@@ -16,19 +16,19 @@ class TestActivity : BaseActivity() {
     }
 
     override fun onCancel(priorityDialog: PriorityDialog) {
-        if (priorityDialog.uuid == "onCancel_test_uuid") {
+        if (priorityDialog.priorityConfig.uuid == "onCancel_test_uuid") {
             Toast.makeText(this, "onCancel called", Toast.LENGTH_SHORT).show()
         }
     }
 
     override fun onDismiss(priorityDialog: PriorityDialog) {
-        if (priorityDialog.uuid == "onDismiss_test_uuid") {
+        if (priorityDialog.priorityConfig.uuid == "onDismiss_test_uuid") {
             Toast.makeText(this, "onDismiss called", Toast.LENGTH_SHORT).show()
         }
     }
 
     override fun onDialogEvent(priorityDialog: PriorityDialog, event: Any) {
-        if (priorityDialog.uuid == "onDialogEvent_test_uuid") {
+        if (priorityDialog.priorityConfig.uuid == "onDialogEvent_test_uuid") {
             when (event) {
                 is BaseAlertDialog.AlertDialogClickEvent -> {
                     Toast.makeText(this, "button ${event.which} clicked", Toast.LENGTH_SHORT).show()

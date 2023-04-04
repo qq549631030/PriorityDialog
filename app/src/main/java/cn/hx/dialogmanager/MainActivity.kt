@@ -54,7 +54,7 @@ class MainActivity : BaseActivity() {
         binding.btnDismissByUserFalse.setOnClickListener {
             showAlertDialog(
                     "first dialog",
-                    "this is the first dialog with priority  = 1\nand with onlyDismissByUser = false\nthis will dismiss when second dialog show",
+                    "this is the first dialog with priority  = 1\nand with isAddToPendingWhenReplaceByOther = false\nthis will dismiss when second dialog show",
                     1,
                     false
             )
@@ -128,7 +128,7 @@ class MainActivity : BaseActivity() {
     override fun onDialogEvent(priorityDialog: PriorityDialog, event: Any) {
         Log.d(TAG, "onDialogEvent() called with: priorityDialog = $priorityDialog, event = $event")
         if (event is BaseAlertDialog.AlertDialogClickEvent) {
-            if (priorityDialog.uuid == "mock_uuid_1" && event.which == DialogInterface.BUTTON_POSITIVE) {
+            if (priorityDialog.priorityConfig.uuid == "mock_uuid_1" && event.which == DialogInterface.BUTTON_POSITIVE) {
                 startActivity(Intent(this, SecondActivity::class.java))
             }
         }

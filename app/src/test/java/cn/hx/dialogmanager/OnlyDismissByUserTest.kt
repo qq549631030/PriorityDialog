@@ -19,7 +19,7 @@ class OnlyDismissByUserTest {
     val activityRule = ActivityScenarioRule(BaseActivity::class.java)
 
     @Test
-    fun onlyDismissByUser_true() {
+    fun addToPendingWhenReplaceByOther_true() {
         activityRule.scenario.onActivity {
             assert(it.currentPriorityDialog == null)
             it.showAlertDialog(message = "first dialog", priority = 1)
@@ -50,10 +50,10 @@ class OnlyDismissByUserTest {
     }
 
     @Test
-    fun onlyDismissByUser_false() {
+    fun addToPendingWhenReplaceByOther_false() {
         activityRule.scenario.onActivity {
             assert(it.currentPriorityDialog == null)
-            it.showAlertDialog(message = "first dialog", priority = 1, onlyDismissByUser = false)
+            it.showAlertDialog(message = "first dialog", priority = 1, isAddToPendingWhenReplaceByOther = false)
         }
         activityRule.scenario.onActivity {
             assert(it.currentPriorityDialog != null)

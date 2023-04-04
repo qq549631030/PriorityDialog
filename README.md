@@ -61,7 +61,7 @@ open class BaseFragment : Fragment(), DialogHost by DialogHostImpl() {
 
 ```kotlin
 val dialog = BaseDialog()
-dialog.priority = 1
+dialog.priorityConfig.priority = 1
 showPriorityDialog(dialog)
 ```
 
@@ -77,11 +77,11 @@ showPriorityDialog(dialog)
 
 ```kotlin
 val dialog1 = BaseDialog()
-dialog1.priority = 1
+dialog1.priorityConfig.priority = 1
 showPriorityDialog(dialog1)
 //当前显示dialog1
 val dialog2 = BaseDialog()
-dialog2.priority = 2
+dialog2.priorityConfig.priority = 2
 showPriorityDialog(dialog2)
 //当前显示dialog2
 dialog2.dismiss()
@@ -94,11 +94,11 @@ dialog1.dismiss()
 
 ```kotlin
 val dialog1 = BaseDialog()
-dialog1.priority = 2
+dialog1.priorityConfig.priority = 2
 showPriorityDialog(dialog1)
 //当前显示dialog1
 val dialog2 = BaseDialog()
-dialog2.priority = 1
+dialog2.priorityConfig.priority = 1
 showPriorityDialog(dialog2)
 //当前仍然显示dialog1
 dialog1.dismiss()
@@ -111,11 +111,11 @@ dialog2.dismiss()
 
 ```kotlin
 val dialog1 = BaseDialog()
-dialog1.priority = 1
+dialog1.priorityConfig.priority = 1
 showPriorityDialog(dialog1)
 //当前显示dialog1
 val dialog2 = BaseDialog()
-dialog2.priority = 1
+dialog2.priorityConfig.priority = 1
 showPriorityDialog(dialog2)
 //当前显示dialog2
 dialog2.dismiss()
@@ -149,25 +149,25 @@ public interface PriorityStrategy {
 }
 ```
 
-#### 2、onlyDismissByUser 对话框是否只有用户才能真正关闭（默认值true）
+#### 2、isAddToPendingWhenReplaceByOther 当被其它对话框顶下去的时候是否要加入等待队列（默认值true）
 
-如前面情况1，**低**被**高**取代，当**高**关闭后**低**会再次显示，如果想**低**不再显示，可以设置**低**的onlyDismissByUser=false
+如前面情况1，**低**被**高**取代，当**高**关闭后**低**会再次显示，如果想**低**不再显示，可以设置**低**isAddToPendingWhenReplaceByOther=false
 
 ```kotlin
 val dialog1 = BaseDialog()
-dialog1.priority = 1
-dialog1.onlyDismissByUser = false
+dialog1.priorityConfig.priority = 1
+dialog1.priorityConfig.isAddToPendingWhenReplaceByOther = false
 showPriorityDialog(dialog1)
 //当前显示dialog1
 val dialog2 = BaseDialog()
-dialog2.priority = 2
+dialog2.priorityConfig.priority = 2
 showPriorityDialog(dialog2)
 //当前显示dialog2
 dialog2.dismiss()
 //当前无dialog
 ```
 
-#### 3、lockWindow是否锁定当前页面(默认值false)
+#### 3、isLockWindow是否锁定当前页面(默认值false)
 
 若为true则对话框显示时只能停留在当前页面，无法关闭无法跳走，会把这些操作缓存起来，当对话框关闭时会自动执行之前未执行的操作。
 
@@ -200,7 +200,7 @@ open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImp
 
 ```kotlin
 val dialog = BaseDialog()
-dialog.lockWindow = true
+dialog.priorityConfig.isLockWindow = true
 showPriorityDialog(dialog)
 //当前显示dialog
 startActivity(Intent(this, SecondActivity::class.java))
@@ -218,7 +218,7 @@ FragmentManager的各种Transaction以及popBackStack
 
 ```kotlin
 val dialog = BaseDialog()
-dialog.lockWindow = true
+dialog.priorityConfig.isLockWindow = true
 showPriorityDialog(dialog)
 //当前显示dialog
 warpParentFragmentManager.beginTransaction().replace(R.id.container, SecondFragment()).commit()
@@ -231,7 +231,7 @@ dialog.dismiss()
 
 ```kotlin
 val dialog = BaseDialog()
-dialog.isSupportRecreate = true
+dialog.priorityConfig.isSupportRecreate = true
 showPriorityDialog(dialog)
 //当前显示dialog
 
@@ -242,7 +242,7 @@ showPriorityDialog(dialog)
 
 ```kotlin
 val dialog = BaseDialog()
-dialog.isSupportRecreate = false
+dialog.priorityConfig.isSupportRecreate = false
 showPriorityDialog(dialog)
 //当前显示dialog
 

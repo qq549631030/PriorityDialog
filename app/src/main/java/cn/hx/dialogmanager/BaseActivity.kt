@@ -30,24 +30,24 @@ open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImp
         super.finish()
     }
 
-    fun showAlertDialog(title: String? = null, message: String, priority: Int = 0, onlyDismissByUser: Boolean = true, lockWindow: Boolean = false, isSupportRecreate: Boolean = true, uuid: String? = null) {
-        val dialog = createAlertDialog(title, message, priority, onlyDismissByUser, lockWindow, isSupportRecreate, uuid)
+    fun showAlertDialog(title: String? = null, message: String, priority: Int = 0, isAddToPendingWhenReplaceByOther: Boolean = true, lockWindow: Boolean = false, isSupportRecreate: Boolean = true, uuid: String? = null) {
+        val dialog = createAlertDialog(title, message, priority, isAddToPendingWhenReplaceByOther, lockWindow, isSupportRecreate, uuid)
         showPriorityDialog(dialog)
     }
 
-    fun createAlertDialog(title: String? = null, message: String, priority: Int = 0, onlyDismissByUser: Boolean = true, lockWindow: Boolean = false, isSupportRecreate: Boolean = true, uuid: String? = null): BaseAlertDialog {
+    fun createAlertDialog(title: String? = null, message: String, priority: Int = 0, isAddToPendingWhenReplaceByOther: Boolean = true, lockWindow: Boolean = false, isSupportRecreate: Boolean = true, uuid: String? = null): BaseAlertDialog {
         val dialog = BaseAlertDialog.Builder()
                 .title(title)
                 .message(message)
                 .positive("Confirm")
                 .negative("Cancel")
                 .create()
-        dialog.priority = priority
-        dialog.onlyDismissByUser = onlyDismissByUser
-        dialog.lockWindow = lockWindow
-        dialog.isSupportRecreate = isSupportRecreate
+        dialog.priorityConfig.priority = priority
+        dialog.priorityConfig.isAddToPendingWhenReplaceByOther = isAddToPendingWhenReplaceByOther
+        dialog.priorityConfig.isLockWindow = lockWindow
+        dialog.priorityConfig.isSupportRecreate = isSupportRecreate
         uuid?.let {
-            dialog.uuid = it
+            dialog.priorityConfig.uuid = it
         }
         return dialog
     }
