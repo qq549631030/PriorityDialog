@@ -10,6 +10,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import java.util.ArrayDeque;
+import java.util.List;
 import java.util.UUID;
 
 public class PriorityDialogHostDelegate {
@@ -75,14 +76,26 @@ public class PriorityDialogHostDelegate {
                 return false;
             }
         } else {
-            if (newDialog.getPriorityConfig().isCasePending() && mDialogManager.getAllPendingDialog().size() > 0) {
+            if (newDialog.getPriorityConfig().isCasePending() && !newDialog.getPriorityDialogDelegate().isInPendingQueue() && mDialogManager.getAllPendingDialog().size() > 0) {
                 if (!priorityStrategy.canNewShowCasePending(mDialogManager.getAllPendingDialog(), newDialog)) {
-                    if (!newDialog.getPriorityDialogDelegate().isInPendingQueue()) {
-                        if (newDialog.getPriorityConfig().isAddToPendingWhenCanNotShow()) {
-                            mDialogManager.addToPendingDialog(newDialog);
-                        } else {
-                            mDialogManager.release(newDialog);
+                    boolean existInPending = false;
+                    List<PendingDialogState> allPendingDialog = mDialogManager.getAllPendingDialog();
+                    for (PendingDialogState dialogState : allPendingDialog) {
+                        if (newDialog.getPriorityConfig().getUuid().equals(dialogState.config.getUuid())) {
+                            existInPending = true;
+                            break;
                         }
+                    }
+                    boolean replaceExist = false;
+                    if (newDialog.getPriorityConfig().isAddToPendingWhenCanNotShow()) {
+                        if (existInPending) {
+                            replaceExist = true;
+                        }
+                        mDialogManager.addToPendingDialog(newDialog);
+                    } else {
+                        mDialogManager.release(newDialog);
+                    }
+                    if (!replaceExist || newDialog.getPriorityConfig().isShowNextPendingWhenReplaceExistCasePending()) {
                         mDialogManager.tryShowNextPendingDialog(false, true);
                     }
                     return false;

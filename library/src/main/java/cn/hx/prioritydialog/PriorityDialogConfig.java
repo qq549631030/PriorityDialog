@@ -47,9 +47,15 @@ public class PriorityDialogConfig implements Parcelable {
      */
     private boolean mShowImmediateAfterPreDismiss = true;
     /**
-     * 是否在上一个对话框无法弹出（和等待队列比）后立即弹出，true
+     * 是否在上一个对话框无法弹出（和等待队列比）后立即弹出，默认true
      */
     private boolean mShowImmediateAfterPreCanNotShowCasePending = true;
+
+    /**
+     * 当替换等待队列中已经存在的对话框后是否要显示下一个最高优先级的等待显示对话框，默认false
+     */
+    private boolean mShowNextPendingWhenReplaceExistCasePending = false;
+
     /**
      * 是否需要考虑等待队列中的弹窗，默认false
      */
@@ -69,6 +75,7 @@ public class PriorityDialogConfig implements Parcelable {
         mAddToPendingWhenReplaceByOther = in.readByte() != 0;
         mShowImmediateAfterPreDismiss = in.readByte() != 0;
         mShowImmediateAfterPreCanNotShowCasePending = in.readByte() != 0;
+        mShowNextPendingWhenReplaceExistCasePending = in.readByte() != 0;
         mCasePending = in.readByte() != 0;
     }
 
@@ -84,6 +91,7 @@ public class PriorityDialogConfig implements Parcelable {
         dest.writeByte((byte) (mAddToPendingWhenReplaceByOther ? 1 : 0));
         dest.writeByte((byte) (mShowImmediateAfterPreDismiss ? 1 : 0));
         dest.writeByte((byte) (mShowImmediateAfterPreCanNotShowCasePending ? 1 : 0));
+        dest.writeByte((byte) (mShowNextPendingWhenReplaceExistCasePending ? 1 : 0));
         dest.writeByte((byte) (mCasePending ? 1 : 0));
     }
 
@@ -189,6 +197,14 @@ public class PriorityDialogConfig implements Parcelable {
         this.mShowImmediateAfterPreCanNotShowCasePending = showImmediateAfterPreCanNotShowCasePending;
     }
 
+    public boolean isShowNextPendingWhenReplaceExistCasePending() {
+        return mShowNextPendingWhenReplaceExistCasePending;
+    }
+
+    public void setShowNextPendingWhenReplaceExistCasePending(boolean mShowNextPendingWhenReplaceExistCasePending) {
+        this.mShowNextPendingWhenReplaceExistCasePending = mShowNextPendingWhenReplaceExistCasePending;
+    }
+
     public boolean isCasePending() {
         return mCasePending;
     }
@@ -208,6 +224,7 @@ public class PriorityDialogConfig implements Parcelable {
         this.mAddToPendingWhenReplaceByOther = other.isAddToPendingWhenReplaceByOther();
         this.mShowImmediateAfterPreDismiss = other.isShowImmediateAfterPreDismiss();
         this.mShowImmediateAfterPreCanNotShowCasePending = other.isShowImmediateAfterPreDismiss();
+        this.mShowNextPendingWhenReplaceExistCasePending = other.isShowNextPendingWhenReplaceExistCasePending();
         this.mCasePending = other.isCasePending();
     }
 }
