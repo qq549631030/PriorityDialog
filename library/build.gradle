@@ -41,3 +41,17 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
+
+publishing {
+    repositories {
+        maven {
+            name = 'custom'
+            url = 'you repo url'
+            allowInsecureProtocol true
+            credentials {
+                username = 'you repo username'
+                password = 'you repo password'
+            }
+        }
+    }
+}
