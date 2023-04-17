@@ -16,6 +16,12 @@ public class PriorityDialogDelegate {
      */
     private boolean isInPendingQueue = false;
 
+    private OnCancelListener mOnCancelListener = null;
+
+    private OnDismissListener mOnDismissListener = null;
+
+    private OnDialogEventListener mOnDialogEventListener = null;
+
     void init(PriorityDialogManager dialogManager) {
         this.dialogManager = dialogManager;
     }
@@ -38,5 +44,29 @@ public class PriorityDialogDelegate {
 
     public void setInPendingQueue(boolean inPendingQueue) {
         isInPendingQueue = inPendingQueue;
+    }
+
+    public OnCancelListener getOnCancelListener() {
+        return mOnCancelListener;
+    }
+
+    public void setOnCancelListener(OnCancelListener onCancelListener) {
+        this.mOnCancelListener = onCancelListener;
+    }
+
+    public OnDismissListener getOnDismissListener() {
+        return mOnDismissListener;
+    }
+
+    public void setOnDismissListener(OnDismissListener onDismissListener) {
+        this.mOnDismissListener = onDismissListener;
+    }
+
+    public OnDialogEventListener getOnDialogEventListener() {
+        return mOnDialogEventListener;
+    }
+
+    public void setOnDialogEventListener(OnDialogEventListener onDialogEventListener) {
+        this.mOnDialogEventListener = onDialogEventListener;
     }
 }

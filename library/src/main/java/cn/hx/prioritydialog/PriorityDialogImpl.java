@@ -44,17 +44,17 @@ public class PriorityDialogImpl implements PriorityDialog {
 
     @Override
     public void setOnCancelListener(@Nullable OnCancelListener listener) {
-        PriorityDialogManager.onCancelListenerMap.put(delegate.getConfig().getUuid(), listener);
+        delegate.setOnCancelListener(listener);
     }
 
     @Override
     public void setOnDismissListener(@Nullable OnDismissListener listener) {
-        PriorityDialogManager.onDismissListenerMap.put(delegate.getConfig().getUuid(), listener);
+        delegate.setOnDismissListener(listener);
     }
 
     @Override
     public void setOnDialogEventListener(@Nullable OnDialogEventListener listener) {
-        PriorityDialogManager.onDialogEventListenerMap.put(delegate.getConfig().getUuid(), listener);
+        delegate.setOnDialogEventListener(listener);
     }
 
     @Override
