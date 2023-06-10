@@ -17,275 +17,157 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Objects;
 
 public class FragmentUtil {
 
+    @SuppressWarnings("deprecation")
     @Nullable
-    static Parcelable saveFragment(@NonNull Fragment fragment) {
+    static FragmentStateData saveFragment(@NonNull Fragment fragment) {
         try {
-            Bundle savedFragmentState;
-            Field fragmentStateField = Fragment.class.getDeclaredField("mState");
-            fragmentStateField.setAccessible(true);
-            int state = fragmentStateField.getInt(fragment);
-            if (state > 0) {
-                savedFragmentState = saveFragmentStateWhenAttached(fragment);
-            } else {//not attached
-                savedFragmentState = saveFragmentStateWhenNotAttached(fragment);
+            Field mStateField = Fragment.class.getDeclaredField("mState");
+            mStateField.setAccessible(true);
+            int state = mStateField.getInt(fragment);
+            FragmentManager fragmentManager = fragment.getFragmentManager();
+            if (state > 0 && fragmentManager != null) {
+                return saveFragmentStateWhenAttached(fragmentManager, fragment);
+            } else {
+                return saveFragmentStateWhenNotAttached(fragment);
             }
-            Class<?> fragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
-            Constructor<?> constructor = fragmentStateClass.getDeclaredConstructor(Fragment.class);
-            constructor.setAccessible(true);
-            Object fragmentState = constructor.newInstance(fragment);
-            Field mSavedFragmentStateField = fragmentStateClass.getDeclaredField("mSavedFragmentState");
-            mSavedFragmentStateField.setAccessible(true);
-            mSavedFragmentStateField.set(fragmentState, savedFragmentState);
-            return (Parcelable) fragmentState;
-        } catch (ClassNotFoundException e) {
+        } catch (NoSuchFieldException e) {
             e.printStackTrace();
-        } catch (NoSuchMethodException e) {
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {
             e.printStackTrace();
-        } catch (IllegalAccessException e) {
+        } catch (NoSuchMethodException e) {
             e.printStackTrace();
         } catch (InstantiationException e) {
             e.printStackTrace();
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
         }
         return null;
     }
 
-    private static Bundle saveFragmentStateWhenAttached(@NonNull Fragment fragment) {
-        Bundle outState = new Bundle();
-        try {
-            Method performSaveInstanceStateMethod = Fragment.class.getDeclaredMethod("performSaveInstanceState", Bundle.class);
-            performSaveInstanceStateMethod.setAccessible(true);
-            performSaveInstanceStateMethod.invoke(fragment, outState);
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
+    private static FragmentStateData saveFragmentStateWhenAttached(@NonNull FragmentManager fragmentManager, @NonNull Fragment fragment) throws NoSuchFieldException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IllegalAccessException, InstantiationException {
+        if (isAfter1_2()) {//1.2.0+
+            Object fragmentStateManager = createFragmentStateManagerForSave(fragmentManager, fragment);
+            Class<?> FragmentStateManagerClass = Class.forName("androidx.fragment.app.FragmentStateManager");
+            Method saveStateMethod = FragmentStateManagerClass.getDeclaredMethod("saveState");
+            saveStateMethod.setAccessible(true);
+            if (isAfter1_6()) {//1.6.0+
+                Bundle savedFragmentState = (Bundle) saveStateMethod.invoke(fragmentStateManager);
+                if (savedFragmentState != null) {
+                    Parcelable fragmentState = savedFragmentState.getParcelable("state");
+                    if (fragmentState != null) {
+                        return new FragmentStateData(fragmentState, savedFragmentState);
+                    }
+                }
+            } else if (isAfter1_4()) {//1.4.0+
+                saveStateMethod.invoke(fragmentStateManager);
+                String who = (String) getFieldValue(fragment, Fragment.class, "mWho");
+                Object fragmentStore = getFragmentStore(fragmentManager);
+                Class<?> FragmentStoreClass = Class.forName("androidx.fragment.app.FragmentStore");
+                Method getSavedStateMethod = FragmentStoreClass.getDeclaredMethod("getSavedState", String.class);
+                getSavedStateMethod.setAccessible(true);
+                Parcelable fragmentState = (Parcelable) getSavedStateMethod.invoke(fragmentStore, who);
+                if (fragmentState != null) {
+                    return new FragmentStateData(fragmentState, new Bundle());
+                }
+            } else {//1.2.0+
+                Parcelable fragmentState = (Parcelable) saveStateMethod.invoke(fragmentStateManager);
+                if (fragmentState != null) {
+                    return new FragmentStateData(fragmentState, new Bundle());
+                }
+            }
+        } else {//1.1.0
+            Parcelable fragmentState = createFragmentState(fragment);
+            Class<?> fragmentManagerImplClass = Class.forName("androidx.fragment.app.FragmentManagerImpl");
+            Method saveFragmentBasicStateMethod = fragmentManagerImplClass.getDeclaredMethod("saveFragmentBasicState", Fragment.class);
+            saveFragmentBasicStateMethod.setAccessible(true);
+            Bundle savedFragmentState = (Bundle) saveFragmentBasicStateMethod.invoke(fragmentManager, fragment);
+
+            setFieldValue(fragmentState, "mSavedFragmentState", savedFragmentState);//fragment 1.6.0以前要把savedFragmentState放入FragmentState
+            return new FragmentStateData(fragmentState, new Bundle());
         }
-        return outState;
+        return null;
     }
 
-    private static Bundle saveFragmentStateWhenNotAttached(@NonNull Fragment fragment) {
-        Bundle outState = new Bundle();
-        fragment.onSaveInstanceState(outState);
-        try {
-            SavedStateRegistry savedStateRegistry = fragment.getSavedStateRegistry();
-            Method performSaveMethod = SavedStateRegistry.class.getDeclaredMethod("performSave", Bundle.class);
-            performSaveMethod.setAccessible(true);
-            performSaveMethod.invoke(savedStateRegistry, outState);
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        return outState;
-    }
+    private static FragmentStateData saveFragmentStateWhenNotAttached(@NonNull Fragment fragment) throws ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IllegalAccessException, InstantiationException, NoSuchFieldException {
+        Parcelable fragmentState = createFragmentState(fragment);
 
-    @Nullable
-    static Fragment restoreFragment(@NonNull Object fragmentState, @NonNull FragmentManager fragmentManager) {
-        try {
-            Class<?> fragmentStateManagerClass = Class.forName("androidx.fragment.app.FragmentStateManager");
-            if (!hasDeclaredField(fragmentStateManagerClass, "mFragmentStore")) {
-                //fragment 1.2.x
-                return restoreFragment1_2(fragmentState, fragmentManager);
+        Bundle savedFragmentState = new Bundle();
+        if (isAfter1_6()) {//fragment 1.6.0以后保存方式变了
+            savedFragmentState.putParcelable("state", fragmentState);
+            savedFragmentState.putBundle("arguments", fragment.getArguments());
+        }
+
+        Bundle savedInstanceState = new Bundle();
+        fragment.onSaveInstanceState(savedInstanceState);
+        if (!savedInstanceState.isEmpty()) {
+            if (isAfter1_6()) {//fragment 1.6.0以后保存方式变了
+                savedFragmentState.putBundle("savedInstanceState", savedInstanceState);
             } else {
-                //fragment 1.3.x
-                return restoreFragment1_3(fragmentState, fragmentManager);
+                savedFragmentState.putAll(savedInstanceState);
             }
-        } catch (ClassNotFoundException e) {
-            //fragment 1.1.x
-            return restoreFragment1_1(fragmentState, fragmentManager);
         }
+
+        Bundle savedStateRegistryState = new Bundle();
+        SavedStateRegistry savedStateRegistry = fragment.getSavedStateRegistry();
+        Method performSaveMethod = SavedStateRegistry.class.getDeclaredMethod("performSave", Bundle.class);
+        performSaveMethod.setAccessible(true);
+        performSaveMethod.invoke(savedStateRegistry, savedStateRegistryState);
+        if (!savedStateRegistryState.isEmpty()) {
+            if (isAfter1_6()) {//fragment 1.6.0以后保存方式变了
+                savedFragmentState.putBundle("registryState", savedStateRegistryState);
+            } else {
+                savedFragmentState.putAll(savedStateRegistryState);
+            }
+        }
+        if (!isAfter1_6()) {//fragment 1.6.0 以前要把savedFragmentState放入FragmentState中
+            setFieldValue(fragmentState, "mSavedFragmentState", savedFragmentState);
+        }
+        return new FragmentStateData(fragmentState, savedFragmentState);
     }
 
     @Nullable
-    private static Fragment restoreFragment1_1(@NonNull Object fragmentState, @NonNull FragmentManager fragmentManager) {
+    static Fragment restoreFragment(@NonNull FragmentStateData fragmentStateData, @NonNull FragmentManager fragmentManager) {
         try {
-            String who = getWhoFromFragmentState(fragmentState);
+            String who = (String) getFieldValue(fragmentStateData.fragmentState, "mWho");
             if (who != null) {
-                Class<?> fragmentManagerImplClass = Class.forName("androidx.fragment.app.FragmentManagerImpl");
-                Method findFragmentByWhoMethod = fragmentManagerImplClass.getDeclaredMethod("findFragmentByWho", String.class);
-                findFragmentByWhoMethod.setAccessible(true);
-                Fragment fragment = (Fragment) findFragmentByWhoMethod.invoke(fragmentManager, who);
+                Fragment fragment = findFragmentByWho(fragmentManager, who);
                 if (fragment != null) {
                     return fragment;
-                }
-                Field mHostField = fragmentManagerImplClass.getDeclaredField("mHost");
-                mHostField.setAccessible(true);
-                Object fragmentHostCallback = mHostField.get(fragmentManager);
-                Class<?> fragmentHostCallbackClass = Class.forName("androidx.fragment.app.FragmentHostCallback");
-                Method getContextMethod = fragmentHostCallbackClass.getDeclaredMethod("getContext");
-                getContextMethod.setAccessible(true);
-                Context context = (Context) getContextMethod.invoke(fragmentHostCallback);
-                if (context != null) {
-                    ClassLoader classLoader = context.getClassLoader();
-                    Class<?> fragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
-                    Method instantiateMethod = fragmentStateClass.getDeclaredMethod("instantiate", ClassLoader.class, FragmentFactory.class);
-                    instantiateMethod.setAccessible(true);
-                    return (Fragment) instantiateMethod.invoke(fragmentState, classLoader, fragmentManager.getFragmentFactory());
+                } else {
+                    ClassLoader classLoader = getClassLoader(fragmentManager);
+                    if (classLoader != null) {
+                        if (isAfter1_2()) {//fragment 1.2.0以后用FragmentStateManager.getFragment
+                            Object fragmentStateManager = createFragmentStateManagerForRestore(fragmentStateData, fragmentManager, classLoader);
+                            Class<?> fragmentStateManagerClass = Class.forName("androidx.fragment.app.FragmentStateManager");
+                            Method getFragmentMethod = fragmentStateManagerClass.getDeclaredMethod("getFragment");
+                            getFragmentMethod.setAccessible(true);
+                            return (Fragment) getFragmentMethod.invoke(fragmentStateManager);
+                        } else {//fragment 1.1.0用FragmentState.instantiate
+                            Class<?> fragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
+                            Method instantiateMethod = fragmentStateClass.getDeclaredMethod("instantiate", ClassLoader.class, FragmentFactory.class);
+                            instantiateMethod.setAccessible(true);
+                            return (Fragment) instantiateMethod.invoke(fragmentStateData.fragmentState, classLoader, fragmentManager.getFragmentFactory());
+                        }
+                    }
                 }
             }
-        } catch (ClassNotFoundException e) {
+        } catch (NoSuchFieldException e) {
             e.printStackTrace();
-        } catch (NoSuchMethodException e) {
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {
             e.printStackTrace();
-        } catch (IllegalAccessException e) {
+        } catch (NoSuchMethodException e) {
             e.printStackTrace();
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    @SuppressWarnings({"JavaReflectionMemberAccess", "JavaReflectionInvocation"})
-    @Nullable
-    private static Fragment restoreFragment1_2(@NonNull Object fragmentState, @NonNull FragmentManager fragmentManager) {
-        String who = getWhoFromFragmentState(fragmentState);
-        if (who != null) {
-            try {
-                Class<?> fragmentManagerClass = Class.forName("androidx.fragment.app.FragmentManager");
-                Method findFragmentByWhoMethod = fragmentManagerClass.getDeclaredMethod("findFragmentByWho", String.class);
-                findFragmentByWhoMethod.setAccessible(true);
-                Fragment fragment = (Fragment) findFragmentByWhoMethod.invoke(fragmentManager, who);
-                if (fragment != null) {
-                    return fragment;
-                }
-                Method getLifecycleCallbacksDispatcherMethod = fragmentManagerClass.getDeclaredMethod("getLifecycleCallbacksDispatcher");
-                getLifecycleCallbacksDispatcherMethod.setAccessible(true);
-                Object mLifecycleCallbacksDispatcher = getLifecycleCallbacksDispatcherMethod.invoke(fragmentManager);
-                Field mHostField = fragmentManagerClass.getDeclaredField("mHost");
-                mHostField.setAccessible(true);
-                Object fragmentHostCallback = mHostField.get(fragmentManager);
-                Class<?> fragmentHostCallbackClass = Class.forName("androidx.fragment.app.FragmentHostCallback");
-                Method getContextMethod = fragmentHostCallbackClass.getDeclaredMethod("getContext");
-                getContextMethod.setAccessible(true);
-                Context context = (Context) getContextMethod.invoke(fragmentHostCallback);
-                if (context != null) {
-                    ClassLoader classLoader = context.getClassLoader();
-                    Class<?> FragmentStateManagerClass = Class.forName("androidx.fragment.app.FragmentStateManager");
-                    Class<?> fragmentLifecycleCallbacksDispatcherClass = Class.forName("androidx.fragment.app.FragmentLifecycleCallbacksDispatcher");
-                    Class<?> fragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
-                    Constructor<?> constructor = FragmentStateManagerClass.getDeclaredConstructor(fragmentLifecycleCallbacksDispatcherClass, ClassLoader.class, FragmentFactory.class, fragmentStateClass);
-                    constructor.setAccessible(true);
-                    Object fragmentStateManager = constructor.newInstance(mLifecycleCallbacksDispatcher, classLoader, fragmentManager.getFragmentFactory(), fragmentState);
-                    Method getFragmentMethod = FragmentStateManagerClass.getDeclaredMethod("getFragment");
-                    getFragmentMethod.setAccessible(true);
-                    return (Fragment) getFragmentMethod.invoke(fragmentStateManager);
-                }
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (NoSuchFieldException e) {
-                e.printStackTrace();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            }
-        }
-        return null;
-    }
-
-    @SuppressWarnings({"JavaReflectionMemberAccess", "JavaReflectionInvocation"})
-    @Nullable
-    private static Fragment restoreFragment1_3(@NonNull Object fragmentState, @NonNull FragmentManager fragmentManager) {
-        String who = getWhoFromFragmentState(fragmentState);
-        if (who != null) {
-            try {
-                Class<?> fragmentManagerClass = Class.forName("androidx.fragment.app.FragmentManager");
-                Method findFragmentByWhoMethod = fragmentManagerClass.getDeclaredMethod("findFragmentByWho", String.class);
-                findFragmentByWhoMethod.setAccessible(true);
-                Fragment fragment = (Fragment) findFragmentByWhoMethod.invoke(fragmentManager, who);
-                if (fragment != null) {
-                    return fragment;
-                }
-                Method getLifecycleCallbacksDispatcherMethod = fragmentManagerClass.getDeclaredMethod("getLifecycleCallbacksDispatcher");
-                getLifecycleCallbacksDispatcherMethod.setAccessible(true);
-                Object mLifecycleCallbacksDispatcher = getLifecycleCallbacksDispatcherMethod.invoke(fragmentManager);
-                Field mHostField = fragmentManagerClass.getDeclaredField("mHost");
-                mHostField.setAccessible(true);
-                Object fragmentHostCallback = mHostField.get(fragmentManager);
-                Class<?> fragmentHostCallbackClass = Class.forName("androidx.fragment.app.FragmentHostCallback");
-                Method getContextMethod = fragmentHostCallbackClass.getDeclaredMethod("getContext");
-                getContextMethod.setAccessible(true);
-                Context context = (Context) getContextMethod.invoke(fragmentHostCallback);
-                if (context != null) {
-                    ClassLoader classLoader = context.getClassLoader();
-                    Class<?> FragmentStateManagerClass = Class.forName("androidx.fragment.app.FragmentStateManager");
-                    Class<?> fragmentLifecycleCallbacksDispatcherClass = Class.forName("androidx.fragment.app.FragmentLifecycleCallbacksDispatcher");
-                    Class<?> FragmentStoreClass = Class.forName("androidx.fragment.app.FragmentStore");
-                    Class<?> fragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
-                    Method getFragmentStoreMethod = fragmentManagerClass.getDeclaredMethod("getFragmentStore");
-                    getFragmentStoreMethod.setAccessible(true);
-                    Object fragmentStore = getFragmentStoreMethod.invoke(fragmentManager);
-                    Constructor<?> constructor = FragmentStateManagerClass.getDeclaredConstructor(fragmentLifecycleCallbacksDispatcherClass, FragmentStoreClass, ClassLoader.class, FragmentFactory.class, fragmentStateClass);
-                    constructor.setAccessible(true);
-                    Object fragmentStateManager = constructor.newInstance(mLifecycleCallbacksDispatcher, fragmentStore, classLoader, fragmentManager.getFragmentFactory(), fragmentState);
-                    Method getFragmentMethod = FragmentStateManagerClass.getDeclaredMethod("getFragment");
-                    getFragmentMethod.setAccessible(true);
-                    return (Fragment) getFragmentMethod.invoke(fragmentStateManager);
-                }
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (NoSuchFieldException e) {
-                e.printStackTrace();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            }
-        }
-        return null;
-    }
-
-    @Nullable
-    private static String getWhoFromFragmentState(@NonNull Object fragmentState) {
-        try {
-            return (String) getFieldFromFragmentState(fragmentState, "mWho");
-        } catch (ClassCastException e) {
-            return null;
-        }
-    }
-
-    @Nullable
-    static Bundle getArgumentsFromFragmentState(@NonNull Object fragmentState) {
-        try {
-            return (Bundle) getFieldFromFragmentState(fragmentState, "mArguments");
-        } catch (ClassCastException e) {
-            return null;
-        }
-    }
-
-    @Nullable
-    private static Object getFieldFromFragmentState(@NonNull Object fragmentState, @NonNull String fieldName) {
-        try {
-            Class<?> fragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
-            Field mWhoField = fragmentStateClass.getDeclaredField(fieldName);
-            mWhoField.setAccessible(true);
-            return mWhoField.get(fragmentState);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
+        } catch (InstantiationException e) {
             e.printStackTrace();
         }
         return null;
@@ -325,11 +207,11 @@ public class FragmentUtil {
                 for (Object mOp : mOps) {
                     Fragment fragment = (Fragment) mFragmentField.get(mOp);
                     if (fragment != null) {
-                        Parcelable fragmentState = saveFragment(fragment);
-                        if (fragmentState != null) {
-                            String who = getWhoFromFragmentState(fragmentState);
+                        FragmentStateData fragmentStateData = saveFragment(fragment);
+                        if (fragmentStateData != null) {
+                            String who = (String) getFieldValue(fragmentStateData.fragmentState, "mWho");
                             if (who != null) {
-                                fragmentStates.putParcelable(who, fragmentState);
+                                fragmentStates.putParcelable(who, fragmentStateData);
                             }
                         }
                     }
@@ -398,9 +280,9 @@ public class FragmentUtil {
                         if (mFragmentField.get(op) == null) {
                             String who = mFragmentWhos.get(i);
                             if (who != null) {
-                                Parcelable fragmentState = pendingTransactionState.fragmentStates.getParcelable(who);
-                                if (fragmentState != null) {
-                                    Fragment fragment = restoreFragment(fragmentState, fragmentManager);
+                                FragmentStateData fragmentStateData = (FragmentStateData) pendingTransactionState.fragmentStates.getParcelable(who);
+                                if (fragmentStateData != null) {
+                                    Fragment fragment = restoreFragment(fragmentStateData, fragmentManager);
                                     if (fragment != null) {
                                         mFragmentField.set(op, fragment);
                                     }
@@ -425,6 +307,57 @@ public class FragmentUtil {
         return null;
     }
 
+    private static boolean isAfter1_2() {
+        try {
+            Class.forName("androidx.fragment.app.FragmentStateManager");//fragment 1.2.0开始用FragmentStateManager管理
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    private static boolean isAfter1_3() {
+        if (isAfter1_2()) {
+            try {
+                Class<?> fragmentStateManagerClass = Class.forName("androidx.fragment.app.FragmentStateManager");
+                if (hasDeclaredField(fragmentStateManagerClass, "mFragmentStore")) {//fragment 1.3.0起使用FragmentStore保存
+                    return true;
+                }
+            } catch (ClassNotFoundException e) {
+            }
+        }
+        return false;
+    }
+
+    private static boolean isAfter1_4() {
+        if (isAfter1_3()) {
+            try {
+                Class<?> fragmentStateManagerClass = Class.forName("androidx.fragment.app.FragmentStateManager");
+                Method saveStateMethod = fragmentStateManagerClass.getDeclaredMethod("saveState");
+                Class<?> returnType = saveStateMethod.getReturnType();
+                if (returnType.equals(void.class)) {//fragment 1.4.0起saveState返回值为空
+                    return true;
+                }
+            } catch (ClassNotFoundException e) {
+            } catch (NoSuchMethodException e) {
+            }
+        }
+        return false;
+    }
+
+    private static boolean isAfter1_6() {
+        if (isAfter1_3()) {
+            try {
+                Class<?> fragmentStateManagerClass = Class.forName("androidx.fragment.app.FragmentStateManager");
+                if (hasDeclaredField(fragmentStateManagerClass, "FRAGMENT_STATE_KEY")) {//fragment 1.6.0开始保存方式变了
+                    return true;
+                }
+            } catch (ClassNotFoundException e) {
+            }
+        }
+        return false;
+    }
+
     @SuppressWarnings("SameParameterValue")
     private static boolean hasDeclaredField(@NonNull Class<?> clz, @NonNull String fieldName) {
         Field[] declaredFields = clz.getDeclaredFields();
@@ -434,5 +367,125 @@ public class FragmentUtil {
             }
         }
         return false;
+    }
+
+    @Nullable
+    private static Object getFieldValue(@NonNull Object obj, @NonNull String fieldName) throws IllegalAccessException, NoSuchFieldException {
+        return getFieldValue(obj, obj.getClass(), fieldName);
+    }
+
+    @Nullable
+    private static Object getFieldValue(@NonNull Object obj, @NonNull Class<?> clz, @NonNull String fieldName) throws IllegalAccessException, NoSuchFieldException {
+        Field field = clz.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.get(obj);
+    }
+
+    private static void setFieldValue(@NonNull Object obj, @NonNull String fieldName, @Nullable Object fieldValue) throws IllegalAccessException, NoSuchFieldException {
+        Class<?> clz = obj.getClass();
+        Field field = clz.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(obj, fieldValue);
+    }
+
+    @NonNull
+    private static Parcelable createFragmentState(@NonNull Fragment fragment) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException {
+        Class<?> fragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
+        Constructor<?> constructor = fragmentStateClass.getDeclaredConstructor(Fragment.class);
+        constructor.setAccessible(true);
+        return (Parcelable) constructor.newInstance(fragment);
+    }
+
+    @NonNull
+    private static Object getLifecycleCallbacksDispatcher(@NonNull FragmentManager fragmentManager) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Method getLifecycleCallbacksDispatcherMethod = FragmentManager.class.getDeclaredMethod("getLifecycleCallbacksDispatcher");
+        getLifecycleCallbacksDispatcherMethod.setAccessible(true);
+        return Objects.requireNonNull(getLifecycleCallbacksDispatcherMethod.invoke(fragmentManager));
+    }
+
+    @NonNull
+    private static Object getFragmentStore(@NonNull FragmentManager fragmentManager) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Method getFragmentStoreMethod = FragmentManager.class.getDeclaredMethod("getFragmentStore");
+        getFragmentStoreMethod.setAccessible(true);
+        return Objects.requireNonNull(getFragmentStoreMethod.invoke(fragmentManager));
+    }
+
+    @SuppressWarnings({"JavaReflectionInvocation", "JavaReflectionMemberAccess"})
+    @NonNull
+    private static Object createFragmentStateManagerForSave(@NonNull FragmentManager fragmentManager, @NonNull Fragment fragment) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException {
+        Class<?> FragmentStateManagerClass = Class.forName("androidx.fragment.app.FragmentStateManager");
+        Class<?> fragmentLifecycleCallbacksDispatcherClass = Class.forName("androidx.fragment.app.FragmentLifecycleCallbacksDispatcher");
+        Object dispatcher = getLifecycleCallbacksDispatcher(fragmentManager);
+        if (isAfter1_3()) {
+            Class<?> FragmentStoreClass = Class.forName("androidx.fragment.app.FragmentStore");
+            Object fragmentStore = getFragmentStore(fragmentManager);
+            Constructor<?> constructor = FragmentStateManagerClass.getDeclaredConstructor(fragmentLifecycleCallbacksDispatcherClass, FragmentStoreClass, Fragment.class);
+            constructor.setAccessible(true);
+            return constructor.newInstance(dispatcher, fragmentStore, fragment);
+        } else {
+            Constructor<?> constructor = FragmentStateManagerClass.getDeclaredConstructor(fragmentLifecycleCallbacksDispatcherClass, Fragment.class);
+            constructor.setAccessible(true);
+            return constructor.newInstance(dispatcher, fragment);
+        }
+    }
+
+    @Nullable
+    private static Fragment findFragmentByWho(@NonNull FragmentManager fragmentManager, @NonNull String who) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Method findFragmentByWhoMethod;
+        if (isAfter1_2()) {
+            findFragmentByWhoMethod = FragmentManager.class.getDeclaredMethod("findFragmentByWho", String.class);
+        } else {
+            Class<?> fragmentManagerImplClass = Class.forName("androidx.fragment.app.FragmentManagerImpl");
+            findFragmentByWhoMethod = fragmentManagerImplClass.getDeclaredMethod("findFragmentByWho", String.class);
+        }
+        findFragmentByWhoMethod.setAccessible(true);
+        return (Fragment) findFragmentByWhoMethod.invoke(fragmentManager, who);
+    }
+
+    @Nullable
+    private static ClassLoader getClassLoader(@NonNull FragmentManager fragmentManager) throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        Class<?> fragmentManagerClass;
+        if (isAfter1_2()) {
+            fragmentManagerClass = FragmentManager.class;
+        } else {
+            fragmentManagerClass = Class.forName("androidx.fragment.app.FragmentManagerImpl");
+        }
+        Field mHostField = fragmentManagerClass.getDeclaredField("mHost");
+        mHostField.setAccessible(true);
+        Object fragmentHostCallback = mHostField.get(fragmentManager);
+        Class<?> fragmentHostCallbackClass = Class.forName("androidx.fragment.app.FragmentHostCallback");
+        Method getContextMethod = fragmentHostCallbackClass.getDeclaredMethod("getContext");
+        getContextMethod.setAccessible(true);
+        Context context = (Context) getContextMethod.invoke(fragmentHostCallback);
+        if (context != null) {
+            return context.getClassLoader();
+        }
+        return null;
+    }
+
+    @SuppressWarnings({"JavaReflectionInvocation", "JavaReflectionMemberAccess"})
+    @NonNull
+    private static Object createFragmentStateManagerForRestore(@NonNull FragmentStateData fragmentStateData, @NonNull FragmentManager fragmentManager, @NonNull ClassLoader classLoader) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchFieldException {
+        Object dispatcher = getLifecycleCallbacksDispatcher(fragmentManager);
+        Class<?> FragmentStateManagerClass = Class.forName("androidx.fragment.app.FragmentStateManager");
+        Class<?> fragmentLifecycleCallbacksDispatcherClass = Class.forName("androidx.fragment.app.FragmentLifecycleCallbacksDispatcher");
+        Class<?> fragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
+        if (isAfter1_3()) {
+            Class<?> FragmentStoreClass = Class.forName("androidx.fragment.app.FragmentStore");
+            Object fragmentStore = getFragmentStore(fragmentManager);
+            if (isAfter1_6()) {//fragment 1.6.0
+                Constructor<?> constructor = FragmentStateManagerClass.getDeclaredConstructor(fragmentLifecycleCallbacksDispatcherClass, FragmentStoreClass, ClassLoader.class, FragmentFactory.class, Bundle.class);
+                constructor.setAccessible(true);
+                return constructor.newInstance(dispatcher, fragmentStore, classLoader, fragmentManager.getFragmentFactory(), fragmentStateData.savedFragmentState);
+            } else {//fragment 1.3.0
+                Constructor<?> constructor = FragmentStateManagerClass.getDeclaredConstructor(fragmentLifecycleCallbacksDispatcherClass, FragmentStoreClass, ClassLoader.class, FragmentFactory.class, fragmentStateClass);
+                constructor.setAccessible(true);
+                return constructor.newInstance(dispatcher, fragmentStore, classLoader, fragmentManager.getFragmentFactory(), fragmentStateData.fragmentState);
+            }
+        } else {//fragment 1.2.0
+            Constructor<?> constructor = FragmentStateManagerClass.getDeclaredConstructor(fragmentLifecycleCallbacksDispatcherClass, ClassLoader.class, FragmentFactory.class, fragmentStateClass);
+            constructor.setAccessible(true);
+            return constructor.newInstance(dispatcher, classLoader, fragmentManager.getFragmentFactory(), fragmentStateData.fragmentState);
+        }
     }
 }

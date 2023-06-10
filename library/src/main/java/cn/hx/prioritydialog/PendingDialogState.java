@@ -1,33 +1,22 @@
 package cn.hx.prioritydialog;
 
-import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 public class PendingDialogState implements Parcelable {
     public final PriorityDialogConfig config;
-    public final Parcelable fragmentState;
-    @Nullable
-    private final Bundle arguments;
+    public final FragmentStateData fragmentStateData;
 
-    public PendingDialogState(@NonNull PriorityDialogConfig config, @NonNull Parcelable fragmentState) {
+    public PendingDialogState(@NonNull PriorityDialogConfig config, @NonNull FragmentStateData fragmentStateData) {
         this.config = config;
-        this.fragmentState = fragmentState;
-        arguments = FragmentUtil.getArgumentsFromFragmentState(fragmentState);
+        this.fragmentStateData = fragmentStateData;
     }
 
     protected PendingDialogState(Parcel in) {
         config = in.readParcelable(PriorityDialogConfig.class.getClassLoader());
-        fragmentState = in.readParcelable(PriorityDialogConfig.class.getClassLoader());
-        arguments = FragmentUtil.getArgumentsFromFragmentState(fragmentState);
-    }
-
-    @Nullable
-    public Bundle getArguments() {
-        return arguments;
+        fragmentStateData = in.readParcelable(PriorityDialogConfig.class.getClassLoader());
     }
 
     public static final Creator<PendingDialogState> CREATOR = new Creator<PendingDialogState>() {
@@ -50,6 +39,6 @@ public class PendingDialogState implements Parcelable {
     @Override
     public void writeToParcel(Parcel parcel, int i) {
         parcel.writeParcelable(config, i);
-        parcel.writeParcelable(fragmentState, i);
+        parcel.writeParcelable(fragmentStateData, i);
     }
 }

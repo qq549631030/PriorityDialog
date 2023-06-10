@@ -46,8 +46,8 @@ android {
 
 dependencies {
 
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'androidx.appcompat:appcompat:1.0.0'
+    implementation 'com.google.android.material:material:1.1.0'
 //    implementation 'com.github.qq549631030:priority-dialog:1.1.2'
     implementation project(path: ':library')
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.10'

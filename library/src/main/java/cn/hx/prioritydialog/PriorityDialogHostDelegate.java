@@ -48,8 +48,16 @@ public class PriorityDialogHostDelegate {
             }
             return false;
         }
-        newDialog.getPriorityDialogDelegate().getConfig().setHostUuid(mUuid);
-        newDialog.getPriorityDialogDelegate().getConfig().setAllowStateLoss(allowStateLoss);
+        newDialog.getPriorityConfig().setHostUuid(mUuid);
+        newDialog.getPriorityConfig().setAllowStateLoss(allowStateLoss);
+        if (newDialog instanceof DialogFragment) {
+            Bundle arguments = ((DialogFragment) newDialog).getArguments();
+            if (arguments == null) {
+                arguments = new Bundle();
+                ((DialogFragment) newDialog).setArguments(arguments);
+            }
+            arguments.putParcelable(PriorityDialog.BASE_DIALOG_CONFIG, newDialog.getPriorityConfig());
+        }
         PriorityDialog currentDialog = mDialogManager.getCurrentDialog();
         PriorityStrategy priorityStrategy = mDialogManager.getPriorityStrategy();
         if (currentDialog != null) {
