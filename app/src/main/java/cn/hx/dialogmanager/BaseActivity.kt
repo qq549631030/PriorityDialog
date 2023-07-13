@@ -30,12 +30,12 @@ open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImp
         super.finish()
     }
 
-    fun showAlertDialog(title: String? = null, message: String, priority: Int = 0, isAddToPendingWhenReplaceByOther: Boolean = true, lockWindow: Boolean = false, isSupportRecreate: Boolean = true, uuid: String? = null) {
-        val dialog = createAlertDialog(title, message, priority, isAddToPendingWhenReplaceByOther, lockWindow, isSupportRecreate, uuid)
+    fun showAlertDialog(title: String? = null, message: String, priority: Int = 0, isAddToPendingWhenReplaceByOther: Boolean = true, lockWindow: Boolean = false, isSupportRecreate: Boolean = true, uuid: String? = null, isCanBeReplace: Boolean = true) {
+        val dialog = createAlertDialog(title, message, priority, isAddToPendingWhenReplaceByOther, lockWindow, isSupportRecreate, uuid, isCanBeReplace)
         showPriorityDialog(dialog)
     }
 
-    fun createAlertDialog(title: String? = null, message: String, priority: Int = 0, isAddToPendingWhenReplaceByOther: Boolean = true, lockWindow: Boolean = false, isSupportRecreate: Boolean = true, uuid: String? = null): BaseAlertDialog {
+    fun createAlertDialog(title: String? = null, message: String, priority: Int = 0, isAddToPendingWhenReplaceByOther: Boolean = true, lockWindow: Boolean = false, isSupportRecreate: Boolean = true, uuid: String? = null, isCanBeReplace: Boolean = true): BaseAlertDialog {
         val dialog = BaseAlertDialog.Builder()
                 .title(title)
                 .message(message)
@@ -46,6 +46,7 @@ open class BaseActivity : AppCompatActivity(), DialogManager by DialogManagerImp
         dialog.priorityConfig.isAddToPendingWhenReplaceByOther = isAddToPendingWhenReplaceByOther
         dialog.priorityConfig.isLockWindow = lockWindow
         dialog.priorityConfig.isSupportRecreate = isSupportRecreate
+        dialog.priorityConfig.isCanBeReplace = isCanBeReplace
         uuid?.let {
             dialog.priorityConfig.uuid = it
         }

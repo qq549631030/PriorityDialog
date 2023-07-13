@@ -63,4 +63,11 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:text="lock window on fragment" />
+
+    <Button
+        android:id="@+id/btn_lock_show_two"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:text="show two dialog together" />
 </LinearLayout>

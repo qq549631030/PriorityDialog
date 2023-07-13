@@ -6,8 +6,6 @@ import androidx.annotation.RestrictTo;
 
 public interface PriorityDialog {
 
-    String BASE_DIALOG_TAG = "cn.hx.base.dialog.tag";
-
     String BASE_DIALOG_CONFIG = "cn.hx.base.dialog.config";
 
     @RestrictTo(RestrictTo.Scope.LIBRARY)

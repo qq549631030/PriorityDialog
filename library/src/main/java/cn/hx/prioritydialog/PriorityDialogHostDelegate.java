@@ -62,15 +62,17 @@ public class PriorityDialogHostDelegate {
         PriorityStrategy priorityStrategy = mDialogManager.getPriorityStrategy();
         if (currentDialog != null) {
             if (priorityStrategy.canNewShow(currentDialog, newDialog)) {
-                if (currentDialog.getPriorityConfig().isAddToPendingWhenReplaceByOther()) {
-                    currentDialog.getPriorityDialogDelegate().setDismissByHighPriorityDialog(true);
-                    mDialogManager.addToPendingDialog(currentDialog);
-                }
-                if (currentDialog instanceof DialogFragment) {
-                    DialogFragment current = (DialogFragment) currentDialog;
-                    FragmentManager fm = current.getFragmentManager();
-                    if (fm != null && !fm.isDestroyed()) {
-                        fm.beginTransaction().remove(current).commitAllowingStateLoss();
+                if (currentDialog.getPriorityConfig().isCanBeReplace()) {
+                    if (currentDialog.getPriorityConfig().isAddToPendingWhenReplaceByOther()) {
+                        currentDialog.getPriorityDialogDelegate().setDismissByHighPriorityDialog(true);
+                        mDialogManager.addToPendingDialog(currentDialog);
+                    }
+                    if (currentDialog instanceof DialogFragment) {
+                        DialogFragment current = (DialogFragment) currentDialog;
+                        FragmentManager fm = current.getFragmentManager();
+                        if (fm != null && !fm.isDestroyed()) {
+                            fm.beginTransaction().remove(current).commitAllowingStateLoss();
+                        }
                     }
                 }
             } else {
@@ -115,9 +117,9 @@ public class PriorityDialogHostDelegate {
             mDialogManager.setPendingShowDialog(newDialog);
             FragmentTransaction transaction = childFragmentManager.beginTransaction();
             if (allowStateLoss) {
-                transaction.add((DialogFragment) newDialog, PriorityDialog.BASE_DIALOG_TAG).commitAllowingStateLoss();
+                transaction.add((DialogFragment) newDialog, null).commitAllowingStateLoss();
             } else {
-                ((DialogFragment) newDialog).show(transaction, PriorityDialog.BASE_DIALOG_TAG);
+                ((DialogFragment) newDialog).show(transaction, null);
             }
             if (!newDialog.getPriorityDialogDelegate().isInPendingQueue()) {
                 mDialogManager.removePendingDialogByUuid(newDialog.getPriorityConfig().getUuid());//删除等待队列里相同uuid的对话框

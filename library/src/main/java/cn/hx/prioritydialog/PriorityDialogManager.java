@@ -33,7 +33,6 @@ public class PriorityDialogManager {
     private static final String PENDING_DIALOGS = "cn.hx.base.dialogManager.pendingDialogs";
     private static final String PENDING_ACTIVITY_ACTIONS = "cn.hx.base.dialogManager.pendingActivityActions";
     private static final String PENDING_FRAGMENT_ACTIONS = "cn.hx.base.dialogManager.pendingFragmentActions";
-    private static final String CURRENT_DIALOG_CONFIG = "cn.hx.base.dialogManager.currentDialogConfig";
     private static PriorityStrategy globalPriorityStrategy = new DefaultPriorityStrategy();
 
     private final Map<String, DialogHost> dialogHostMap = new HashMap<>();
@@ -50,7 +49,6 @@ public class PriorityDialogManager {
     FragmentActivity activity;
 
     PriorityDialog pendingShowDialog;
-    private PriorityDialogConfig currentDialogConfig;
 
     private PriorityStrategy currentPriorityStrategy = null;
 
@@ -103,7 +101,6 @@ public class PriorityDialogManager {
                     dialogManager.savePendingDialogs(bundle);
                     dialogManager.savePendingActivityActions(bundle);
                     dialogManager.savePendingFragmentActions(bundle);
-                    bundle.putParcelable(CURRENT_DIALOG_CONFIG, dialogManager.currentDialogConfig);
                     if (activity instanceof DialogHost) {
                         // save activity host uuid
                         bundle.putString(DialogHost.BASE_DIALOG_HOST_UUID, ((DialogHost) activity).getUuid());
@@ -151,9 +148,6 @@ public class PriorityDialogManager {
         restorePendingDialogs(savedInstanceState);
         restorePendingActivityActions(savedInstanceState);
         restorePendingFragmentActions(savedInstanceState);
-        if (savedInstanceState != null) {
-            currentDialogConfig = savedInstanceState.getParcelable(CURRENT_DIALOG_CONFIG);
-        }
         activity.getSupportFragmentManager().registerFragmentLifecycleCallbacks(new FragmentManager.FragmentLifecycleCallbacks() {
             @Override
             public void onFragmentCreated(@NonNull FragmentManager fm, @NonNull Fragment f, @Nullable Bundle savedInstanceState) {
@@ -202,21 +196,14 @@ public class PriorityDialogManager {
                         if (!config.isSupportRecreate()) {
                             //dismiss when un support recreate
                             ((DialogFragment) f).dismiss();
-                            if (currentDialogConfig != null && config.getUuid().equals(currentDialogConfig.getUuid())) {
-                                currentDialogConfig = null;
-                            }
                             return;
                         }
                         if (isPendingDismissDialog(config.getHostUuid(), config.getUuid())) {
                             ((DialogFragment) f).dismiss();
-                            if (currentDialogConfig != null && config.getUuid().equals(currentDialogConfig.getUuid())) {
-                                currentDialogConfig = null;
-                            }
                             removePendingDismissDialog(config.getHostUuid(), config.getUuid());
                             return;
                         }
                     }
-                    currentDialogConfig = priorityDialog.getPriorityConfig();
                     for (PriorityDialogListener listener : priorityDialogListeners) {
                         listener.onDialogShow(priorityDialog);
                     }
@@ -266,9 +253,6 @@ public class PriorityDialogManager {
                     PriorityDialogConfig config = ((PriorityDialog) f).getPriorityConfig();
                     if (reallyDismiss) {
                         dispatchDialogDismiss((PriorityDialog) f);
-                        if (currentDialogConfig != null && config.getUuid().equals(currentDialogConfig.getUuid())) {
-                            currentDialogConfig = null;
-                        }
                         for (PriorityDialogListener listener : priorityDialogListeners) {
                             listener.onDialogDismiss((PriorityDialog) f);
                         }
@@ -367,9 +351,6 @@ public class PriorityDialogManager {
 
     void setPendingShowDialog(PriorityDialog pendingShowDialog) {
         this.pendingShowDialog = pendingShowDialog;
-        if (pendingShowDialog != null) {
-            currentDialogConfig = pendingShowDialog.getPriorityConfig();
-        }
     }
 
     @Nullable
@@ -377,22 +358,31 @@ public class PriorityDialogManager {
         if (pendingShowDialog != null) {
             return pendingShowDialog;
         }
-        if (currentDialogConfig != null) {
-            DialogHost dialogHost = dialogHostMap.get(currentDialogConfig.getHostUuid());
-            if (dialogHost != null) {
-                FragmentManager childFragmentManager = dialogHost.getPriorityDialogHostDelegate().childFragmentManager;
-                Fragment fragment = childFragmentManager.findFragmentByTag(PriorityDialog.BASE_DIALOG_TAG);
-                if (fragment instanceof PriorityDialog && !fragment.isRemoving()) {
-                    return (PriorityDialog) fragment;
+        return findCurrentDialog(activity.getSupportFragmentManager());
+    }
+
+    @Nullable
+    private PriorityDialog findCurrentDialog(@NonNull FragmentManager fragmentManager) {
+        List<Fragment> fragments = fragmentManager.getFragments();
+        for (int i = fragments.size() - 1; i >= 0; i--) {
+            Fragment fragment = fragments.get(i);
+            if (fragment instanceof DialogHost) {
+                PriorityDialog dialog = findCurrentDialog(fragment.getChildFragmentManager());
+                if (dialog != null) {
+                    return dialog;
                 }
+            }
+            if (fragment instanceof PriorityDialog && !fragment.isRemoving()) {
+                return (PriorityDialog) fragment;
             }
         }
         return null;
     }
 
     void dismissCurrentDialog(boolean allowStateLoss) {
-        if (currentDialogConfig != null) {
-            dismissDialog(currentDialogConfig.getHostUuid(), currentDialogConfig.getUuid(), allowStateLoss);
+        PriorityDialog currentDialog = getCurrentDialog();
+        if (currentDialog != null) {
+            dismissDialog(currentDialog.getPriorityConfig().getHostUuid(), currentDialog.getPriorityConfig().getUuid(), allowStateLoss);
         }
     }
 

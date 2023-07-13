@@ -118,6 +118,23 @@ class MainActivity : BaseActivity() {
         binding.btnLockWindowOnFragment.setOnClickListener {
             startActivity(Intent(this, FragmentTestActivity::class.java))
         }
+
+        binding.btnLockShowTwo.setOnClickListener {
+            showAlertDialog(
+                    "first dialog",
+                    "this is the first dialog with priority  = 1\nthis will not dismiss when second dialog show\nthis will not dismiss when second dialog show\nthis will not dismiss when second dialog show\nthis will not dismiss when second dialog show\n",
+                    1,
+                    isCanBeReplace = false
+            )
+
+            handler.postDelayed({
+                showAlertDialog(
+                        "second dialog",
+                        "this is the second dialog with priority  = 2",
+                        2
+                )
+            }, 1000L)
+        }
     }
 
     override fun onDestroy() {

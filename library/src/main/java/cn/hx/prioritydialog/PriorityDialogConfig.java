@@ -61,6 +61,11 @@ public class PriorityDialogConfig implements Parcelable {
      */
     private boolean mCasePending = false;
 
+    /**
+     * 是否可以被高优先级取代，默认true
+     */
+    private boolean mCanBeReplace = true;
+
     public PriorityDialogConfig() {
     }
 
@@ -77,6 +82,7 @@ public class PriorityDialogConfig implements Parcelable {
         mShowImmediateAfterPreCanNotShowCasePending = in.readByte() != 0;
         mShowNextPendingWhenReplaceExistCasePending = in.readByte() != 0;
         mCasePending = in.readByte() != 0;
+        mCanBeReplace = in.readByte() != 0;
     }
 
     @Override
@@ -93,6 +99,7 @@ public class PriorityDialogConfig implements Parcelable {
         dest.writeByte((byte) (mShowImmediateAfterPreCanNotShowCasePending ? 1 : 0));
         dest.writeByte((byte) (mShowNextPendingWhenReplaceExistCasePending ? 1 : 0));
         dest.writeByte((byte) (mCasePending ? 1 : 0));
+        dest.writeByte((byte) (mCanBeReplace ? 1 : 0));
     }
 
     @Override
@@ -213,6 +220,14 @@ public class PriorityDialogConfig implements Parcelable {
         this.mCasePending = casePending;
     }
 
+    public boolean isCanBeReplace() {
+        return mCanBeReplace;
+    }
+
+    public void setCanBeReplace(boolean canBeReplace) {
+        this.mCanBeReplace = canBeReplace;
+    }
+
     void copyFrom(@NonNull PriorityDialogConfig other) {
         this.mUuid = other.getUuid();
         this.mHostUuid = other.getHostUuid();
@@ -226,5 +241,6 @@ public class PriorityDialogConfig implements Parcelable {
         this.mShowImmediateAfterPreCanNotShowCasePending = other.isShowImmediateAfterPreDismiss();
         this.mShowNextPendingWhenReplaceExistCasePending = other.isShowNextPendingWhenReplaceExistCasePending();
         this.mCasePending = other.isCasePending();
+        this.mCanBeReplace = other.isCanBeReplace();
     }
 }
