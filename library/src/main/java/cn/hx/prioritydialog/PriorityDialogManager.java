@@ -367,6 +367,9 @@ public class PriorityDialogManager {
         for (int i = fragments.size() - 1; i >= 0; i--) {
             Fragment fragment = fragments.get(i);
             if (fragment instanceof DialogHost) {
+                if (fragment.getHost() == null) {
+                    continue;
+                }
                 PriorityDialog dialog = findCurrentDialog(fragment.getChildFragmentManager());
                 if (dialog != null) {
                     return dialog;

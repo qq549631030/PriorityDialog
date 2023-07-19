@@ -9,9 +9,9 @@ import androidx.annotation.NonNull;
 public class FragmentStateData implements Parcelable {
 
     @NonNull
-    final Parcelable fragmentState;
+    public final Parcelable fragmentState;
     @NonNull
-    final Bundle savedFragmentState;
+    public final Bundle savedFragmentState;
 
     public FragmentStateData(@NonNull Parcelable fragmentState, @NonNull Bundle savedFragmentState) {
         this.fragmentState = fragmentState;

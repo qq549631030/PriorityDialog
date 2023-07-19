@@ -234,6 +234,28 @@ public class FragmentUtil {
         return null;
     }
 
+    @Nullable
+    static Bundle getArgumentsFromFragmentStateData(@NonNull FragmentStateData fragmentStateData) {
+        try {
+            if (isAfter1_6()) {//fragment 1.6.0以后保存方式变了
+                return fragmentStateData.savedFragmentState.getBundle("arguments");
+            } else {
+                Class<?> fragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
+                Field mArgumentsField = fragmentStateClass.getDeclaredField("mArguments");
+                mArgumentsField.setAccessible(true);
+                return (Bundle) mArgumentsField.get(fragmentStateData.fragmentState);
+            }
+        } catch (ClassCastException e) {
+            return null;
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     @Nullable
     static FragmentTransaction restorePendingTransaction(@NonNull PendingTransactionState pendingTransactionState, @NonNull FragmentManager fragmentManager) {

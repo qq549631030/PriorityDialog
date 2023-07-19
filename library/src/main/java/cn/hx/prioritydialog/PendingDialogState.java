@@ -1,17 +1,22 @@
 package cn.hx.prioritydialog;
 
+import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 public class PendingDialogState implements Parcelable {
     public final PriorityDialogConfig config;
     public final FragmentStateData fragmentStateData;
+    @Nullable
+    public Bundle arguments;
 
     public PendingDialogState(@NonNull PriorityDialogConfig config, @NonNull FragmentStateData fragmentStateData) {
         this.config = config;
         this.fragmentStateData = fragmentStateData;
+        arguments = FragmentUtil.getArgumentsFromFragmentStateData(fragmentStateData);
     }
 
     protected PendingDialogState(Parcel in) {
