@@ -7,8 +7,12 @@ import android.os.Parcelable;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.Objects;
+
 public class PendingDialogState implements Parcelable {
+    @NonNull
     public final PriorityDialogConfig config;
+    @NonNull
     public final FragmentStateData fragmentStateData;
     @Nullable
     public Bundle arguments;
@@ -20,8 +24,8 @@ public class PendingDialogState implements Parcelable {
     }
 
     protected PendingDialogState(Parcel in) {
-        config = in.readParcelable(PriorityDialogConfig.class.getClassLoader());
-        fragmentStateData = in.readParcelable(PriorityDialogConfig.class.getClassLoader());
+        config = Objects.requireNonNull(in.readParcelable(PriorityDialogConfig.class.getClassLoader()));
+        fragmentStateData = Objects.requireNonNull(in.readParcelable(PriorityDialogConfig.class.getClassLoader()));
     }
 
     public static final Creator<PendingDialogState> CREATOR = new Creator<PendingDialogState>() {

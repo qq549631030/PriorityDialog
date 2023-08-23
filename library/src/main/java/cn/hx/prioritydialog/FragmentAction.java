@@ -8,6 +8,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentTransaction;
 
+import java.util.Objects;
+
 public class FragmentAction implements Parcelable {
     public static final int TYPE_TRANSACTION = 1;
     public static final int TYPE_POP_BACKSTACK = 2;
@@ -17,6 +19,7 @@ public class FragmentAction implements Parcelable {
     public static final int TRANSACTION_TYPE_COMMIT_NOW = 3;
     public static final int TRANSACTION_TYPE_COMMIT_NOW_ALLOWING_STATE_LOSS = 4;
 
+    @NonNull
     public final String hostUuid;
     public final int type;
     public final boolean isChildFragmentManager;
@@ -26,7 +29,7 @@ public class FragmentAction implements Parcelable {
     public PendingTransactionState transactionState;
     public Bundle popBackStack;
 
-    public FragmentAction(int transactionType, @NonNull FragmentTransaction cachedTransaction, String hostUuid, boolean isChildFragmentManager) {
+    public FragmentAction(int transactionType, @NonNull FragmentTransaction cachedTransaction, @NonNull String hostUuid, boolean isChildFragmentManager) {
         this.isChildFragmentManager = isChildFragmentManager;
         this.type = TYPE_TRANSACTION;
         this.transactionType = transactionType;
@@ -35,7 +38,7 @@ public class FragmentAction implements Parcelable {
         this.hostUuid = hostUuid;
     }
 
-    public FragmentAction(@NonNull Bundle popBackStack, String hostUuid, boolean isChildFragmentManager) {
+    public FragmentAction(@NonNull Bundle popBackStack, @NonNull String hostUuid, boolean isChildFragmentManager) {
         this.isChildFragmentManager = isChildFragmentManager;
         this.type = TYPE_POP_BACKSTACK;
         this.popBackStack = popBackStack;
@@ -43,7 +46,7 @@ public class FragmentAction implements Parcelable {
     }
 
     protected FragmentAction(Parcel in) {
-        hostUuid = in.readString();
+        hostUuid = Objects.requireNonNull(in.readString());
         type = in.readInt();
         transactionType = in.readInt();
         isChildFragmentManager = in.readByte() != 0;

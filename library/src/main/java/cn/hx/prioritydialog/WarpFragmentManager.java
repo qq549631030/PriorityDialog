@@ -26,12 +26,15 @@ public class WarpFragmentManager extends FragmentManager {
     public static final int TYPE_POP_IMMEDIATE_WITH_NAME = 5;
     public static final int TYPE_POP_IMMEDIATE_WITH_ID = 6;
 
+    @NonNull
     final FragmentManager fragmentManager;
+    @NonNull
     final PriorityDialogManager dialogManager;
+    @NonNull
     final String hostUuid;
     final boolean isChildFragmentManager;
 
-    public WarpFragmentManager(FragmentManager fragmentManager, PriorityDialogManager dialogManager, String hostUuid, boolean isChildFragmentManager) {
+    public WarpFragmentManager(@NonNull FragmentManager fragmentManager, @NonNull PriorityDialogManager dialogManager, @NonNull String hostUuid, boolean isChildFragmentManager) {
         this.fragmentManager = fragmentManager;
         this.dialogManager = dialogManager;
         this.hostUuid = hostUuid;

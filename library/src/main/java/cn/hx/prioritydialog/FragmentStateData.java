@@ -6,6 +6,8 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+import java.util.Objects;
+
 public class FragmentStateData implements Parcelable {
 
     @NonNull
@@ -19,8 +21,8 @@ public class FragmentStateData implements Parcelable {
     }
 
     protected FragmentStateData(Parcel in) {
-        fragmentState = in.readParcelable(getClass().getClassLoader());
-        savedFragmentState = in.readBundle(getClass().getClassLoader());
+        fragmentState = Objects.requireNonNull(in.readParcelable(getClass().getClassLoader()));
+        savedFragmentState = Objects.requireNonNull(in.readBundle(getClass().getClassLoader()));
     }
 
     @Override

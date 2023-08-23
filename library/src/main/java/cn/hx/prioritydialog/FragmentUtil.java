@@ -345,7 +345,7 @@ public class FragmentUtil {
                 if (hasDeclaredField(fragmentStateManagerClass, "mFragmentStore")) {//fragment 1.3.0起使用FragmentStore保存
                     return true;
                 }
-            } catch (ClassNotFoundException e) {
+            } catch (ClassNotFoundException ignored) {
             }
         }
         return false;
@@ -360,8 +360,8 @@ public class FragmentUtil {
                 if (returnType.equals(void.class)) {//fragment 1.4.0起saveState返回值为空
                     return true;
                 }
-            } catch (ClassNotFoundException e) {
-            } catch (NoSuchMethodException e) {
+            } catch (ClassNotFoundException ignored) {
+            } catch (NoSuchMethodException ignored) {
             }
         }
         return false;
@@ -374,7 +374,7 @@ public class FragmentUtil {
                 if (hasDeclaredField(fragmentStateManagerClass, "FRAGMENT_STATE_KEY")) {//fragment 1.6.0开始保存方式变了
                     return true;
                 }
-            } catch (ClassNotFoundException e) {
+            } catch (ClassNotFoundException ignored) {
             }
         }
         return false;

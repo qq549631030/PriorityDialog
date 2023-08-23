@@ -42,16 +42,16 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
 
-publishing {
-    repositories {
-        maven {
-            name = 'custom'
-            url = 'you repo url'
-            allowInsecureProtocol true
-            credentials {
-                username = 'you repo username'
-                password = 'you repo password'
-            }
-        }
-    }
-}
+//publishing {
+//    repositories {
+//        maven {
+//            name = 'custom'
+//            url = 'you repo url'
+//            allowInsecureProtocol true
+//            credentials {
+//                username = 'you repo username'
+//                password = 'you repo password'
+//            }
+//        }
+//    }
+//}

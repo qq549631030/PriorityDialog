@@ -28,15 +28,12 @@ import java.util.TreeMap;
 
 public class PriorityDialogManager {
 
-    private static final String TAG = "PriorityDialogManager";
-
     private static final String PENDING_DIALOGS = "cn.hx.base.dialogManager.pendingDialogs";
     private static final String PENDING_ACTIVITY_ACTIONS = "cn.hx.base.dialogManager.pendingActivityActions";
     private static final String PENDING_FRAGMENT_ACTIONS = "cn.hx.base.dialogManager.pendingFragmentActions";
     private static PriorityStrategy globalPriorityStrategy = new DefaultPriorityStrategy();
 
     private final Map<String, DialogHost> dialogHostMap = new HashMap<>();
-    private final Map<String, PriorityDialog> cachePendingDialogMap = new TreeMap<>();
     private final TreeMap<Integer, LinkedList<PendingDialogState>> pendingDialogMap = new TreeMap<>();
     private final Map<String, ArrayDeque<ActivityAction>> pendingActivityActionMap = new HashMap<>();
     private final Map<String, ArrayDeque<FragmentAction>> pendingFragmentActionMap = new HashMap<>();
@@ -52,7 +49,7 @@ public class PriorityDialogManager {
 
     private PriorityStrategy currentPriorityStrategy = null;
 
-    private Set<PriorityDialogListener> priorityDialogListeners = new HashSet<>();
+    private final Set<PriorityDialogListener> priorityDialogListeners = new HashSet<>();
 
     public static void init(Context context, @NonNull PriorityStrategy priorityStrategy) {
         globalPriorityStrategy = priorityStrategy;
@@ -295,12 +292,7 @@ public class PriorityDialogManager {
                 while (listIterator.hasPrevious()) {
                     PendingDialogState dialogInfo = listIterator.previous();
                     if (hostUuid.equals(dialogInfo.config.getHostUuid())) {
-                        PriorityDialog removed = cachePendingDialogMap.remove(dialogInfo.config.getUuid());
-                        if (removed != null) {
-                            dispatchDialogDismiss(removed);
-                        } else {
-                            removeDialogListeners(dialogInfo.config.getUuid());
-                        }
+                        removeDialogListeners(dialogInfo.config.getUuid());
                         listIterator.remove();
                     }
                 }
@@ -323,12 +315,7 @@ public class PriorityDialogManager {
                 while (listIterator.hasPrevious()) {
                     PendingDialogState dialogInfo = listIterator.previous();
                     if (uuid.equals(dialogInfo.config.getUuid())) {
-                        PriorityDialog removed = cachePendingDialogMap.remove(dialogInfo.config.getUuid());
-                        if (removed != null) {
-                            dispatchDialogDismiss(removed);
-                        } else {
-                            removeDialogListeners(dialogInfo.config.getUuid());
-                        }
+                        removeDialogListeners(dialogInfo.config.getUuid());
                         listIterator.remove();
                         return true;
                     }
@@ -443,7 +430,6 @@ public class PriorityDialogManager {
                 pendingDialogMap.put(priorityDialog.getPriorityConfig().getPriority(), linkedList);
             }
             linkedList.addLast(new PendingDialogState(priorityDialog.getPriorityConfig(), fragmentStateData));
-            cachePendingDialogMap.put(priorityDialog.getPriorityConfig().getUuid(), priorityDialog);
             for (PriorityDialogListener listener : priorityDialogListeners) {
                 listener.onDialogAddToPending(priorityDialog);
             }
@@ -501,21 +487,16 @@ public class PriorityDialogManager {
         if (samePriorityDialogs == null || !samePriorityDialogs.contains(dialogInfo)) {
             return false;
         }
-        String uuid = dialogInfo.config.getUuid();
         String hostUuid = dialogInfo.config.getHostUuid();
         DialogHost dialogHost = getDialogHost(hostUuid);
         if (dialogHost != null) {
-            PriorityDialog dialog = cachePendingDialogMap.get(uuid);
-            if (dialog == null) {
-                FragmentManager fragmentManager = dialogHost.getPriorityDialogHostDelegate().childFragmentManager;
-                dialog = (PriorityDialog) FragmentUtil.restoreFragment(dialogInfo.fragmentStateData, fragmentManager);
-            }
+            FragmentManager fragmentManager = dialogHost.getPriorityDialogHostDelegate().childFragmentManager;
+            PriorityDialog dialog = (PriorityDialog) FragmentUtil.restoreFragment(dialogInfo.fragmentStateData, fragmentManager);
             if (dialog != null) {
                 dialog.getPriorityConfig().copyFrom(dialogInfo.config);
                 if (isReady(hostUuid) && canPendingDialogShow(dialog)) {
                     dialog.getPriorityDialogDelegate().setInPendingQueue(true);
                     if (dialogHost.showPriorityDialog(dialog, dialog.getPriorityConfig().isAllowStateLoss())) {
-                        cachePendingDialogMap.remove(uuid);
                         samePriorityDialogs.remove(dialogInfo);
                         if (samePriorityDialogs.isEmpty()) {
                             pendingDialogMap.remove(priority);
@@ -591,7 +572,9 @@ public class PriorityDialogManager {
             if (activityActions != null) {
                 for (String key : activityActions.keySet()) {
                     ArrayList<ActivityAction> list = activityActions.getParcelableArrayList(key);
-                    pendingActivityActionMap.put(key, new ArrayDeque<>(list));
+                    if (list != null) {
+                        pendingActivityActionMap.put(key, new ArrayDeque<>(list));
+                    }
                 }
             }
         }
@@ -615,7 +598,9 @@ public class PriorityDialogManager {
             if (fragmentActions != null) {
                 for (String key : fragmentActions.keySet()) {
                     ArrayList<FragmentAction> list = fragmentActions.getParcelableArrayList(key);
-                    pendingFragmentActionMap.put(key, new ArrayDeque<>(list));
+                    if (list != null) {
+                        pendingFragmentActionMap.put(key, new ArrayDeque<>(list));
+                    }
                 }
             }
         }
