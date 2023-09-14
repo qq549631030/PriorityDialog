@@ -370,8 +370,8 @@ public class FragmentUtil {
     private static boolean isAfter1_6() {
         if (isAfter1_3()) {
             try {
-                Class<?> fragmentStateManagerClass = Class.forName("androidx.fragment.app.FragmentStateManager");
-                if (hasDeclaredField(fragmentStateManagerClass, "FRAGMENT_STATE_KEY")) {//fragment 1.6.0开始保存方式变了
+                Class<?> FragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
+                if (!hasDeclaredField(FragmentStateClass, "mSavedFragmentState")) {//fragment 1.6.0开始保存方式变了
                     return true;
                 }
             } catch (ClassNotFoundException ignored) {

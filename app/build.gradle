@@ -22,6 +22,7 @@ android {
     buildTypes {
         release {
             minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -50,10 +51,9 @@ dependencies {
     implementation 'com.google.android.material:material:1.1.0'
 //    implementation 'com.github.qq549631030:priority-dialog:1.1.2'
     implementation project(path: ':library')
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.10'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'androidx.test.ext:junit:1.1.5'
-    testImplementation "org.robolectric:robolectric:4.9.2"
+    testImplementation "org.robolectric:robolectric:4.10.3"
     testImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
