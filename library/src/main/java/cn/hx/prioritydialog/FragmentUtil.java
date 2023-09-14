@@ -12,6 +12,10 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.savedstate.SavedStateRegistry;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -20,6 +24,21 @@ import java.util.List;
 import java.util.Objects;
 
 public class FragmentUtil {
+
+    private static String fragmentVersion;
+    private static int fragmentMajorVersion = -1;
+    private static int fragmentMinorVersion = -1;
+
+    static {
+        fragmentVersion = getFragmentVersionFromResource();
+        if (fragmentVersion != null) {
+            String[] split = fragmentVersion.split("\\.");
+            if (split.length >= 2) {
+                fragmentMajorVersion = Integer.parseInt(split[0]);
+                fragmentMinorVersion = Integer.parseInt(split[1]);
+            }
+        }
+    }
 
     @SuppressWarnings("deprecation")
     @Nullable
@@ -330,6 +349,9 @@ public class FragmentUtil {
     }
 
     private static boolean isAfter1_2() {
+        if (fragmentVersion != null && fragmentMinorVersion >= 0) {
+            return fragmentMinorVersion >= 2;
+        }
         try {
             Class.forName("androidx.fragment.app.FragmentStateManager");//fragment 1.2.0开始用FragmentStateManager管理
             return true;
@@ -339,6 +361,9 @@ public class FragmentUtil {
     }
 
     private static boolean isAfter1_3() {
+        if (fragmentVersion != null && fragmentMinorVersion >= 0) {
+            return fragmentMinorVersion >= 3;
+        }
         if (isAfter1_2()) {
             try {
                 Class<?> fragmentStateManagerClass = Class.forName("androidx.fragment.app.FragmentStateManager");
@@ -352,6 +377,9 @@ public class FragmentUtil {
     }
 
     private static boolean isAfter1_4() {
+        if (fragmentVersion != null && fragmentMinorVersion >= 0) {
+            return fragmentMinorVersion >= 4;
+        }
         if (isAfter1_3()) {
             try {
                 Class<?> fragmentStateManagerClass = Class.forName("androidx.fragment.app.FragmentStateManager");
@@ -368,6 +396,9 @@ public class FragmentUtil {
     }
 
     private static boolean isAfter1_6() {
+        if (fragmentVersion != null && fragmentMinorVersion >= 0) {
+            return fragmentMinorVersion >= 6;
+        }
         if (isAfter1_3()) {
             try {
                 Class<?> FragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
@@ -509,5 +540,16 @@ public class FragmentUtil {
             constructor.setAccessible(true);
             return constructor.newInstance(dispatcher, classLoader, fragmentManager.getFragmentFactory(), fragmentStateData.fragmentState);
         }
+    }
+
+    private static String getFragmentVersionFromResource() {
+        try (InputStream in = Fragment.class.getResourceAsStream("/META-INF/androidx.fragment_fragment.version")) {
+            if (in != null) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                return reader.readLine();
+            }
+        } catch (IOException ignored) {
+        }
+        return null;
     }
 }
