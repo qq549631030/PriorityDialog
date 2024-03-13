@@ -161,7 +161,7 @@ public class PriorityDialogManager {
                     }
 
                     dialogHost.getPriorityDialogHostDelegate().init(PriorityDialogManager.this, f.requireFragmentManager(), f.getChildFragmentManager(), savedInstanceState);
-                    if (savedInstanceState == null) {
+                    if (savedInstanceState == null && !f.isStateSaved()) {
                         Bundle arguments = f.getArguments();
                         if (arguments == null) {
                             arguments = new Bundle();
