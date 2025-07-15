@@ -10,7 +10,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentFactory;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.savedstate.SavedStateRegistry;
+import androidx.savedstate.SavedStateRegistryController;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -48,7 +48,8 @@ public class FragmentUtil {
             mStateField.setAccessible(true);
             int state = mStateField.getInt(fragment);
             FragmentManager fragmentManager = fragment.getFragmentManager();
-            if (state > 0 && fragmentManager != null) {
+            int minAttachedState = isAfter1_2() ? 0 : 1;
+            if (state >= minAttachedState && fragmentManager != null) {
                 return saveFragmentStateWhenAttached(fragmentManager, fragment);
             } else {
                 return saveFragmentStateWhenNotAttached(fragment);
@@ -133,10 +134,12 @@ public class FragmentUtil {
         }
 
         Bundle savedStateRegistryState = new Bundle();
-        SavedStateRegistry savedStateRegistry = fragment.getSavedStateRegistry();
-        Method performSaveMethod = SavedStateRegistry.class.getDeclaredMethod("performSave", Bundle.class);
-        performSaveMethod.setAccessible(true);
-        performSaveMethod.invoke(savedStateRegistry, savedStateRegistryState);
+        Field mSavedStateRegistryController = Fragment.class.getDeclaredField("mSavedStateRegistryController");
+        mSavedStateRegistryController.setAccessible(true);
+        SavedStateRegistryController savedStateRegistryController = (SavedStateRegistryController) mSavedStateRegistryController.get(fragment);
+        if (savedStateRegistryController != null) {
+            savedStateRegistryController.performSave(savedStateRegistryState);
+        }
         if (!savedStateRegistryState.isEmpty()) {
             if (isAfter1_6()) {//fragment 1.6.0以后保存方式变了
                 savedFragmentState.putBundle("registryState", savedStateRegistryState);
