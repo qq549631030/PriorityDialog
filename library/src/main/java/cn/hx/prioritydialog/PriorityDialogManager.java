@@ -177,7 +177,7 @@ public class PriorityDialogManager {
                     if (priorityDialog.equals(pendingShowDialog)) {
                         pendingShowDialog = null;
                     }
-                    if (savedInstanceState != null) {
+                    if (savedInstanceState != null && savedInstanceState.containsKey("android:savedDialogState")) {
                         PriorityDialogConfig savedConfig = null;
                         Bundle arguments = f.getArguments();
                         if (arguments != null) {
@@ -187,9 +187,6 @@ public class PriorityDialogManager {
                             priorityDialog.getPriorityConfig().copyFrom(savedConfig);
                         }
                         PriorityDialogConfig config = priorityDialog.getPriorityConfig();
-                        priorityDialog.setOnCancelListener(onCancelListenerMap.remove(config.getUuid()));
-                        priorityDialog.setOnDismissListener(onDismissListenerMap.remove(config.getUuid()));
-                        priorityDialog.setOnDialogEventListener(onDialogEventListenerMap.remove(config.getUuid()));
                         if (!config.isSupportRecreate()) {
                             //dismiss when un support recreate
                             ((DialogFragment) f).dismiss();
@@ -200,6 +197,18 @@ public class PriorityDialogManager {
                             removePendingDismissDialog(config.getHostUuid(), config.getUuid());
                             return;
                         }
+                    }
+                    OnCancelListener cancelListener = onCancelListenerMap.remove(priorityDialog.getPriorityConfig().getUuid());
+                    if (cancelListener != null) {
+                        priorityDialog.getPriorityDialogDelegate().setOnCancelListener(cancelListener);
+                    }
+                    OnDismissListener dismissListener = onDismissListenerMap.remove(priorityDialog.getPriorityConfig().getUuid());
+                    if (dismissListener != null) {
+                        priorityDialog.getPriorityDialogDelegate().setOnDismissListener(dismissListener);
+                    }
+                    OnDialogEventListener dialogEventListener = onDialogEventListenerMap.remove(priorityDialog.getPriorityConfig().getUuid());
+                    if (dialogEventListener != null) {
+                        priorityDialog.getPriorityDialogDelegate().setOnDialogEventListener(dialogEventListener);
                     }
                     for (PriorityDialogListener listener : priorityDialogListeners) {
                         listener.onDialogShow(priorityDialog);
@@ -432,6 +441,15 @@ public class PriorityDialogManager {
             linkedList.addLast(new PendingDialogState(priorityDialog.getPriorityConfig(), fragmentStateData));
             for (PriorityDialogListener listener : priorityDialogListeners) {
                 listener.onDialogAddToPending(priorityDialog);
+            }
+            if (priorityDialog.getPriorityDialogDelegate().getOnCancelListener() != null) {
+                onCancelListenerMap.put(priorityDialog.getPriorityConfig().getUuid(), priorityDialog.getPriorityDialogDelegate().getOnCancelListener());
+            }
+            if (priorityDialog.getPriorityDialogDelegate().getOnDismissListener() != null) {
+                onDismissListenerMap.put(priorityDialog.getPriorityConfig().getUuid(), priorityDialog.getPriorityDialogDelegate().getOnDismissListener());
+            }
+            if (priorityDialog.getPriorityDialogDelegate().getOnDialogEventListener() != null) {
+                onDialogEventListenerMap.put(priorityDialog.getPriorityConfig().getUuid(), priorityDialog.getPriorityDialogDelegate().getOnDialogEventListener());
             }
         }
     }
