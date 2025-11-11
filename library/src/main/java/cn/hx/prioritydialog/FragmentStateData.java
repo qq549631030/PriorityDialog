@@ -5,30 +5,44 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
-
-import java.util.Objects;
+import androidx.annotation.Nullable;
 
 public class FragmentStateData implements Parcelable {
 
-    @NonNull
-    public final Parcelable fragmentState;
-    @NonNull
-    public final Bundle savedFragmentState;
+    public boolean isAttached;
+    public Parcelable fragmentState;
+    public Bundle savedFragmentState;
+    public String className;
+    public Bundle arguments;
 
-    public FragmentStateData(@NonNull Parcelable fragmentState, @NonNull Bundle savedFragmentState) {
+
+    public FragmentStateData(boolean isAttached, @NonNull Parcelable fragmentState, @Nullable Bundle savedFragmentState) {
+        this.isAttached = isAttached;
         this.fragmentState = fragmentState;
         this.savedFragmentState = savedFragmentState;
     }
 
+    public FragmentStateData(@NonNull String className, @Nullable Bundle arguments) {
+        isAttached = false;
+        this.className = className;
+        this.arguments = arguments;
+    }
+
     protected FragmentStateData(Parcel in) {
-        fragmentState = Objects.requireNonNull(in.readParcelable(getClass().getClassLoader()));
-        savedFragmentState = Objects.requireNonNull(in.readBundle(getClass().getClassLoader()));
+        isAttached = in.readByte() != 0;
+        fragmentState = in.readParcelable(getClass().getClassLoader());
+        savedFragmentState = in.readBundle(getClass().getClassLoader());
+        className = in.readString();
+        arguments = in.readBundle(getClass().getClassLoader());
     }
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        dest.writeByte((byte) (isAttached ? 1 : 0));
         dest.writeParcelable(fragmentState, flags);
         dest.writeBundle(savedFragmentState);
+        dest.writeString(className);
+        dest.writeBundle(arguments);
     }
 
     @Override

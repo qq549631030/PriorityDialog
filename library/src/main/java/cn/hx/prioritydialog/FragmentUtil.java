@@ -42,7 +42,7 @@ public class FragmentUtil {
 
     @SuppressWarnings("deprecation")
     @Nullable
-    static FragmentStateData saveFragment(@NonNull Fragment fragment) {
+    static FragmentStateData saveFragment(@NonNull Fragment fragment, boolean fromTransaction) {
         try {
             Field mStateField = Fragment.class.getDeclaredField("mState");
             mStateField.setAccessible(true);
@@ -52,20 +52,20 @@ public class FragmentUtil {
             if (state >= minAttachedState && fragmentManager != null) {
                 return saveFragmentStateWhenAttached(fragmentManager, fragment);
             } else {
-                return saveFragmentStateWhenNotAttached(fragment);
+                return saveFragmentStateWhenNotAttached(fragment, fromTransaction);
             }
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
+        } catch (NoSuchFieldException ignored) {
+
+        } catch (IllegalAccessException ignored) {
+
+        } catch (ClassNotFoundException ignored) {
+
+        } catch (InvocationTargetException ignored) {
+
+        } catch (NoSuchMethodException ignored) {
+
+        } catch (InstantiationException ignored) {
+
         }
         return null;
     }
@@ -81,7 +81,7 @@ public class FragmentUtil {
                 if (savedFragmentState != null) {
                     Parcelable fragmentState = savedFragmentState.getParcelable("state");
                     if (fragmentState != null) {
-                        return new FragmentStateData(fragmentState, savedFragmentState);
+                        return new FragmentStateData(true, fragmentState, savedFragmentState);
                     }
                 }
             } else if (isAfter1_4()) {//1.4.0+
@@ -93,12 +93,12 @@ public class FragmentUtil {
                 getSavedStateMethod.setAccessible(true);
                 Parcelable fragmentState = (Parcelable) getSavedStateMethod.invoke(fragmentStore, who);
                 if (fragmentState != null) {
-                    return new FragmentStateData(fragmentState, new Bundle());
+                    return new FragmentStateData(true, fragmentState, null);
                 }
             } else {//1.2.0+
                 Parcelable fragmentState = (Parcelable) saveStateMethod.invoke(fragmentStateManager);
                 if (fragmentState != null) {
-                    return new FragmentStateData(fragmentState, new Bundle());
+                    return new FragmentStateData(true, fragmentState, null);
                 }
             }
         } else {//1.1.0
@@ -109,88 +109,99 @@ public class FragmentUtil {
             Bundle savedFragmentState = (Bundle) saveFragmentBasicStateMethod.invoke(fragmentManager, fragment);
 
             setFieldValue(fragmentState, "mSavedFragmentState", savedFragmentState);//fragment 1.6.0以前要把savedFragmentState放入FragmentState
-            return new FragmentStateData(fragmentState, new Bundle());
+            return new FragmentStateData(true, fragmentState, null);
         }
         return null;
     }
 
-    private static FragmentStateData saveFragmentStateWhenNotAttached(@NonNull Fragment fragment) throws ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IllegalAccessException, InstantiationException, NoSuchFieldException {
-        Parcelable fragmentState = createFragmentState(fragment);
+    private static FragmentStateData saveFragmentStateWhenNotAttached(@NonNull Fragment fragment, boolean fromTransaction) throws ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IllegalAccessException, InstantiationException, NoSuchFieldException {
+        if (fromTransaction) {
+            Parcelable fragmentState = createFragmentState(fragment);
 
-        Bundle savedFragmentState = new Bundle();
-        if (isAfter1_6()) {//fragment 1.6.0以后保存方式变了
-            savedFragmentState.putParcelable("state", fragmentState);
-            savedFragmentState.putBundle("arguments", fragment.getArguments());
-        }
-
-        Bundle savedInstanceState = new Bundle();
-        fragment.onSaveInstanceState(savedInstanceState);
-        if (!savedInstanceState.isEmpty()) {
+            Bundle savedFragmentState = new Bundle();
             if (isAfter1_6()) {//fragment 1.6.0以后保存方式变了
-                savedFragmentState.putBundle("savedInstanceState", savedInstanceState);
-            } else {
-                savedFragmentState.putAll(savedInstanceState);
+                savedFragmentState.putParcelable("state", fragmentState);
+                savedFragmentState.putBundle("arguments", fragment.getArguments());
             }
-        }
 
-        Bundle savedStateRegistryState = new Bundle();
-        Field mSavedStateRegistryController = Fragment.class.getDeclaredField("mSavedStateRegistryController");
-        mSavedStateRegistryController.setAccessible(true);
-        SavedStateRegistryController savedStateRegistryController = (SavedStateRegistryController) mSavedStateRegistryController.get(fragment);
-        if (savedStateRegistryController != null) {
-            savedStateRegistryController.performSave(savedStateRegistryState);
-        }
-        if (!savedStateRegistryState.isEmpty()) {
-            if (isAfter1_6()) {//fragment 1.6.0以后保存方式变了
-                savedFragmentState.putBundle("registryState", savedStateRegistryState);
-            } else {
-                savedFragmentState.putAll(savedStateRegistryState);
+            Bundle savedInstanceState = new Bundle();
+            fragment.onSaveInstanceState(savedInstanceState);
+            if (!savedInstanceState.isEmpty()) {
+                if (isAfter1_6()) {//fragment 1.6.0以后保存方式变了
+                    savedFragmentState.putBundle("savedInstanceState", savedInstanceState);
+                } else {
+                    savedFragmentState.putAll(savedInstanceState);
+                }
             }
+
+            Bundle savedStateRegistryState = new Bundle();
+            Field mSavedStateRegistryController = Fragment.class.getDeclaredField("mSavedStateRegistryController");
+            mSavedStateRegistryController.setAccessible(true);
+            SavedStateRegistryController savedStateRegistryController = (SavedStateRegistryController) mSavedStateRegistryController.get(fragment);
+            if (savedStateRegistryController != null) {
+                savedStateRegistryController.performSave(savedStateRegistryState);
+            }
+            if (!savedStateRegistryState.isEmpty()) {
+                if (isAfter1_6()) {//fragment 1.6.0以后保存方式变了
+                    savedFragmentState.putBundle("registryState", savedStateRegistryState);
+                } else {
+                    savedFragmentState.putAll(savedStateRegistryState);
+                }
+            }
+            if (!isAfter1_6()) {//fragment 1.6.0 以前要把savedFragmentState放入FragmentState中
+                setFieldValue(fragmentState, "mSavedFragmentState", savedFragmentState);
+            }
+            return new FragmentStateData(false, fragmentState, savedFragmentState);
+        } else {
+            return new FragmentStateData(fragment.getClass().getName(), fragment.getArguments());
         }
-        if (!isAfter1_6()) {//fragment 1.6.0 以前要把savedFragmentState放入FragmentState中
-            setFieldValue(fragmentState, "mSavedFragmentState", savedFragmentState);
-        }
-        return new FragmentStateData(fragmentState, savedFragmentState);
     }
 
     @Nullable
     static Fragment restoreFragment(@NonNull FragmentStateData fragmentStateData, @NonNull FragmentManager fragmentManager) {
         try {
-            String who = (String) getFieldValue(fragmentStateData.fragmentState, "mWho");
-            if (who != null) {
-                Fragment fragment = findFragmentByWho(fragmentManager, who);
-                if (fragment != null) {
-                    return fragment;
-                } else {
-                    ClassLoader classLoader = getClassLoader(fragmentManager);
-                    if (classLoader != null) {
-                        if (isAfter1_2()) {//fragment 1.2.0以后用FragmentStateManager.getFragment
-                            Object fragmentStateManager = createFragmentStateManagerForRestore(fragmentStateData, fragmentManager, classLoader);
-                            Class<?> fragmentStateManagerClass = Class.forName("androidx.fragment.app.FragmentStateManager");
-                            Method getFragmentMethod = fragmentStateManagerClass.getDeclaredMethod("getFragment");
-                            getFragmentMethod.setAccessible(true);
-                            return (Fragment) getFragmentMethod.invoke(fragmentStateManager);
-                        } else {//fragment 1.1.0用FragmentState.instantiate
-                            Class<?> fragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
-                            Method instantiateMethod = fragmentStateClass.getDeclaredMethod("instantiate", ClassLoader.class, FragmentFactory.class);
-                            instantiateMethod.setAccessible(true);
-                            return (Fragment) instantiateMethod.invoke(fragmentStateData.fragmentState, classLoader, fragmentManager.getFragmentFactory());
+            if (!fragmentStateData.isAttached && fragmentStateData.fragmentState == null) {
+                Class<?> fragmentClass = Class.forName(fragmentStateData.className);
+                Fragment fragment = (Fragment) fragmentClass.getConstructor().newInstance();
+                fragment.setArguments(fragmentStateData.arguments);
+                return fragment;
+            } else {
+                String who = (String) getFieldValue(fragmentStateData.fragmentState, "mWho");
+                if (who != null) {
+                    Fragment fragment = findFragmentByWho(fragmentManager, who);
+                    if (fragment != null) {
+                        return fragment;
+                    } else {
+                        ClassLoader classLoader = getClassLoader(fragmentManager);
+                        if (classLoader != null) {
+                            if (isAfter1_2()) {//fragment 1.2.0以后用FragmentStateManager.getFragment
+                                Object fragmentStateManager = createFragmentStateManagerForRestore(fragmentStateData, fragmentManager, classLoader);
+                                Class<?> fragmentStateManagerClass = Class.forName("androidx.fragment.app.FragmentStateManager");
+                                Method getFragmentMethod = fragmentStateManagerClass.getDeclaredMethod("getFragment");
+                                getFragmentMethod.setAccessible(true);
+                                return (Fragment) getFragmentMethod.invoke(fragmentStateManager);
+                            } else {//fragment 1.1.0用FragmentState.instantiate
+                                Class<?> fragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
+                                Method instantiateMethod = fragmentStateClass.getDeclaredMethod("instantiate", ClassLoader.class, FragmentFactory.class);
+                                instantiateMethod.setAccessible(true);
+                                return (Fragment) instantiateMethod.invoke(fragmentStateData.fragmentState, classLoader, fragmentManager.getFragmentFactory());
+                            }
                         }
                     }
                 }
             }
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
+        } catch (NoSuchFieldException ignored) {
+
+        } catch (IllegalAccessException ignored) {
+
+        } catch (ClassNotFoundException ignored) {
+
+        } catch (InvocationTargetException ignored) {
+
+        } catch (NoSuchMethodException ignored) {
+
+        } catch (InstantiationException ignored) {
+
         }
         return null;
     }
@@ -229,8 +240,8 @@ public class FragmentUtil {
                 for (Object mOp : mOps) {
                     Fragment fragment = (Fragment) mFragmentField.get(mOp);
                     if (fragment != null) {
-                        FragmentStateData fragmentStateData = saveFragment(fragment);
-                        if (fragmentStateData != null) {
+                        FragmentStateData fragmentStateData = saveFragment(fragment, true);
+                        if (fragmentStateData != null && fragmentStateData.fragmentState != null) {
                             String who = (String) getFieldValue(fragmentStateData.fragmentState, "mWho");
                             if (who != null) {
                                 fragmentStates.putParcelable(who, fragmentStateData);
@@ -240,18 +251,18 @@ public class FragmentUtil {
                 }
             }
             return new PendingTransactionState(mAddToBackStack, backStackState, fragmentStates);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
+        } catch (ClassNotFoundException ignored) {
+
+        } catch (NoSuchFieldException ignored) {
+
+        } catch (IllegalAccessException ignored) {
+
+        } catch (NoSuchMethodException ignored) {
+
+        } catch (InvocationTargetException ignored) {
+
+        } catch (InstantiationException ignored) {
+
         }
         return null;
     }
@@ -259,13 +270,21 @@ public class FragmentUtil {
     @Nullable
     static Bundle getArgumentsFromFragmentStateData(@NonNull FragmentStateData fragmentStateData) {
         try {
-            if (isAfter1_6()) {//fragment 1.6.0以后保存方式变了
-                return fragmentStateData.savedFragmentState.getBundle("arguments");
+            if (!fragmentStateData.isAttached && fragmentStateData.savedFragmentState == null) {
+                return fragmentStateData.arguments;
             } else {
-                Class<?> fragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
-                Field mArgumentsField = fragmentStateClass.getDeclaredField("mArguments");
-                mArgumentsField.setAccessible(true);
-                return (Bundle) mArgumentsField.get(fragmentStateData.fragmentState);
+                if (isAfter1_6()) {//fragment 1.6.0以后保存方式变了
+                    if (fragmentStateData.savedFragmentState != null) {
+                        return fragmentStateData.savedFragmentState.getBundle("arguments");
+                    } else {
+                        return null;
+                    }
+                } else {
+                    Class<?> fragmentStateClass = Class.forName("androidx.fragment.app.FragmentState");
+                    Field mArgumentsField = fragmentStateClass.getDeclaredField("mArguments");
+                    mArgumentsField.setAccessible(true);
+                    return (Bundle) mArgumentsField.get(fragmentStateData.fragmentState);
+                }
             }
         } catch (ClassCastException e) {
             return null;
@@ -337,16 +356,16 @@ public class FragmentUtil {
                 }
                 return newBackStackRecord;
             }
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
+        } catch (ClassNotFoundException ignored) {
+
+        } catch (NoSuchMethodException ignored) {
+
+        } catch (InvocationTargetException ignored) {
+
+        } catch (IllegalAccessException ignored) {
+
+        } catch (NoSuchFieldException ignored) {
+
         }
         return null;
     }

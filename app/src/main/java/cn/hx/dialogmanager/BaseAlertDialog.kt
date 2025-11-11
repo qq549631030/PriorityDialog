@@ -13,26 +13,14 @@ class BaseAlertDialog : BaseDialog(), DialogInterface.OnClickListener {
     private var negative: CharSequence? = null
     private var neutral: CharSequence? = null
 
-    init {
-        savedStateRegistry.registerSavedStateProvider(KEY_ALERT_DIALOG_STATE) {
-            Bundle().apply {
-                putCharSequence(TITLE, title)
-                putCharSequence(MESSAGE, message)
-                putCharSequence(POSITIVE, positive)
-                putCharSequence(NEGATIVE, negative)
-                putCharSequence(NEUTRAL, neutral)
-            }
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        savedStateRegistry.consumeRestoredStateForKey(KEY_ALERT_DIALOG_STATE)?.run {
-            title = getCharSequence(TITLE)
-            message = getCharSequence(MESSAGE)
-            positive = getCharSequence(POSITIVE)
-            negative = getCharSequence(NEGATIVE)
-            neutral = getCharSequence(NEUTRAL)
+        arguments?.let {
+            title = it.getCharSequence(TITLE)
+            message = it.getCharSequence(MESSAGE)
+            positive = it.getCharSequence(POSITIVE)
+            negative = it.getCharSequence(NEGATIVE)
+            neutral = it.getCharSequence(NEUTRAL)
         }
     }
 
@@ -89,12 +77,14 @@ class BaseAlertDialog : BaseDialog(), DialogInterface.OnClickListener {
         }
 
         fun create(): BaseAlertDialog {
-            return BaseAlertDialog().also {
-                it.title = title
-                it.message = message
-                it.positive = positive
-                it.negative = negative
-                it.neutral = neutral
+            return BaseAlertDialog().apply {
+                arguments = Bundle().apply {
+                    putCharSequence(TITLE, this@Builder.title)
+                    putCharSequence(MESSAGE, this@Builder.message)
+                    putCharSequence(POSITIVE, this@Builder.positive)
+                    putCharSequence(NEGATIVE, this@Builder.negative)
+                    putCharSequence(NEUTRAL, this@Builder.neutral)
+                }
             }
         }
     }

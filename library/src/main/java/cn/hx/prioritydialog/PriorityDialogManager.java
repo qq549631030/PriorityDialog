@@ -430,7 +430,7 @@ public class PriorityDialogManager {
         if (priorityDialog.getPriorityConfig().getHostUuid() == null || !(priorityDialog instanceof DialogFragment)) {
             return;
         }
-        FragmentStateData fragmentStateData = FragmentUtil.saveFragment((Fragment) priorityDialog);
+        FragmentStateData fragmentStateData = FragmentUtil.saveFragment((Fragment) priorityDialog, false);
         if (fragmentStateData != null) {
             removePendingDialogByUuid(priorityDialog.getPriorityConfig().getUuid());
             LinkedList<PendingDialogState> linkedList = pendingDialogMap.get(priorityDialog.getPriorityConfig().getPriority());
