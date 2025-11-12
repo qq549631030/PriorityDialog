@@ -263,4 +263,47 @@ class PendingDialogTest {
             assert(it.currentPriorityDialog == null)
         }
     }
+
+    @Test
+    fun removePendingDialogByUuid() {
+        activityRule.scenario.onActivity {
+            it.showAlertDialog(message = "dialog2_1", priority = 2, uuid = "dialog2_1")
+            it.showAlertDialog(message = "dialog1_1", priority = 1, uuid = "dialog1_1")
+        }
+        activityRule.scenario.onActivity {
+            Espresso.onView(ViewMatchers.withId(android.R.id.message))
+                    .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
+                    .check(ViewAssertions.matches(ViewMatchers.withText("dialog2_1")))
+            it.removePendingDialogByUuid("dialog1_1")
+
+            Espresso.onView(ViewMatchers.withId(android.R.id.button1))
+                    .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
+                    .perform(ViewActions.click())
+        }
+        activityRule.scenario.onActivity {
+            assert(it.currentPriorityDialog == null)
+        }
+    }
+
+    @Test
+    fun removeAllPendingDialogs() {
+        activityRule.scenario.onActivity {
+            it.showAlertDialog(message = "dialog3_1", priority = 3, uuid = "dialog3_1")
+            it.showAlertDialog(message = "dialog2_1", priority = 2, uuid = "dialog2_1")
+            it.showAlertDialog(message = "dialog1_1", priority = 1, uuid = "dialog1_1")
+        }
+        activityRule.scenario.onActivity {
+            Espresso.onView(ViewMatchers.withId(android.R.id.message))
+                    .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
+                    .check(ViewAssertions.matches(ViewMatchers.withText("dialog3_1")))
+            it.removeAllPendingDialogs()
+
+            Espresso.onView(ViewMatchers.withId(android.R.id.button1))
+                    .inRoot(RootMatchers.withDecorView(Matchers.not(it.window.decorView)))
+                    .perform(ViewActions.click())
+        }
+        activityRule.scenario.onActivity {
+            assert(it.currentPriorityDialog == null)
+        }
+    }
 }

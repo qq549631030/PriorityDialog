@@ -55,6 +55,16 @@ public class DialogHostImpl implements DialogHost {
     }
 
     @Override
+    public void removeAllPendingDialogs() {
+        mPriorityDialogHostDelegate.mDialogManager.removePendingDialogByHostUuid(getUuid());
+    }
+
+    @Override
+    public void removePendingDialogByUuid(@NonNull String uuid) {
+        mPriorityDialogHostDelegate.mDialogManager.removePendingDialogByUuid(uuid);
+    }
+
+    @Override
     public void onDialogEvent(@NonNull PriorityDialog priorityDialog, @NonNull Object event) {
 
     }

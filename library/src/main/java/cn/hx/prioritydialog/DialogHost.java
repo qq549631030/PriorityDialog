@@ -59,6 +59,17 @@ public interface DialogHost {
     void dismissByUuid(@NonNull String uuid, boolean allowStateLoss);
 
     /**
+     * 删除所有等待队列里的对话框
+     */
+    void removeAllPendingDialogs();
+
+    /**
+     * 删除等待队列里指定uuid的对话框
+     *
+     */
+    void removePendingDialogByUuid(@NonNull String uuid);
+
+    /**
      * 自定义对话框事件
      *
      * @param event 自定义事件

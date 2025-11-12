@@ -292,7 +292,7 @@ public class PriorityDialogManager {
         pendingFragmentActionMap.remove(hostUuid);
     }
 
-    private void removePendingDialogByHostUuid(String hostUuid) {
+    public void removePendingDialogByHostUuid(String hostUuid) {
         Map.Entry<Integer, LinkedList<PendingDialogState>> lastEntry = pendingDialogMap.lastEntry();
         while (lastEntry != null) {
             LinkedList<PendingDialogState> linkedList = lastEntry.getValue();
@@ -315,7 +315,7 @@ public class PriorityDialogManager {
         }
     }
 
-    boolean removePendingDialogByUuid(String uuid) {
+    public boolean removePendingDialogByUuid(String uuid) {
         Map.Entry<Integer, LinkedList<PendingDialogState>> lastEntry = pendingDialogMap.lastEntry();
         while (lastEntry != null) {
             LinkedList<PendingDialogState> linkedList = lastEntry.getValue();
